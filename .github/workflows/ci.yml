@@ -1,0 +1,19 @@
+name: CI
+on:
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+jobs:
+  plan:
+    container: "haxe/terraform_devcontainer_workspace:20210824013051"
+    steps:
+      - uses: actions/checkout@v2
+      - run: terraform init
+      - run: terraform plan -detailed-exitcode
+        env:
+          TF_INPUT: 0
+          TF_IN_AUTOMATION: 1
+          AWS_ACCESS_KEY_ID: ${{ secrets.TF_AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.TF_AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: eu-west-1

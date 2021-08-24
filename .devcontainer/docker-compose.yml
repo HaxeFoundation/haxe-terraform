@@ -1,0 +1,11 @@
+version: '3'
+services:
+  workspace:
+    image: haxe/terraform_devcontainer_workspace:20210824013051
+    init: true
+    volumes:
+      - /var/run/docker.sock:/var/run/docker-host.sock
+      - ..:/workspace:cached
+    user: vscode
+    entrypoint: /usr/local/share/docker-init.sh
+    command: sleep infinity
