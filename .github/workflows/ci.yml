@@ -6,6 +6,7 @@ on:
   workflow_dispatch:
 jobs:
   plan:
+    runs-on: ubuntu-latest
     container: "haxe/terraform_devcontainer_workspace:20210824013051"
     steps:
       - uses: actions/checkout@v2
