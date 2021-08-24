@@ -8,13 +8,17 @@ jobs:
   plan:
     runs-on: ubuntu-latest
     container: "haxe/terraform_devcontainer_workspace:20210824013051"
+    env:
+      TF_INPUT: 0
+      TF_IN_AUTOMATION: 1
+      AWS_DEFAULT_REGION: eu-west-1
     steps:
       - uses: actions/checkout@v2
       - run: terraform init
-      - run: terraform plan -detailed-exitcode
         env:
-          TF_INPUT: 0
-          TF_IN_AUTOMATION: 1
           AWS_ACCESS_KEY_ID: ${{ secrets.TF_AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.TF_AWS_SECRET_ACCESS_KEY }}
-          AWS_DEFAULT_REGION: eu-west-1
+      - run: terraform plan -detailed-exitcode
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.TF_AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.TF_AWS_SECRET_ACCESS_KEY }}
