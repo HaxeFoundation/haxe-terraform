@@ -3,6 +3,8 @@ locals {
 
   # Let's use only one AZ, such that ebs can be reliably re-attached.
   eks_subnets = [module.vpc.public_subnets[0]]
+
+  ebs_controller_sa_name = "ebs-csi-controller-sa"
 }
 
 data "aws_eks_cluster" "cluster" {
@@ -33,6 +35,27 @@ provider "kubernetes" {
 
   experiments {
     manifest_resource = true
+  }
+}
+
+provider "helm" {
+  kubernetes {
+    host                   = data.aws_eks_cluster.cluster.endpoint
+    cluster_ca_certificate = base64decode(data.aws_eks_cluster.cluster.certificate_authority.0.data)
+    exec {
+      api_version = "client.authentication.k8s.io/v1alpha1"
+      command     = "aws-iam-authenticator"
+      args = [
+        "token",
+        "-i", module.eks.cluster_id,
+        "-r", aws_iam_role.k8s-admin.arn, # comment this out when the eks module is not created yet
+      ]
+      env = {
+        # AWS_ACCESS_KEY_ID
+        # AWS_SECRET_ACCESS_KEY
+        # AWS_DEFAULT_REGION
+      }
+    }
   }
 }
 
@@ -81,4 +104,27 @@ module "eks" {
   depends_on = [
     module.vpc, # EKS needs a VPC with an Internet gateway, so the VPC module better be completely created
   ]
+}
+
+# https://github.com/kubernetes-sigs/aws-ebs-csi-driver/tree/master/charts/aws-ebs-csi-driver
+resource "helm_release" "aws-ebs-csi-driver" {
+  namespace  = "kube-system"
+  name       = "aws-ebs-csi-driver"
+  repository = "https://kubernetes-sigs.github.io/aws-ebs-csi-driver/"
+  chart      = "aws-ebs-csi-driver"
+  version    = "2.0.4"
+
+  values = [yamlencode(
+    {
+      "controller" : {
+        "serviceAccount" : {
+          "create" : true,
+          "name" : local.ebs_controller_sa_name,
+          "annotations" : {
+            "eks.amazonaws.com/role-arn" : aws_iam_role.AmazonEKS_EBS_CSI_DriverRole.arn
+          }
+        }
+      }
+    }
+  )]
 }
