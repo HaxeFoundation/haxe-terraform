@@ -18,6 +18,13 @@ RUN apt-get update \
     # Clean up
     && apt-get autoremove -y && apt-get clean -y && rm -rf /var/lib/apt/lists/* /tmp/library-scripts/
 
+# https://github.com/docker-library/mysql/blob/master/5.7/Dockerfile.debian
+# apt-key adv --keyserver ha.pool.sks-keyservers.net --recv-keys A4A9406876FCBD3C456770C88C718D3B5072E1F5 || \
+# apt-key adv --keyserver pgp.mit.edu --recv-keys A4A9406876FCBD3C456770C88C718D3B5072E1F5 || \
+# apt-key adv --keyserver keyserver.pgp.com --recv-keys A4A9406876FCBD3C456770C88C718D3B5072E1F5
+COPY mysql-public-key /tmp/mysql-public-key
+RUN apt-key add /tmp/mysql-public-key
+
 # Configure apt and install packages
 RUN apt-get update \
     && apt-get install -y --no-install-recommends apt-utils dialog 2>&1 \
@@ -33,6 +40,7 @@ RUN apt-get update \
         direnv \
         tzdata \
         python3-pip \
+        jq \
     && echo 'eval "$(direnv hook bash)"' >> /etc/bash.bashrc \
     && add-apt-repository ppa:git-core/ppa \
     && apt-get install -y git \
@@ -40,19 +48,28 @@ RUN apt-get update \
     && apt-get install -y nodejs=14.* \
     && add-apt-repository ppa:haxe/haxe3.4 \
     && apt-get install -y neko haxe \
-    # Install mysql-client
-    # https://github.com/docker-library/mysql/blob/master/5.7/Dockerfile.debian
-    && (apt-key adv --keyserver ha.pool.sks-keyservers.net --recv-keys A4A9406876FCBD3C456770C88C718D3B5072E1F5 || \
-        apt-key adv --keyserver pgp.mit.edu --recv-keys A4A9406876FCBD3C456770C88C718D3B5072E1F5 || \
-        apt-key adv --keyserver keyserver.pgp.com --recv-keys A4A9406876FCBD3C456770C88C718D3B5072E1F5 )\
-    && echo 'deb http://repo.mysql.com/apt/ubuntu/ bionic mysql-5.7' > /etc/apt/sources.list.d/mysql.list \
-    && apt-get update \
-    && apt-get -y install mysql-client=5.7.* \
     # Install terraform
     && curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo apt-key add - \
     && apt-add-repository "deb [arch=$(dpkg --print-architecture)] https://apt.releases.hashicorp.com $(lsb_release -cs) main" \
     && apt-get -y install --no-install-recommends terraform=1.0.6 terraform-ls \
     && echo 'complete -C /usr/bin/terraform terraform' >> /etc/bash.bashrc \
+    # install kubectl
+    && curl -fsSL https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add - \
+    && echo "deb https://apt.kubernetes.io/ kubernetes-xenial main" | tee -a /etc/apt/sources.list.d/kubernetes.list \
+    && apt-get update \
+    && apt-get -y install --no-install-recommends kubectl \
+    && echo 'source <(kubectl completion bash)' >> /home/vscode/.bashrc \
+    # install helm
+    && curl -fsSL https://baltocdn.com/helm/signing.asc | apt-key add - \
+    && echo "deb https://baltocdn.com/helm/stable/debian/ all main" | tee /etc/apt/sources.list.d/helm-stable-debian.list \
+    && apt-get update \
+    && apt-get -y install --no-install-recommends helm \
+    && echo 'source <(helm completion bash)' >> /home/vscode/.bashrc \
+    # Install mysql-client
+    # https://github.com/docker-library/mysql/blob/master/5.7/Dockerfile.debian
+    && echo 'deb http://repo.mysql.com/apt/ubuntu/ bionic mysql-5.7' > /etc/apt/sources.list.d/mysql.list \
+    && apt-get update \
+    && apt-get -y install mysql-client=5.7.* \
     #
     # Clean up
     && apt-get autoremove -y \
@@ -73,6 +90,11 @@ RUN cd / \
 ENV LC_ALL=en_US.UTF-8
 RUN python3 -m pip install --ignore-installed --upgrade pip setuptools wheel PyYAML
 RUN pip3 install awsebcli==3.19.4 --upgrade
+
+# install aws-iam-authenticator
+RUN curl -o aws-iam-authenticator https://amazon-eks.s3.us-west-2.amazonaws.com/1.21.2/2021-07-05/bin/linux/amd64/aws-iam-authenticator \
+    && chmod +x ./aws-iam-authenticator \
+    && mv ./aws-iam-authenticator /usr/local/bin/
 
 # Config direnv
 COPY --chown=$USER_UID:$USER_GID direnv.toml /home/$USERNAME/.config/direnv/config.toml
