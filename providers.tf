@@ -6,11 +6,11 @@ terraform {
       version = "~> 3.56"
     }
     kubernetes = {
-      source = "hashicorp/kubernetes"
+      source  = "hashicorp/kubernetes"
       version = "~> 2.4"
     }
     helm = {
-      source = "hashicorp/helm"
+      source  = "hashicorp/helm"
       version = "~> 2.3"
     }
     cloudflare = {
@@ -20,6 +20,10 @@ terraform {
     github = {
       source  = "integrations/github"
       version = "~> 4.11"
+    }
+    random = {
+      source  = "hashicorp/random"
+      version = "~> 3.1"
     }
   }
   backend "s3" {

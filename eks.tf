@@ -90,6 +90,10 @@ module "eks" {
 
   }]
 
+  worker_additional_security_group_ids = [
+    # aws_security_group.all_worker_mgmt.id,
+  ]
+
   map_roles = [
     {
       rolearn  = aws_iam_role.k8s-admin.arn
@@ -97,6 +101,7 @@ module "eks" {
       groups   = ["system:masters"]
     }
   ]
+
   kubeconfig_aws_authenticator_additional_args = [
     "-r", aws_iam_role.k8s-admin.arn
   ]
@@ -104,6 +109,23 @@ module "eks" {
   depends_on = [
     module.vpc, # EKS needs a VPC with an Internet gateway, so the VPC module better be completely created
   ]
+}
+
+resource "aws_security_group" "all_worker_mgmt" {
+  name_prefix = "all_worker_management"
+  vpc_id      = module.vpc.vpc_id
+
+  ingress {
+    from_port = 22
+    to_port   = 22
+    protocol  = "tcp"
+
+    cidr_blocks = [
+      "10.0.0.0/8",
+      "172.16.0.0/12",
+      "192.168.0.0/16",
+    ]
+  }
 }
 
 # https://github.com/kubernetes-sigs/aws-ebs-csi-driver/tree/master/charts/aws-ebs-csi-driver

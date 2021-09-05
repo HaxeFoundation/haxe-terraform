@@ -9,4 +9,7 @@ export AWS_DEFAULT_REGION=eu-west-1
 # Optional. Let us use `kubectl`.
 # https://kubernetes.io/docs/tasks/access-application-cluster/configure-access-multiple-clusters/#set-the-kubeconfig-environment-variable
 export KUBECONFIG="$(pwd)/kubeconfig_haxe2021"
+
+# Optional. Let us use VS Code for `kubectl edit`.
+export KUBE_EDITOR="code -w"
 ```
