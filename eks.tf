@@ -149,3 +149,9 @@ resource "helm_release" "aws-ebs-csi-driver" {
     }
   )]
 }
+
+resource "kubernetes_namespace" "monitoring" {
+  metadata {
+    name = "monitoring"
+  }
+}
