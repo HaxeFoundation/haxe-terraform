@@ -1,9 +1,14 @@
 locals {
   oauth2-proxy = {
-    whitelist-domains = {
-      oauth2-proxy = "oauth2-proxy.haxe.org"
+    domains = {
+      oauth2-proxy  = "oauth2-proxy.haxe.org"
+      k8s-dashboard = "k8s.haxe.org"
     }
     container_port = 4180
+    ingress_annotations = {
+      "nginx.ingress.kubernetes.io/auth-url"    = "https://oauth2-proxy.haxe.org/oauth2/auth"
+      "nginx.ingress.kubernetes.io/auth-signin" = "https://oauth2-proxy.haxe.org/oauth2/sign_in?rd=https://$host$request_uri"
+    }
   }
 }
 
@@ -52,7 +57,7 @@ resource "kubernetes_deployment" "oauth2-proxy" {
           }
           env {
             name  = "OAUTH2_PROXY_WHITELIST_DOMAINS"
-            value = join(",", values(local.oauth2-proxy.whitelist-domains))
+            value = join(",", values(local.oauth2-proxy.domains))
           }
           env {
             name  = "OAUTH2_PROXY_COOKIE_DOMAINS"
@@ -115,7 +120,7 @@ resource "kubernetes_service" "oauth2-proxy" {
 }
 
 resource "kubernetes_ingress" "oauth2-proxy" {
-  for_each = local.oauth2-proxy.whitelist-domains
+  for_each = local.oauth2-proxy.domains
 
   metadata {
     name = "oauth2-proxy-${each.key}"
