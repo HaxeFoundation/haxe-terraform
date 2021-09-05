@@ -76,18 +76,17 @@ module "eks" {
       "t3.medium", "t3a.medium", "t4g.medium", "t2.medium",
     ]
 
-    asg_min_size                             = 1
+    asg_min_size                             = 2
     asg_max_size                             = 4
-    asg_desired_capacity                     = 1
     on_demand_base_capacity                  = 0
     on_demand_percentage_above_base_capacity = 0
     spot_allocation_strategy                 = "lowest-price"
 
     public_ip = true
     # ami_id           = "ami-0d2a3c8fac031047a" # avoid auto update
-    root_volume_type = "gp2"
-    subnets          = local.eks_subnets,
-
+    root_volume_type   = "gp2"
+    subnets            = local.eks_subnets,
+    kubelet_extra_args = "--node-labels=node.kubernetes.io/lifecycle=spot"
   }]
 
   worker_additional_security_group_ids = [
