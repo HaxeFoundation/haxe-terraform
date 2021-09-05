@@ -4,7 +4,14 @@ locals {
   }
   grafana = {
     hostname = "grafana.haxe.org"
+    user     = "admin"
+    password = random_password.grafana-admin-pw.result
   }
+}
+
+output "grafana" {
+  value     = local.grafana
+  sensitive = true
 }
 
 resource "random_password" "grafana-admin-pw" {
@@ -19,8 +26,8 @@ resource "kubernetes_secret" "grafana-admin" {
   }
 
   data = {
-    admin-user     = "admin"
-    admin-password = random_password.grafana-admin-pw.result
+    admin-user     = local.grafana.user
+    admin-password = local.grafana.password
   }
 }
 
