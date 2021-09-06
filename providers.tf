@@ -43,8 +43,8 @@ provider "aws" {
 }
 
 provider "aws" {
-  alias      = "us-east-1"
-  region     = "us-east-1"
+  alias  = "us-east-1"
+  region = "us-east-1"
   # AWS_ACCESS_KEY_ID
   # AWS_SECRET_ACCESS_KEY
 }
@@ -52,3 +52,7 @@ provider "aws" {
 data "aws_caller_identity" "current" {}
 data "aws_canonical_user_id" "current" {}
 data "aws_availability_zones" "available" {}
+
+provider "github" {
+  owner = "HaxeFoundation"
+}

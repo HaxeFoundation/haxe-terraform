@@ -14,18 +14,18 @@ resource "aws_iam_user" "TravisCI-Bot" {
   name = "TravisCI-Bot"
 }
 
-resource "aws_iam_group" "admin" {
-  name = "${local.stack_name}-admin"
+resource "aws_iam_group" "k8s-admin" {
+  name = "${local.stack_name}-k8s-admin"
 }
-resource "aws_iam_group_membership" "admin" {
+resource "aws_iam_group_membership" "k8s-admin" {
   name  = "${local.stack_name}-admin-membership"
-  group = aws_iam_group.admin.name
+  group = aws_iam_group.k8s-admin.name
   users = [
     aws_iam_user.Andy.name,
     aws_iam_user.ibilon.name,
     aws_iam_user.waneck.name,
-    aws_iam_user.serverless-admin.name,
     aws_iam_user.TravisCI-Bot.name,
+    aws_iam_user.haxelib-operator.name,
   ]
 }
 
@@ -46,7 +46,7 @@ data "aws_iam_policy_document" "allow-self-assumerole" {
 
 resource "aws_iam_group_policy" "allow-assume-k8s-admin" {
   name   = "allow-assume-${local.stack_name}-k8s-admin"
-  group  = aws_iam_group.admin.name
+  group  = aws_iam_group.k8s-admin.name
   policy = data.aws_iam_policy_document.allow-assume-k8s-admin.json
 }
 data "aws_iam_policy_document" "allow-assume-k8s-admin" {

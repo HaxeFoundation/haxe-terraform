@@ -26,10 +26,14 @@ resource "helm_release" "ingress-nginx" {
           "annotations" : {
             "service.beta.kubernetes.io/aws-load-balancer-ssl-cert" : aws_acm_certificate.haxe-org.arn,
             "service.beta.kubernetes.io/aws-load-balancer-backend-protocol" : "tcp",
+            "service.beta.kubernetes.io/aws-load-balancer-proxy-protocol" : "*",
             "service.beta.kubernetes.io/aws-load-balancer-ssl-ports" : "https",
             "service.beta.kubernetes.io/aws-load-balancer-connection-idle-timeout" : 3600
-          }
-        }
+          },
+        },
+        "config" : {
+          "use-proxy-protocol" : "true",
+        },
       },
     })
   ]
