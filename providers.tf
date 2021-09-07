@@ -49,6 +49,7 @@ provider "aws" {
   # AWS_SECRET_ACCESS_KEY
 }
 
+data "aws_region" "current" {}
 data "aws_caller_identity" "current" {}
 data "aws_canonical_user_id" "current" {}
 data "aws_availability_zones" "available" {}

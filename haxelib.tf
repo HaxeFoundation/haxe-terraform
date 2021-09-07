@@ -99,3 +99,37 @@ resource "github_actions_secret" "haxelib-AWS_SECRET_ACCESS_KEY" {
   secret_name     = "AWS_SECRET_ACCESS_KEY"
   plaintext_value = aws_iam_access_key.haxelib-operator.secret
 }
+
+
+resource "aws_iam_user" "haxelib-server" {
+  name = "haxelib-server"
+}
+
+resource "aws_iam_access_key" "haxelib-server" {
+  user = aws_iam_user.haxelib-server.name
+}
+
+resource "kubernetes_secret" "haxelib-server" {
+  metadata {
+    name = "haxelib-server"
+  }
+  data = {
+    AWS_ACCESS_KEY_ID     = aws_iam_access_key.haxelib-server.id
+    AWS_SECRET_ACCESS_KEY = aws_iam_access_key.haxelib-server.secret
+    AWS_DEFAULT_REGION    = data.aws_region.current.name
+  }
+}
+
+resource "aws_iam_user_policy" "haxelib-server" {
+  name   = "${local.stack_name}-haxelib-server"
+  user   = aws_iam_user.haxelib-server.name
+  policy = data.aws_iam_policy_document.haxelib-server.json
+}
+data "aws_iam_policy_document" "haxelib-server" {
+  # lib.haxe.org S3 bucket
+  statement {
+    effect    = "Allow"
+    actions   = ["s3:*"]
+    resources = ["arn:aws:s3:::lib.haxe.org"]
+  }
+}
