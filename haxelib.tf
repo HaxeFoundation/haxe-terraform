@@ -83,6 +83,10 @@ data "aws_iam_policy_document" "haxelib-operator" {
     resources = ["*"]
   }
 }
+resource "aws_iam_role_policy_attachment" "name" {
+  role = aws_iam_role.haxelib-operator.id
+  policy_arn = "arn:aws:iam::aws:policy/AdministratorAccess-AWSElasticBeanstalk"
+}
 
 resource "aws_iam_access_key" "haxelib-operator" {
   user = aws_iam_user.haxelib-operator.name
