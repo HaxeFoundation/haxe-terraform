@@ -33,6 +33,7 @@ resource "helm_release" "ingress-nginx" {
         },
         "config" : {
           "use-proxy-protocol" : "true",
+          "proxy-body-size": "256m",
         },
       },
     })
