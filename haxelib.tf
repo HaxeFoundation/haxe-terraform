@@ -52,6 +52,16 @@ resource "aws_iam_role_policy" "haxelib-operator" {
 data "aws_iam_policy_document" "haxelib-operator" {
   # lib.haxe.org S3 bucket
   statement {
+    effect = "Allow"
+    actions = [
+      "s3:GetObject",
+      "s3:GetObjectVersion",
+      "s3:PutObject",
+      "s3:PutObjectAcl"
+    ]
+    resources = ["arn:aws:s3:::lib.haxe.org/*"]
+  }
+  statement {
     effect    = "Allow"
     actions   = ["s3:*"]
     resources = ["arn:aws:s3:::lib.haxe.org"]
@@ -84,7 +94,7 @@ data "aws_iam_policy_document" "haxelib-operator" {
   }
 }
 resource "aws_iam_role_policy_attachment" "name" {
-  role = aws_iam_role.haxelib-operator.id
+  role       = aws_iam_role.haxelib-operator.id
   policy_arn = "arn:aws:iam::aws:policy/AdministratorAccess-AWSElasticBeanstalk"
 }
 
@@ -132,8 +142,18 @@ resource "aws_iam_user_policy" "haxelib-server" {
 data "aws_iam_policy_document" "haxelib-server" {
   # lib.haxe.org S3 bucket
   statement {
+    effect = "Allow"
+    actions = [
+      "s3:GetObject",
+      "s3:GetObjectVersion",
+      "s3:PutObject",
+      "s3:PutObjectAcl"
+    ]
+    resources = ["arn:aws:s3:::lib.haxe.org/*"]
+  }
+  statement {
     effect    = "Allow"
-    actions   = ["s3:*"]
+    actions   = ["s3:ListBucket"]
     resources = ["arn:aws:s3:::lib.haxe.org"]
   }
 }
