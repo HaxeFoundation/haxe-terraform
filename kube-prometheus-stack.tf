@@ -112,7 +112,7 @@ resource "aws_route53_record" "prom-haxe-org" {
   zone_id = aws_route53_zone.haxe-org.zone_id
   name    = "prom"
   type    = "CNAME"
-  ttl     = "30"
+  ttl     = "86400"
   records = [local.ingress_hostname]
 }
 
@@ -120,6 +120,6 @@ resource "aws_route53_record" "grafana-haxe-org" {
   zone_id = aws_route53_zone.haxe-org.zone_id
   name    = "grafana"
   type    = "CNAME"
-  ttl     = "30"
+  ttl     = "86400"
   records = [local.ingress_hostname]
 }

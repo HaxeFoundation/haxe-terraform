@@ -146,6 +146,6 @@ resource "aws_route53_record" "oauth2-proxy" {
   zone_id = aws_route53_zone.haxe-org.zone_id
   name    = "oauth2-proxy"
   type    = "CNAME"
-  ttl     = "30"
+  ttl     = "86400"
   records = [local.ingress_hostname]
 }

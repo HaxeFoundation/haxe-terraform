@@ -83,6 +83,6 @@ resource "aws_route53_record" "loki-haxe-org" {
   zone_id = aws_route53_zone.haxe-org.zone_id
   name    = "loki"
   type    = "CNAME"
-  ttl     = "30"
+  ttl     = "86400"
   records = [local.ingress_hostname]
 }
