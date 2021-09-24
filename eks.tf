@@ -82,8 +82,8 @@ module "eks" {
     on_demand_percentage_above_base_capacity = 0
     spot_allocation_strategy                 = "lowest-price"
 
-    public_ip = true
-    # ami_id           = "ami-0d2a3c8fac031047a" # avoid auto update
+    public_ip          = true
+    ami_id             = "ami-044dfe22e0788d8ed" # avoid auto update
     root_volume_type   = "gp2"
     subnets            = local.eks_subnets,
     kubelet_extra_args = "--node-labels=node.kubernetes.io/lifecycle=spot"
