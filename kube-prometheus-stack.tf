@@ -31,6 +31,10 @@ resource "kubernetes_secret" "grafana-admin" {
   }
 }
 
+data "aws_ssm_parameter" "GRAFANA_GITHUB_OAUTH_CLIENT_SECRET" {
+  name = "GRAFANA_GITHUB_OAUTH_CLIENT_SECRET"
+}
+
 resource "helm_release" "prometheus" {
   name       = "prometheus-stack"
   repository = "https://prometheus-community.github.io/helm-charts"
@@ -102,6 +106,19 @@ resource "helm_release" "prometheus" {
             # https://grafana.com/docs/grafana/latest/administration/configuration/#root_url
             "root_url" : "https://${local.grafana.hostname}/",
           },
+          # https://grafana.com/docs/grafana/latest/auth/github/
+          "auth.github" : {
+            "enabled" : true,
+            "allow_sign_up" : true,
+            "client_id" : "eb0775533ce2551dd1de",
+            "client_secret" : data.aws_ssm_parameter.GRAFANA_GITHUB_OAUTH_CLIENT_SECRET.value,
+            "scopes" : "user:email,read:org",
+            "auth_url" : "https://github.com/login/oauth/authorize",
+            "token_url" : "https://github.com/login/oauth/access_token",
+            "api_url" : "https://api.github.com/user",
+            "allowed_organizations" : "HaxeFoundation",
+            "team_ids" : data.github_team.system-admin.id,
+          }
         },
       }
     }),
