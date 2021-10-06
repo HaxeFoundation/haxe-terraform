@@ -3,9 +3,11 @@
 set -ex
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
-TAG="haxe/terraform_devcontainer_workspace:$(date +%Y%m%d%H%M%S)"
+IMAGE="haxe/terraform_devcontainer_workspace"
+TAG="${IMAGE}:$(date +%Y%m%d%H%M%S)"
 
 docker build --pull -t "$TAG" "$DIR"
 
-yq eval ".services.workspace.image = \"$TAG\"" "$DIR/docker-compose.yml" -i
-yq eval ".jobs.plan.container = \"$TAG\"" "$DIR/../.github/workflows/ci.yml" -i
+sed -i -e "s#${IMAGE}:[0-9]*#$TAG#g" \
+    "$DIR/docker-compose.yml" -i \
+    "$DIR/../.github/workflows/ci.yml" -i

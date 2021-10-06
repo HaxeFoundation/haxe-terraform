@@ -46,12 +46,12 @@ RUN apt-get update \
     && apt-get install -y git \
     && curl -sL https://deb.nodesource.com/setup_14.x | bash - \
     && apt-get install -y nodejs=14.* \
-    && add-apt-repository ppa:haxe/haxe3.4 \
+    && add-apt-repository ppa:haxe/haxe4.2 \
     && apt-get install -y neko haxe \
     # Install terraform
     && curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo apt-key add - \
     && apt-add-repository "deb [arch=$(dpkg --print-architecture)] https://apt.releases.hashicorp.com $(lsb_release -cs) main" \
-    && apt-get -y install --no-install-recommends terraform=1.0.6 terraform-ls \
+    && apt-get -y install --no-install-recommends terraform=1.0.8 terraform-ls \
     && echo 'complete -C /usr/bin/terraform terraform' >> /etc/bash.bashrc \
     # install kubectl
     && curl -fsSL https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add - \
@@ -76,20 +76,12 @@ RUN apt-get update \
     && apt-get clean -y \
     && rm -rf /var/lib/apt/lists/*
 
-# Install yq
-RUN wget https://github.com/mikefarah/yq/releases/download/v4.7.0/yq_linux_amd64.tar.gz -O - | tar xz && mv yq_linux_amd64 /usr/bin/yq
-
 # Install AWS cli
 RUN cd / \
     && curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" \
     && unzip awscliv2.zip \
     && ./aws/install \
     && rm -rf ./aws awscliv2.zip
-
-# Install eb cli
-ENV LC_ALL=en_US.UTF-8
-RUN python3 -m pip install --ignore-installed --upgrade pip setuptools wheel PyYAML
-RUN pip3 install awsebcli==3.19.4 --upgrade
 
 # install aws-iam-authenticator
 RUN curl -o aws-iam-authenticator https://amazon-eks.s3.us-west-2.amazonaws.com/1.21.2/2021-07-05/bin/linux/amd64/aws-iam-authenticator \
