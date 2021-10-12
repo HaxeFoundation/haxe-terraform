@@ -1,0 +1,644 @@
+resource "aws_cloudfront_distribution" "lib-haxe-org" {
+  aliases         = ["lib.haxe.org"]
+  enabled         = true
+  is_ipv6_enabled = true
+  price_class     = "PriceClass_100"
+
+  origin {
+    domain_name = "master-lib-haxe-org.eu-west-1.elasticbeanstalk.com"
+    origin_id   = "master-lib-haxe-org.eu-west-1.elasticbeanstalk.com"
+
+    custom_origin_config {
+      http_port              = 80
+      https_port             = 443
+      origin_protocol_policy = "https-only"
+      origin_ssl_protocols = [
+        "TLSv1",
+        "TLSv1.1",
+        "TLSv1.2"
+      ]
+    }
+  }
+
+  origin {
+    domain_name = "master-lib.haxe.org"
+    origin_id   = "Custom-master-lib.haxe.org"
+
+    custom_origin_config {
+      http_port              = 80
+      https_port             = 443
+      origin_protocol_policy = "https-only"
+      origin_ssl_protocols = [
+        "TLSv1",
+        "TLSv1.1",
+        "TLSv1.2"
+      ]
+    }
+  }
+
+  origin {
+    domain_name = "lib.haxe.org.s3.amazonaws.com"
+    origin_id   = "S3-lib.haxe.org"
+  }
+
+  ordered_cache_behavior {
+    path_pattern     = "files/*"
+    target_origin_id = "S3-lib.haxe.org"
+    allowed_methods = [
+      "HEAD",
+      "GET",
+    ]
+    cached_methods = [
+      "HEAD",
+      "GET",
+    ]
+    forwarded_values {
+      headers                 = []
+      query_string            = false
+      query_string_cache_keys = []
+      cookies {
+        forward           = "none"
+        whitelisted_names = []
+      }
+    }
+    viewer_protocol_policy = "allow-all"
+    min_ttl                = 0
+    default_ttl            = 86400
+    max_ttl                = 31536000
+  }
+
+  ordered_cache_behavior {
+    path_pattern     = "api/*"
+    target_origin_id = "Custom-master-lib.haxe.org"
+    allowed_methods = [
+      "HEAD",
+      "DELETE",
+      "POST",
+      "GET",
+      "OPTIONS",
+      "PUT",
+      "PATCH"
+    ]
+    cached_methods = [
+      "HEAD",
+      "GET",
+    ]
+    forwarded_values {
+      headers                 = ["*"]
+      query_string            = true
+      query_string_cache_keys = []
+      cookies {
+        forward           = "all"
+        whitelisted_names = []
+      }
+    }
+    viewer_protocol_policy = "allow-all"
+    min_ttl                = 0
+    default_ttl            = 86400
+    max_ttl                = 31536000
+  }
+
+  ordered_cache_behavior {
+    path_pattern     = "index.n"
+    target_origin_id = "Custom-master-lib.haxe.org"
+    allowed_methods = [
+      "HEAD",
+      "DELETE",
+      "POST",
+      "GET",
+      "OPTIONS",
+      "PUT",
+      "PATCH"
+    ]
+    cached_methods = [
+      "HEAD",
+      "GET",
+    ]
+    forwarded_values {
+      headers                 = ["*"]
+      query_string            = true
+      query_string_cache_keys = []
+      cookies {
+        forward           = "all"
+        whitelisted_names = []
+      }
+    }
+    viewer_protocol_policy = "allow-all"
+    min_ttl                = 0
+    default_ttl            = 86400
+    max_ttl                = 31536000
+  }
+
+  default_cache_behavior {
+    target_origin_id       = "Custom-master-lib.haxe.org"
+    viewer_protocol_policy = "redirect-to-https"
+    allowed_methods = [
+      "HEAD",
+      "DELETE",
+      "POST",
+      "GET",
+      "OPTIONS",
+      "PUT",
+      "PATCH",
+    ]
+    cached_methods = [
+      "HEAD",
+      "GET",
+    ]
+    forwarded_values {
+      headers                 = []
+      query_string            = true
+      query_string_cache_keys = []
+      cookies {
+        forward           = "none"
+        whitelisted_names = []
+      }
+    }
+    compress    = true
+    min_ttl     = 0
+    default_ttl = 86400
+    max_ttl     = 31536000
+  }
+
+  restrictions {
+    geo_restriction {
+      restriction_type = "none"
+    }
+  }
+
+  viewer_certificate {
+    cloudfront_default_certificate = true
+  }
+}
+
+resource "aws_cloudfront_distribution" "haxe-org" {
+  aliases             = ["haxe.org"]
+  enabled             = true
+  is_ipv6_enabled     = true
+  price_class         = "PriceClass_All"
+  default_root_object = "index.html"
+
+  origin {
+    domain_name = "haxe.org.s3-website-eu-west-1.amazonaws.com"
+    origin_id   = "S3-Website-haxe.org.s3-website-eu-west-1.amazonaws.com/master"
+    origin_path = "/master"
+
+    custom_origin_config {
+      http_port              = 80
+      https_port             = 443
+      origin_protocol_policy = "http-only"
+      origin_ssl_protocols = [
+        "TLSv1",
+        "TLSv1.1",
+        "TLSv1.2"
+      ]
+    }
+  }
+
+  default_cache_behavior {
+    target_origin_id       = "S3-Website-haxe.org.s3-website-eu-west-1.amazonaws.com/master"
+    viewer_protocol_policy = "redirect-to-https"
+    allowed_methods = [
+      "HEAD",
+      "DELETE",
+      "POST",
+      "GET",
+      "OPTIONS",
+      "PUT",
+      "PATCH",
+    ]
+    cached_methods = [
+      "HEAD",
+      "GET",
+    ]
+    forwarded_values {
+      headers                 = ["Origin"]
+      query_string            = false
+      query_string_cache_keys = []
+      cookies {
+        forward           = "none"
+        whitelisted_names = []
+      }
+    }
+    compress    = true
+    min_ttl     = 0
+    default_ttl = 86400
+    max_ttl     = 31536000
+  }
+
+  custom_error_response {
+    error_caching_min_ttl = 300
+    error_code            = 404
+    response_code         = 404
+    response_page_path    = "/404.html"
+  }
+
+  restrictions {
+    geo_restriction {
+      restriction_type = "none"
+    }
+  }
+
+  viewer_certificate {
+    acm_certificate_arn = "arn:aws:acm:us-east-1:045355064871:certificate/3da3dcce-7403-4a06-b2d2-aebcdce3d199"
+    ssl_support_method  = "sni-only"
+  }
+}
+
+# TODO: terraform import aws_cloudfront_distribution.staging-haxe-org EBWZNOF1KEBFM
+# resource "aws_cloudfront_distribution" "staging-haxe-org" {
+#   aliases = ["staging.haxe.org"]
+# }
+
+resource "aws_cloudfront_distribution" "www-haxe-org" {
+  aliases         = ["www.haxe.org"]
+  enabled         = true
+  is_ipv6_enabled = true
+  price_class     = "PriceClass_100"
+
+  origin {
+    domain_name = "www.haxe.org.s3-website-eu-west-1.amazonaws.com"
+    origin_id   = "S3-Website-www.haxe.org.s3-website-eu-west-1.amazonaws.com"
+    origin_path = ""
+
+    custom_origin_config {
+      http_port              = 80
+      https_port             = 443
+      origin_protocol_policy = "http-only"
+      origin_ssl_protocols = [
+        "TLSv1",
+        "TLSv1.1",
+        "TLSv1.2"
+      ]
+    }
+  }
+
+  default_cache_behavior {
+    target_origin_id       = "S3-Website-www.haxe.org.s3-website-eu-west-1.amazonaws.com"
+    viewer_protocol_policy = "allow-all"
+    allowed_methods = [
+      "HEAD",
+      "GET",
+    ]
+    cached_methods = [
+      "HEAD",
+      "GET",
+    ]
+    forwarded_values {
+      headers                 = []
+      query_string            = false
+      query_string_cache_keys = []
+      cookies {
+        forward           = "none"
+        whitelisted_names = []
+      }
+    }
+    compress    = false
+    min_ttl     = 0
+    default_ttl = 86400
+    max_ttl     = 31536000
+  }
+
+  restrictions {
+    geo_restriction {
+      restriction_type = "none"
+    }
+  }
+
+  viewer_certificate {
+    acm_certificate_arn = "arn:aws:acm:us-east-1:045355064871:certificate/3da3dcce-7403-4a06-b2d2-aebcdce3d199"
+    ssl_support_method  = "sni-only"
+  }
+}
+
+# TODO: terraform import aws_cloudfront_distribution.code-haxe-org E1452WN9F15XHI
+# resource "aws_cloudfront_distribution" "code-haxe-org" {
+#   aliases = ["code.haxe.org"]
+# }
+
+# TODO: terraform import aws_cloudfront_distribution.api-haxe-org E2DBQLH91C15KP
+# resource "aws_cloudfront_distribution" "api-haxe-org" {
+#   aliases = ["api.haxe.org"]
+# }
+
+# TODO: terraform import aws_cloudfront_distribution.hashlink-haxe-org E7BJFZ08JIIVM
+# resource "aws_cloudfront_distribution" "hashlink-haxe-org" {
+#   aliases = ["hashlink.haxe.org"]
+# }
+
+# TODO: terraform import aws_cloudfront_distribution.learn-haxe-org E2J4UGGO75GS2N
+# resource "aws_cloudfront_distribution" "learn-haxe-org" {
+#   aliases = ["learn.haxe.org"]
+# }
+
+resource "aws_cloudfront_distribution" "nekovm-org" {
+  aliases             = ["nekovm.org"]
+  enabled             = true
+  is_ipv6_enabled     = true
+  price_class         = "PriceClass_100"
+
+  origin {
+    domain_name = "nekovm.org.s3-eu-west-1.amazonaws.com"
+    origin_id   = "S3-nekovm.org"
+  }
+
+  origin {
+    domain_name = "haxefoundation.github.io"
+    origin_id   = "Custom-haxefoundation.github.io/nekovm.org"
+    origin_path = "/nekovm.org"
+
+    custom_origin_config {
+      http_port              = 80
+      https_port             = 443
+      origin_protocol_policy = "https-only"
+      origin_ssl_protocols = [
+        "TLSv1",
+        "TLSv1.1",
+        "TLSv1.2"
+      ]
+    }
+  }
+
+  ordered_cache_behavior {
+    path_pattern     = "/*media/*"
+    target_origin_id = "S3-nekovm.org"
+    allowed_methods = [
+      "HEAD",
+      "DELETE",
+      "POST",
+      "GET",
+      "OPTIONS",
+      "PUT",
+      "PATCH"
+    ]
+    cached_methods = [
+      "HEAD",
+      "GET",
+    ]
+    forwarded_values {
+      headers                 = []
+      query_string            = false
+      query_string_cache_keys = []
+      cookies {
+        forward           = "none"
+        whitelisted_names = []
+      }
+    }
+    compress               = true
+    viewer_protocol_policy = "allow-all"
+    min_ttl                = 0
+    default_ttl            = 86400
+    max_ttl                = 31536000
+  }
+
+  default_cache_behavior {
+    target_origin_id       = "Custom-haxefoundation.github.io/nekovm.org"
+    viewer_protocol_policy = "redirect-to-https"
+    allowed_methods = [
+      "HEAD",
+      "GET",
+      "OPTIONS",
+    ]
+    cached_methods = [
+      "HEAD",
+      "GET",
+    ]
+    forwarded_values {
+      headers                 = []
+      query_string            = false
+      query_string_cache_keys = []
+      cookies {
+        forward           = "none"
+        whitelisted_names = []
+      }
+    }
+    compress    = true
+    min_ttl     = 0
+    default_ttl = 8640
+    max_ttl     = 3153600
+  }
+
+  restrictions {
+    geo_restriction {
+      restriction_type = "none"
+    }
+  }
+
+  viewer_certificate {
+    acm_certificate_arn      = "arn:aws:acm:us-east-1:045355064871:certificate/f086aef6-089d-4c4a-a069-e322afaf8e3a"
+    ssl_support_method       = "sni-only"
+    minimum_protocol_version = "TLSv1.1_2016"
+  }
+}
+
+# TODO: terraform import aws_cloudfront_distribution.summit-haxe-org E29VEFM5C4JM40
+# resource "aws_cloudfront_distribution" "summit-haxe-org" {
+#   aliases = ["summit.haxe.org"]
+# }
+
+# TODO: terraform import aws_cloudfront_distribution.haxedevelop-org EM3IECFGY3XF0
+# resource "aws_cloudfront_distribution" "haxedevelop-org" {
+#   aliases = ["haxedevelop.org"]
+# }
+
+resource "aws_cloudfront_distribution" "build-haxe-org" {
+  aliases = ["build.haxe.org"]
+  enabled             = true
+  is_ipv6_enabled     = true
+  price_class         = "PriceClass_All"
+
+  origin {
+    domain_name = "t3oujumflj.execute-api.eu-west-1.amazonaws.com"
+    origin_id   = "Custom-t3oujumflj.execute-api.eu-west-1.amazonaws.com/dev"
+    origin_path = "/dev"
+
+    custom_origin_config {
+      http_port              = 80
+      https_port             = 443
+      origin_protocol_policy = "https-only"
+      origin_ssl_protocols = [
+        "TLSv1",
+        "TLSv1.1",
+        "TLSv1.2"
+      ]
+    }
+  }
+
+  origin {
+    domain_name = "hxbuilds.s3-website-us-east-1.amazonaws.com"
+    origin_id   = "S3-Website-hxbuilds.s3-website-us-east-1.amazonaws.com"
+    origin_path = ""
+
+    custom_origin_config {
+      http_port              = 80
+      https_port             = 443
+      origin_protocol_policy = "http-only"
+      origin_ssl_protocols = [
+        "TLSv1",
+        "TLSv1.1",
+        "TLSv1.2"
+      ]
+    }
+  }
+
+  ordered_cache_behavior {
+    path_pattern     = "*_latest.*"
+    target_origin_id = "S3-Website-hxbuilds.s3-website-us-east-1.amazonaws.com"
+    allowed_methods = [
+      "HEAD",
+      "GET",
+    ]
+    cached_methods = [
+      "HEAD",
+      "GET",
+    ]
+    forwarded_values {
+      headers                 = []
+      query_string            = false
+      query_string_cache_keys = []
+      cookies {
+        forward           = "none"
+        whitelisted_names = []
+      }
+    }
+    compress               = true
+    viewer_protocol_policy = "allow-all"
+    min_ttl                = 0
+    default_ttl            = 600
+    max_ttl                = 600
+  }
+
+  ordered_cache_behavior {
+    path_pattern     = "*.zip"
+    target_origin_id = "S3-Website-hxbuilds.s3-website-us-east-1.amazonaws.com"
+    allowed_methods = [
+      "HEAD",
+      "GET",
+    ]
+    cached_methods = [
+      "HEAD",
+      "GET",
+    ]
+    forwarded_values {
+      headers                 = []
+      query_string            = false
+      query_string_cache_keys = []
+      cookies {
+        forward           = "none"
+        whitelisted_names = []
+      }
+    }
+    compress               = true
+    viewer_protocol_policy = "allow-all"
+    min_ttl                = 0
+    default_ttl            = 864000
+    max_ttl                = 31536000
+  }
+
+  ordered_cache_behavior {
+    path_pattern     = "*.tar.gz"
+    target_origin_id = "S3-Website-hxbuilds.s3-website-us-east-1.amazonaws.com"
+    allowed_methods = [
+      "HEAD",
+      "GET",
+    ]
+    cached_methods = [
+      "HEAD",
+      "GET",
+    ]
+    forwarded_values {
+      headers                 = []
+      query_string            = false
+      query_string_cache_keys = []
+      cookies {
+        forward           = "none"
+        whitelisted_names = []
+      }
+    }
+    compress               = true
+    viewer_protocol_policy = "allow-all"
+    min_ttl                = 0
+    default_ttl            = 864000
+    max_ttl                = 31536000
+  }
+
+  ordered_cache_behavior {
+    path_pattern     = "*.nupkg"
+    target_origin_id = "S3-Website-hxbuilds.s3-website-us-east-1.amazonaws.com"
+    allowed_methods = [
+      "HEAD",
+      "GET",
+    ]
+    cached_methods = [
+      "HEAD",
+      "GET",
+    ]
+    forwarded_values {
+      headers                 = []
+      query_string            = false
+      query_string_cache_keys = []
+      cookies {
+        forward           = "none"
+        whitelisted_names = []
+      }
+    }
+    compress               = true
+    viewer_protocol_policy = "allow-all"
+    min_ttl                = 0
+    default_ttl            = 864000
+    max_ttl                = 31536000
+  }
+
+  default_cache_behavior {
+    target_origin_id       = "Custom-t3oujumflj.execute-api.eu-west-1.amazonaws.com/dev"
+    viewer_protocol_policy = "redirect-to-https"
+    allowed_methods = [
+      "HEAD",
+      "GET",
+    ]
+    cached_methods = [
+      "HEAD",
+      "GET",
+    ]
+    forwarded_values {
+      headers                 = []
+      query_string            = false
+      query_string_cache_keys = []
+      cookies {
+        forward           = "none"
+        whitelisted_names = []
+      }
+    }
+    compress    = true
+    min_ttl     = 0
+    default_ttl = 600
+    max_ttl     = 600
+  }
+
+  restrictions {
+    geo_restriction {
+      restriction_type = "none"
+    }
+  }
+
+  viewer_certificate {
+    acm_certificate_arn      = "arn:aws:acm:us-east-1:045355064871:certificate/3da3dcce-7403-4a06-b2d2-aebcdce3d199"
+    ssl_support_method       = "sni-only"
+    minimum_protocol_version = "TLSv1.1_2016"
+  }
+}
+
+# TODO: terraform import aws_cloudfront_distribution.blog-haxe-org EQZBOJL1E2YAH
+# resource "aws_cloudfront_distribution" "blog-haxe-org" {
+#   aliases = ["blog.haxe.org"]
+# }
+
+# TODO: terraform import aws_cloudfront_distribution.www-haxedevelop-org E13SJQASHEWH2G
+# resource "aws_cloudfront_distribution" "www-haxedevelop-org" {
+#   aliases = ["www.haxedevelop.org"]
+# }
+
+# TODO: terraform import aws_cloudfront_distribution.haxe4-haxe-org E1N7PLSOX12HRX
+# resource "aws_cloudfront_distribution" "haxe4-haxe-org" {
+#   aliases = ["haxe4.haxe.org"]
+# }
