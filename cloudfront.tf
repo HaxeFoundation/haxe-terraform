@@ -240,7 +240,7 @@ resource "aws_cloudfront_distribution" "haxe-org" {
   }
 
   viewer_certificate {
-    acm_certificate_arn = "arn:aws:acm:us-east-1:045355064871:certificate/3da3dcce-7403-4a06-b2d2-aebcdce3d199"
+    acm_certificate_arn = aws_acm_certificate.haxe-org-us-east-1.arn
     ssl_support_method  = "sni-only"
   }
 }
@@ -306,7 +306,7 @@ resource "aws_cloudfront_distribution" "www-haxe-org" {
   }
 
   viewer_certificate {
-    acm_certificate_arn = "arn:aws:acm:us-east-1:045355064871:certificate/3da3dcce-7403-4a06-b2d2-aebcdce3d199"
+    acm_certificate_arn = aws_acm_certificate.haxe-org-us-east-1.arn
     ssl_support_method  = "sni-only"
   }
 }
@@ -425,7 +425,7 @@ resource "aws_cloudfront_distribution" "nekovm-org" {
   }
 
   viewer_certificate {
-    acm_certificate_arn      = "arn:aws:acm:us-east-1:045355064871:certificate/f086aef6-089d-4c4a-a069-e322afaf8e3a"
+    acm_certificate_arn      = aws_acm_certificate.nekovm-org-us-east-1.arn
     ssl_support_method       = "sni-only"
     minimum_protocol_version = "TLSv1.1_2016"
   }
@@ -622,7 +622,7 @@ resource "aws_cloudfront_distribution" "build-haxe-org" {
   }
 
   viewer_certificate {
-    acm_certificate_arn      = "arn:aws:acm:us-east-1:045355064871:certificate/3da3dcce-7403-4a06-b2d2-aebcdce3d199"
+    acm_certificate_arn      = aws_acm_certificate.haxe-org-us-east-1.arn
     ssl_support_method       = "sni-only"
     minimum_protocol_version = "TLSv1.1_2016"
   }
