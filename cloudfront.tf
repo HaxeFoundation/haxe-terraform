@@ -314,7 +314,7 @@ resource "aws_cloudfront_distribution" "staging-haxe-org" {
   }
 
   viewer_certificate {
-    acm_certificate_arn = aws_acm_certificate.haxe-org-us-east-1.arn
+    acm_certificate_arn = aws_acm_certificate.haxe-org-us-east-1-dns.arn
     ssl_support_method  = "sni-only"
   }
 }
@@ -441,7 +441,7 @@ resource "aws_cloudfront_distribution" "code-haxe-org" {
   }
 
   viewer_certificate {
-    acm_certificate_arn      = aws_acm_certificate.haxe-org-us-east-1.arn
+    acm_certificate_arn      = aws_acm_certificate.haxe-org-us-east-1-dns.arn
     ssl_support_method       = "sni-only"
     minimum_protocol_version = "TLSv1.1_2016"
   }
@@ -508,7 +508,7 @@ resource "aws_cloudfront_distribution" "api-haxe-org" {
   }
 
   viewer_certificate {
-    acm_certificate_arn      = aws_acm_certificate.haxe-org-us-east-1.arn
+    acm_certificate_arn      = aws_acm_certificate.haxe-org-us-east-1-dns.arn
     ssl_support_method       = "sni-only"
     minimum_protocol_version = "TLSv1.1_2016"
   }
@@ -575,7 +575,7 @@ resource "aws_cloudfront_distribution" "hashlink-haxe-org" {
   }
 
   viewer_certificate {
-    acm_certificate_arn      = aws_acm_certificate.haxe-org-us-east-1.arn
+    acm_certificate_arn      = aws_acm_certificate.haxe-org-us-east-1-dns.arn
     ssl_support_method       = "sni-only"
     minimum_protocol_version = "TLSv1.1_2016"
   }
@@ -742,7 +742,7 @@ resource "aws_cloudfront_distribution" "summit-haxe-org" {
   }
 
   viewer_certificate {
-    acm_certificate_arn      = aws_acm_certificate.haxe-org-us-east-1.arn
+    acm_certificate_arn      = aws_acm_certificate.haxe-org-us-east-1-dns.arn
     ssl_support_method       = "sni-only"
     minimum_protocol_version = "TLSv1.1_2016"
   }
@@ -996,7 +996,7 @@ resource "aws_cloudfront_distribution" "blog-haxe-org" {
   }
 
   viewer_certificate {
-    acm_certificate_arn      = aws_acm_certificate.haxe-org-us-east-1.arn
+    acm_certificate_arn      = aws_acm_certificate.haxe-org-us-east-1-dns.arn
     ssl_support_method       = "sni-only"
     minimum_protocol_version = "TLSv1.1_2016"
   }
