@@ -1,8 +1,9 @@
 locals {
   loki = {
-    hostname = "loki.haxe.org"
-    user     = "loki"
-    password = random_pet.loki-pw.keepers.loki-pw
+    hostname     = "loki.haxe.org"
+    user         = "loki"
+    password     = random_pet.loki-pw.keepers.loki-pw
+    index_prefix = "loki_"
   }
 }
 
@@ -10,6 +11,46 @@ output "loki" {
   value     = local.loki
   sensitive = true
 }
+
+resource "aws_iam_user" "loki" {
+  name = "loki"
+}
+resource "aws_iam_access_key" "loki" {
+  user = aws_iam_user.loki.name
+}
+resource "aws_iam_user_policy" "loki" {
+  user   = aws_iam_user.loki.name
+  policy = data.aws_iam_policy_document.loki.json
+}
+
+# https://grafana.com/docs/loki/latest/operations/storage/#cloud-storage-permissions
+data "aws_iam_policy_document" "loki" {
+  statement {
+    sid = "s3"
+
+    actions = [
+      "s3:ListObjects",
+      "s3:ListBucket",
+      "s3:PutObject",
+      "s3:GetObject",
+      "s3:DeleteObject",
+    ]
+
+    resources = [
+      module.loki_s3_bucket.s3_bucket_arn,
+      "${module.loki_s3_bucket.s3_bucket_arn}/*",
+    ]
+  }
+}
+
+module "loki_s3_bucket" {
+  source  = "terraform-aws-modules/s3-bucket/aws"
+  version = "2.9.0"
+
+  bucket_prefix = "loki"
+  force_destroy = true
+}
+
 
 resource "random_password" "loki-pw" {
   length  = 32
@@ -47,7 +88,7 @@ resource "helm_release" "loki-stack" {
   name       = "loki-stack"
   repository = "https://grafana.github.io/helm-charts"
   chart      = "loki-stack"
-  version    = "2.4.1"
+  version    = "2.5.0"
   values = [
     yamlencode({
       "loki" : {
@@ -68,8 +109,35 @@ resource "helm_release" "loki-stack" {
           }
         },
         "persistence" : {
-          "enabled" : true,
-          "size" : "10Gi",
+          "enabled" : false,
+        }
+        "config" : {
+          "schema_config" : {
+            "configs" : [
+              {
+                "from" : "2021-01-01"
+                "store" : "boltdb-shipper"
+                "object_store" : "s3"
+                "schema" : "v11"
+                "index" : {
+                  "prefix" : local.loki.index_prefix
+                  "period" : "24h"
+                }
+              }
+            ]
+          }
+          "storage_config" : {
+            "aws" : {
+              "s3" : "s3://${aws_iam_access_key.loki.id}:${urlencode(aws_iam_access_key.loki.secret)}@${data.aws_region.current.name}/${module.loki_s3_bucket.s3_bucket_id}"
+              "s3forcepathstyle" : true
+            }
+            "boltdb_shipper" : {
+              "shared_store" : "s3"
+            }
+          }
+          "compactor" : {
+            "shared_store" : "s3"
+          }
         }
       },
       "promtail" : {
