@@ -105,6 +105,12 @@ module "eks" {
     "-r", aws_iam_role.k8s-admin.arn
   ]
 
+  cluster_enabled_log_types = [
+    "api",
+    "controllerManager",
+    "scheduler",
+  ]
+
   depends_on = [
     module.vpc, # EKS needs a VPC with an Internet gateway, so the VPC module better be completely created
   ]
