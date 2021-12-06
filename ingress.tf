@@ -33,8 +33,20 @@ resource "helm_release" "ingress-nginx" {
         },
         "config" : {
           "use-proxy-protocol" : "true",
-          "proxy-body-size": "256m",
+          "proxy-body-size" : "256m",
         },
+        "topologySpreadConstraints" : [
+          {
+            "maxSkew" : 1,
+            "topologyKey" : "kubernetes.io/hostname",
+            "whenUnsatisfiable" : "ScheduleAnyway",
+            "labelSelector" : {
+              "matchLabels" : {
+                "app.kubernetes.io/instance" : "ingress-nginx"
+              }
+            }
+          }
+        ]
       },
     })
   ]
