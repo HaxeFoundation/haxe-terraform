@@ -48,7 +48,6 @@ devcontainer-base:
             tzdata \
             python3-pip \
             jq \
-        && echo 'eval "$(direnv hook bash)"' >> /etc/bash.bashrc \
         && add-apt-repository ppa:git-core/ppa \
         && apt-get install -y git \
         && curl -sL https://deb.nodesource.com/setup_14.x | bash - \
@@ -60,13 +59,11 @@ devcontainer-base:
         && echo "deb https://apt.kubernetes.io/ kubernetes-xenial main" | tee -a /etc/apt/sources.list.d/kubernetes.list \
         && apt-get update \
         && apt-get -y install --no-install-recommends kubectl \
-        && echo 'source <(kubectl completion bash)' >> /home/vscode/.bashrc \
         # install helm
         && curl -fsSL https://baltocdn.com/helm/signing.asc | apt-key add - \
         && echo "deb https://baltocdn.com/helm/stable/debian/ all main" | tee /etc/apt/sources.list.d/helm-stable-debian.list \
         && apt-get update \
         && apt-get -y install --no-install-recommends helm \
-        && echo 'source <(helm completion bash)' >> /home/vscode/.bashrc \
         # Install mysql-client
         # https://github.com/docker-library/mysql/blob/master/5.7/Dockerfile.debian
         && echo 'deb http://repo.mysql.com/apt/ubuntu/ bionic mysql-5.7' > /etc/apt/sources.list.d/mysql.list \
@@ -173,9 +170,12 @@ devcontainer:
 
     RUN haxelib setup /haxelib
 
-    # Config bash completion
+    # Config bash
+    RUN echo 'eval "$(direnv hook bash)"' >> ~/.bashrc
     RUN echo 'complete -C terraform terraform' >> ~/.bashrc
     RUN echo "complete -C '/usr/local/bin/aws_completer' aws" >> ~/.bashrc
+    RUN echo 'source <(helm completion bash)' >> ~/.bashrc
+    RUN echo 'source <(kubectl completion bash)' >> ~/.bashrc
 
     USER root
 
