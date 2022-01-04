@@ -189,6 +189,10 @@ devcontainer:
     RUN echo 'source <(kubectl completion bash)' >> ~/.bashrc
     RUN echo 'source <(doctl completion bash)' >> ~/.bashrc
 
+    # Create kubeconfig for storing current-context,
+    # such that the kubeconfig_dasloop-* files wouldn't be touched.
+    RUN mkdir -p ~/.kube && install -m 600 /dev/null ~/.kube/config
+
     USER root
 
     ARG DEVCONTAINER_IMAGE_NAME="$DEVCONTAINER_IMAGE_NAME_DEFAULT"
@@ -223,3 +227,11 @@ devcontainer-update-ref:
     COPY "$FILE" file.src
     RUN sed -e "s#$DEVCONTAINER_IMAGE_NAME:[a-z0-9]*#$DEVCONTAINER_IMAGE_NAME:$DEVCONTAINER_IMAGE_TAG#g" file.src > file.out
     SAVE ARTIFACT --keep-ts file.out $FILE AS LOCAL $FILE
+
+do-kubeconfig:
+    FROM +doctl
+    ARG --required CLUSTER_ID
+    RUN --mount=type=secret,id=+secrets/.envrc,target=.envrc \
+        . ./.envrc \
+        && KUBECONFIG="kubeconfig" doctl kubernetes cluster kubeconfig save "$CLUSTER_ID"
+    SAVE ARTIFACT --keep-ts kubeconfig
