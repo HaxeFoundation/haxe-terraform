@@ -5,6 +5,10 @@ terraform {
       source  = "hashicorp/aws"
       version = "~> 3.56"
     }
+    digitalocean = {
+      source  = "digitalocean/digitalocean"
+      version = "~> 2.16"
+    }
     kubernetes = {
       source  = "hashicorp/kubernetes"
       version = "~> 2.4"
@@ -34,6 +38,10 @@ terraform {
     # AWS_ACCESS_KEY_ID
     # AWS_SECRET_ACCESS_KEY
   }
+}
+
+provider "digitalocean" {
+  # DIGITALOCEAN_TOKEN
 }
 
 provider "aws" {
