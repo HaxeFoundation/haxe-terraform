@@ -104,6 +104,14 @@ aws-iam-authenticator:
     SAVE ARTIFACT /usr/local/bin/aws-iam-authenticator
 
 # Usage:
+# COPY +doctl/doctl /usr/local/bin/
+doctl:
+    ARG TARGETARCH
+    ARG DOCTL_VERSION=1.66.0
+    RUN curl -fsSL "https://github.com/digitalocean/doctl/releases/download/v${DOCTL_VERSION}/doctl-${DOCTL_VERSION}-linux-${TARGETARCH}.tar.gz" | tar xvz -C /usr/local/bin/
+    SAVE ARTIFACT /usr/local/bin/doctl
+
+# Usage:
 # COPY +tfenv/tfenv /tfenv
 # RUN ln -s /tfenv/bin/* /usr/local/bin
 tfenv:
@@ -148,6 +156,9 @@ devcontainer:
 
     COPY +aws-iam-authenticator/aws-iam-authenticator /usr/local/bin/
 
+    # doctl
+    COPY +doctl/doctl /usr/local/bin/
+
     # tfenv
     COPY +tfenv/tfenv /tfenv
     RUN ln -s /tfenv/bin/* /usr/local/bin/
@@ -176,6 +187,7 @@ devcontainer:
     RUN echo "complete -C '/usr/local/bin/aws_completer' aws" >> ~/.bashrc
     RUN echo 'source <(helm completion bash)' >> ~/.bashrc
     RUN echo 'source <(kubectl completion bash)' >> ~/.bashrc
+    RUN echo 'source <(doctl completion bash)' >> ~/.bashrc
 
     USER root
 
@@ -207,7 +219,7 @@ devcontainer-update-refs:
 devcontainer-update-ref:
     ARG --required DEVCONTAINER_IMAGE_NAME
     ARG --required DEVCONTAINER_IMAGE_TAG
-    ARG FILE
+    ARG --required FILE
     COPY "$FILE" file.src
     RUN sed -e "s#$DEVCONTAINER_IMAGE_NAME:[a-z0-9]*#$DEVCONTAINER_IMAGE_NAME:$DEVCONTAINER_IMAGE_TAG#g" file.src > file.out
     SAVE ARTIFACT --keep-ts file.out $FILE AS LOCAL $FILE

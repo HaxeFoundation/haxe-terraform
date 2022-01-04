@@ -41,7 +41,7 @@ terraform {
 }
 
 provider "digitalocean" {
-  # DIGITALOCEAN_TOKEN
+  # DIGITALOCEAN_ACCESS_TOKEN
 }
 
 provider "aws" {
