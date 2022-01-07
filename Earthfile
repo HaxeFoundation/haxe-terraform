@@ -171,8 +171,7 @@ devcontainer:
     COPY +earthly/earthly /usr/local/bin/
     RUN earthly bootstrap --no-buildkit --with-autocomplete
 
-    RUN mkdir -p /haxelib
-    RUN chmod a+rw /haxelib
+    RUN mkdir -m 777 /haxelib
 
     USER $USERNAME
 
@@ -182,15 +181,15 @@ devcontainer:
     RUN haxelib setup /haxelib
 
     # Config bash
-    RUN echo 'eval "$(direnv hook bash)"' >> ~/.bashrc
-    RUN echo 'complete -C terraform terraform' >> ~/.bashrc
-    RUN echo "complete -C '/usr/local/bin/aws_completer' aws" >> ~/.bashrc
-    RUN echo 'source <(helm completion bash)' >> ~/.bashrc
-    RUN echo 'source <(kubectl completion bash)' >> ~/.bashrc
-    RUN echo 'source <(doctl completion bash)' >> ~/.bashrc
+    RUN echo 'eval "$(direnv hook bash)"' >> ~/.bashrc \
+        && echo 'complete -C terraform terraform' >> ~/.bashrc \
+        && echo "complete -C '/usr/local/bin/aws_completer' aws" >> ~/.bashrc \
+        && echo 'source <(helm completion bash)' >> ~/.bashrc \
+        && echo 'source <(kubectl completion bash)' >> ~/.bashrc \
+        && echo 'source <(doctl completion bash)' >> ~/.bashrc
 
     # Create kubeconfig for storing current-context,
-    # such that the kubeconfig_dasloop-* files wouldn't be touched.
+    # such that the project kubeconfig_* files wouldn't be touched.
     RUN mkdir -p ~/.kube && install -m 600 /dev/null ~/.kube/config
 
     USER root
