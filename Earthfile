@@ -143,6 +143,13 @@ tfk8s:
     FROM golang:1.17
     RUN go install github.com/jrhouston/tfk8s@v0.1.7
     SAVE ARTIFACT /go/bin/tfk8s
+
+cert-manager.crds:
+    FROM +devcontainer
+    RUN curl -fsSL https://github.com/jetstack/cert-manager/releases/download/v1.6.1/cert-manager.crds.yaml \
+        | tfk8s --output cert-manager.crds.tf
+    SAVE ARTIFACT cert-manager.crds.tf AS LOCAL cert-manager.crds/cert-manager.crds.tf
+
 # Usage:
 # COPY +earthly/earthly /usr/local/bin/
 # RUN earthly bootstrap --no-buildkit --with-autocomplete
