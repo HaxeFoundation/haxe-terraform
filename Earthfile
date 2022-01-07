@@ -138,6 +138,12 @@ terraform:
     RUN tfenv use "$TERRAFORM_VERSION"
 
 # Usage:
+# COPY +tfk8s/tfk8s /usr/local/bin/
+tfk8s:
+    FROM golang:1.17
+    RUN go install github.com/jrhouston/tfk8s@v0.1.7
+    SAVE ARTIFACT /go/bin/tfk8s
+# Usage:
 # COPY +earthly/earthly /usr/local/bin/
 # RUN earthly bootstrap --no-buildkit --with-autocomplete
 earthly:
@@ -166,6 +172,8 @@ devcontainer:
     RUN tfenv install "$(cat /home/$USERNAME/.terraform-version)"
     RUN tfenv use "$(cat /home/$USERNAME/.terraform-version)"
     COPY +terraform-ls/terraform-ls /usr/local/bin/
+
+    COPY +tfk8s/tfk8s /usr/local/bin/
 
     # Install earthly
     COPY +earthly/earthly /usr/local/bin/
