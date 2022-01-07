@@ -1,5 +1,6 @@
 locals {
-  do_ingress_ip = data.kubernetes_service.do-ingress-nginx.status[0].load_balancer[0].ingress[0].ip
+  # do_ingress_ip = data.kubernetes_service.do-ingress-nginx.status[0].load_balancer[0].ingress[0].ip
+  do_ingress_ip = "159.89.248.238"
 }
 
 # https://github.com/kubernetes/ingress-nginx/tree/main/charts/ingress-nginx
@@ -21,8 +22,14 @@ resource "helm_release" "do-ingress-nginx" {
           "default" : true,
         },
         "config" : {
-          # "use-proxy-protocol" : "true",
+          "use-proxy-protocol" : "true",
           "proxy-body-size" : "256m",
+        },
+        "service" : {
+          "annotations" : {
+            "service.beta.kubernetes.io/do-loadbalancer-enable-proxy-protocol" : true,
+            "service.beta.kubernetes.io/do-loadbalancer-hostname" : "do-k8s.haxe.org",
+          }
         },
         "topologySpreadConstraints" : [
           {
@@ -48,4 +55,12 @@ data "kubernetes_service" "do-ingress-nginx" {
   metadata {
     name = "ingress-nginx-controller"
   }
+}
+
+resource "aws_route53_record" "do-k8s-haxe-org" {
+  zone_id = aws_route53_zone.haxe-org.zone_id
+  name    = "do-k8s"
+  type    = "A"
+  ttl     = "600"
+  records = [local.do_ingress_ip]
 }

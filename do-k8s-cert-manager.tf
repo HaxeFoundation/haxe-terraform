@@ -1,3 +1,9 @@
+locals {
+  do-cert-manager = {
+    email = "andy@onthewings.net"
+  }
+}
+
 # https://cert-manager.io/docs/installation/helm/
 resource "helm_release" "do-cert-manager" {
   provider = helm.do
@@ -7,7 +13,9 @@ resource "helm_release" "do-cert-manager" {
   chart      = "cert-manager"
   version    = "1.6.1"
 
-  # values = [yamlencode({})]
+  values = [yamlencode({
+    installCRDs = false # CRDs are installed by module.do-cert-manager-crds
+  })]
 
   depends_on = [
     module.do-cert-manager-crds
@@ -20,5 +28,65 @@ module "do-cert-manager-crds" {
   source = "./cert-manager.crds"
   providers = {
     kubernetes = kubernetes.do
+  }
+}
+
+resource "kubernetes_manifest" "do-letsencrypt-issuer-staging" {
+  provider = kubernetes.do
+
+  manifest = {
+    "apiVersion" = "cert-manager.io/v1"
+    "kind"       = "ClusterIssuer"
+    "metadata" = {
+      "name" = "letsencrypt-staging"
+    }
+    "spec" = {
+      "acme" = {
+        "email" = local.do-cert-manager.email
+        "privateKeySecretRef" = {
+          "name" = "letsencrypt-staging"
+        }
+        "server" = "https://acme-staging-v02.api.letsencrypt.org/directory"
+        "solvers" = [
+          {
+            "http01" = {
+              "ingress" = {
+                "class" = "nginx"
+              }
+            }
+          },
+        ]
+      }
+    }
+  }
+}
+
+resource "kubernetes_manifest" "do-letsencrypt-issuer-production" {
+  provider = kubernetes.do
+
+  manifest = {
+    "apiVersion" = "cert-manager.io/v1"
+    "kind"       = "ClusterIssuer"
+    "metadata" = {
+      "name" = "letsencrypt-production"
+    }
+    "spec" = {
+      "acme" = {
+        "email" = local.do-cert-manager.email
+        "privateKeySecretRef" = {
+          "name" = "letsencrypt-production"
+        }
+        "server" = "https://acme-v02.api.letsencrypt.org/directory"
+        "solvers" = [
+          {
+            "http01" = {
+              "ingress" = {
+                "class" = "nginx"
+              }
+            }
+          },
+        ]
+      }
+    }
   }
 }

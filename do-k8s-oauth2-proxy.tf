@@ -135,9 +135,16 @@ resource "kubernetes_ingress" "do-oauth2-proxy" {
   provider = kubernetes.do
   metadata {
     name = "oauth2-proxy-${each.key}"
+    annotations = {
+      "cert-manager.io/cluster-issuer" = "letsencrypt-production"
+    }
   }
 
   spec {
+    tls {
+      hosts       = [each.value]
+      secret_name = "oauth2-proxy-${each.key}-tls"
+    }
     rule {
       host = each.value
       http {

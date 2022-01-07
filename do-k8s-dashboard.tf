@@ -14,10 +14,17 @@ resource "helm_release" "do-k8s-dashboard" {
     },
     "ingress" : {
       "enabled" : true,
-      "hosts" : [
-        "do-k8s.haxe.org",
-      ],
-      "annotations" : local.do-oauth2-proxy.ingress_annotations,
+      "hosts" : ["do-k8s.haxe.org"],
+      "annotations" : merge(
+        local.do-oauth2-proxy.ingress_annotations,
+        {
+          "cert-manager.io/cluster-issuer" : "letsencrypt-production"
+        },
+      ),
+      "tls" : [{
+        "hosts" : ["do-k8s.haxe.org"],
+        "secretName" : "k8s-dashboard-tls",
+      }],
     },
     "extraArgs" : ["--enable-skip-login"], // the whole dashboard is guarded by oauth2-proxy
   })]
@@ -38,12 +45,4 @@ resource "kubernetes_cluster_role_binding" "do-fullaccess" {
     kind = "ServiceAccount"
     name = "k8s-dashboard-kubernetes-dashboard"
   }
-}
-
-resource "aws_route53_record" "do-k8s-haxe-org" {
-  zone_id = aws_route53_zone.haxe-org.zone_id
-  name    = "do-k8s"
-  type    = "A"
-  ttl     = "600"
-  records = [local.do_ingress_ip]
 }
