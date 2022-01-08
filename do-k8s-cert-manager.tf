@@ -1,6 +1,9 @@
 locals {
   do-cert-manager = {
     email = "andy@onthewings.net"
+    ingress_annotations = {
+      "cert-manager.io/cluster-issuer" = "letsencrypt-production"
+    }
   }
 }
 

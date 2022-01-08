@@ -40,3 +40,10 @@ provider "helm" {
     )
   }
 }
+
+resource "kubernetes_namespace" "do-monitoring" {
+  provider = kubernetes.do
+  metadata {
+    name = "monitoring"
+  }
+}
