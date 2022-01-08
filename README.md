@@ -8,6 +8,8 @@ export AWS_DEFAULT_REGION=eu-west-1
 
 # Digital Ocean access tokens
 export DIGITALOCEAN_ACCESS_TOKEN=FIXME
+export SPACES_ACCESS_KEY_ID=FIXME
+export SPACES_SECRET_ACCESS_KEY=FIXME
 
 # GitHub personal access token
 # public_repo, admin:org
