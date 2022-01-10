@@ -6,6 +6,7 @@ data "digitalocean_kubernetes_versions" "k8s-1-21" {
   version_prefix = "1.21."
 }
 
+# List available Droplet sizes by `doctl compute size list`
 resource "digitalocean_kubernetes_cluster" "cluster" {
   name         = local.do_cluster_name
   region       = "lon1"
@@ -16,14 +17,21 @@ resource "digitalocean_kubernetes_cluster" "cluster" {
     name       = "worker-pool"
     size       = "s-2vcpu-4gb"
     auto_scale = true
-    min_nodes  = 2
-    max_nodes  = 5
+    min_nodes  = 1
+    max_nodes  = 2
   }
 
   lifecycle {
     prevent_destroy = true
   }
 }
+
+# resource "digitalocean_kubernetes_node_pool" "s-4vcpu-8gb" {
+#   cluster_id = digitalocean_kubernetes_cluster.cluster.id
+#   name       = "s-4vcpu-8gb"
+#   size       = "s-4vcpu-8gb"
+#   node_count = 1
+# }
 
 provider "kubernetes" {
   alias = "do"
