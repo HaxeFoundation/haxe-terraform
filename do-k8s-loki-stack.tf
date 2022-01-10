@@ -21,18 +21,7 @@ resource "digitalocean_spaces_bucket" "loki" {
   force_destroy = true
 }
 
-# resource "kubernetes_secret" "loki-do-spaces" {
-#   provider = kubernetes.do
-#   metadata {
-#     namespace = kubernetes_namespace.do-monitoring.metadata[0].name
-#     name      = "loki-do-spaces"
-#   }
-#   data = {
-#     SPACES_KEY    = "FIXME"
-#     SPACES_SECRET = "FIXME"
-#   }
-# }
-
+# kubectl -n monitoring create secret generic loki-do-spaces --from-literal=SPACES_KEY=FIXME --from-literal=SPACES_SECRET=FIXME
 data "kubernetes_secret" "loki-do-spaces" {
   provider = kubernetes.do
   metadata {

@@ -12,16 +12,7 @@ locals {
   }
 }
 
-# resource "kubernetes_secret" "do-oauth2-proxy-client-secret" {
-#   provider = kubernetes.do
-#   metadata {
-#     name = "oauth2-proxy-client-secret"
-#   }
-#   data = {
-#     OAUTH2_PROXY_CLIENT_SECRET = "FIXME"
-#   }
-# }
-
+# kubectl create secret generic oauth2-proxy-client-secret --from-literal=OAUTH2_PROXY_CLIENT_SECRET=FIXME
 data "kubernetes_secret" "do-oauth2-proxy-client-secret" {
   provider = kubernetes.do
   metadata {
@@ -163,7 +154,7 @@ resource "kubernetes_ingress" "do-oauth2-proxy" {
 resource "aws_route53_record" "do-oauth2-proxy" {
   zone_id = aws_route53_zone.haxe-org.zone_id
   name    = "do-oauth2-proxy"
-  type    = "A"
-  ttl     = "600"
-  records = [local.do_ingress_ip]
+  type    = "CNAME"
+  ttl     = "86400"
+  records = ["do-k8s.haxe.org"]
 }

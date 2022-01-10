@@ -22,17 +22,7 @@ resource "kubernetes_secret" "do-grafana-admin" {
   }
 }
 
-# resource "kubernetes_secret" "do-grafana-github-oauth-client-secret" {
-#   provider = kubernetes.do
-#   metadata {
-#     name = "grafana-github-oauth-client-secret"
-#     namespace = kubernetes_namespace.do-monitoring.metadata[0].name
-#   }
-#   data = {
-#     GRAFANA_GITHUB_OAUTH_CLIENT_SECRET = "FIXME"
-#   }
-# }
-
+# kubectl -n monitoring create secret generic grafana-github-oauth-client-secret --from-literal=GRAFANA_GITHUB_OAUTH_CLIENT_SECRET=FIXME
 data "kubernetes_secret" "do-grafana-github-oauth-client-secret" {
   provider = kubernetes.do
   metadata {

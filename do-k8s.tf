@@ -14,10 +14,14 @@ resource "digitalocean_kubernetes_cluster" "cluster" {
 
   node_pool {
     name       = "worker-pool"
-    size       = "s-2vcpu-2gb"
+    size       = "s-2vcpu-4gb"
     auto_scale = true
     min_nodes  = 2
     max_nodes  = 5
+  }
+
+  lifecycle {
+    prevent_destroy = true
   }
 }
 

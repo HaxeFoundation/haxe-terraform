@@ -1,6 +1,7 @@
 locals {
   # do_ingress_ip = data.kubernetes_service.do-ingress-nginx.status[0].load_balancer[0].ingress[0].ip
-  do_ingress_ip = "159.89.248.238"
+  # https://github.com/digitalocean/terraform-provider-digitalocean/issues/772
+  do_ingress_ip = "46.101.64.224"
 }
 
 # https://github.com/kubernetes/ingress-nginx/tree/main/charts/ingress-nginx
