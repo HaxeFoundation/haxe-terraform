@@ -1,7 +1,7 @@
 locals {
   # do_ingress_ip = data.kubernetes_service.do-ingress-nginx.status[0].load_balancer[0].ingress[0].ip
   # https://github.com/digitalocean/terraform-provider-digitalocean/issues/772
-  do_ingress_ip = "46.101.64.224"
+  do_ingress_ip = data.digitalocean_loadbalancer.do-ingress-nginx.ip
 }
 
 # https://github.com/kubernetes/ingress-nginx/tree/main/charts/ingress-nginx
@@ -65,6 +65,10 @@ data "kubernetes_service" "do-ingress-nginx" {
   metadata {
     name = "ingress-nginx-controller"
   }
+}
+
+data "digitalocean_loadbalancer" "do-ingress-nginx" {
+  id = data.kubernetes_service.do-ingress-nginx.metadata[0].annotations["kubernetes.digitalocean.com/load-balancer-id"]
 }
 
 resource "aws_route53_record" "do-k8s-haxe-org" {
