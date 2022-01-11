@@ -29,6 +29,10 @@ terraform {
       source  = "hashicorp/random"
       version = "~> 3.1"
     }
+    grafana = {
+      source = "grafana/grafana"
+      version = "~> 1.18"
+    }
   }
   backend "s3" {
     bucket         = "haxe-terraform"

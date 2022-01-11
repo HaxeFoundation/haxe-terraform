@@ -36,6 +36,13 @@ resource "helm_release" "ingress-nginx" {
           "proxy-body-size" : "256m",
           "http-snippet" : "proxy_cache_path /tmp/nginx_my_cache levels=1:2 keys_zone=mycache:2m use_temp_path=off max_size=2g inactive=48h;"
         },
+        "metrics" : {
+          "enabled" : true,
+          "serviceMonitor" : {
+            "enabled" : true,
+            "scrapeInterval" : "15s",
+          },
+        },
         "topologySpreadConstraints" : [
           {
             "maxSkew" : 1,
