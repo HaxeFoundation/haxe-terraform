@@ -111,12 +111,19 @@ doctl:
     RUN curl -fsSL "https://github.com/digitalocean/doctl/releases/download/v${DOCTL_VERSION}/doctl-${DOCTL_VERSION}-linux-${TARGETARCH}.tar.gz" | tar xvz -C /usr/local/bin/
     SAVE ARTIFACT /usr/local/bin/doctl
 
+github-src:
+    ARG --required REPO
+    ARG --required COMMIT
+    ARG DIR=/src
+    WORKDIR $DIR
+    RUN curl -fsSL "https://github.com/${REPO}/archive/${COMMIT}.tar.gz" | tar xz --strip-components=1 -C "$DIR"
+    SAVE ARTIFACT "$DIR"
+
 # Usage:
 # COPY +tfenv/tfenv /tfenv
 # RUN ln -s /tfenv/bin/* /usr/local/bin
 tfenv:
-    FROM +devcontainer-base
-    RUN git clone --depth 1 https://github.com/tfutils/tfenv.git /tfenv
+    FROM +github-src --REPO=tfutils/tfenv --COMMIT=459d15b63f55c2f507bfa6a18e9dec5937e45daf --DIR=/tfenv
     SAVE ARTIFACT /tfenv
 
 # Usage:

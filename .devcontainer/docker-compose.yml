@@ -1,7 +1,7 @@
 version: '3'
 services:
   workspace:
-    image: haxe/terraform_devcontainer_workspace:20220107041735
+    image: haxe/terraform_devcontainer_workspace:20220111023757
     init: true
     volumes:
       - /var/run/docker.sock:/var/run/docker-host.sock
