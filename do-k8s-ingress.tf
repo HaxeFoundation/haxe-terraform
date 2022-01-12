@@ -23,6 +23,7 @@ resource "helm_release" "do-ingress-nginx" {
           "default" : true,
         },
         "config" : {
+          "use-forwarded-headers" : "true",
           "use-proxy-protocol" : "true",
           "proxy-body-size" : "256m",
           "http-snippet" : "proxy_cache_path /tmp/nginx_my_cache levels=1:2 keys_zone=mycache:2m use_temp_path=off max_size=2g inactive=48h;"
