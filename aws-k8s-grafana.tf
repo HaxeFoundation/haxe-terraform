@@ -9,5 +9,8 @@ module "grafana" {
     grafana = grafana
   }
 
-  depends_on = [helm_release.ingress-nginx]
+  depends_on = [
+    helm_release.ingress-nginx,
+    helm_release.prometheus,
+  ]
 }

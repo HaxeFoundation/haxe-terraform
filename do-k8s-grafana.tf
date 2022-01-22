@@ -11,5 +11,8 @@ module "do-grafana" {
     grafana = grafana.do
   }
 
-  depends_on = [helm_release.do-ingress-nginx]
+  depends_on = [
+    helm_release.do-ingress-nginx,
+    helm_release.do-prometheus,
+  ]
 }
