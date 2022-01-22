@@ -93,7 +93,11 @@ resource "helm_release" "prometheus" {
           "enabled" : true,
           "hosts" : [local.grafana.hostname]
           "pathType" : "Prefix",
-        }
+        },
+        "persistence" : {
+          "enabled" : true,
+          "size" : "10Gi",
+        },
         "adminPassword" : random_password.grafana-admin-pw.result,
         "admin" : {
           "existingSecret" : kubernetes_secret.grafana-admin.metadata[0].name,

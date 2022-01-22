@@ -26,7 +26,7 @@ resource "kubernetes_secret" "do-grafana-admin" {
 data "kubernetes_secret" "do-grafana-github-oauth-client-secret" {
   provider = kubernetes.do
   metadata {
-    name = "grafana-github-oauth-client-secret"
+    name      = "grafana-github-oauth-client-secret"
     namespace = kubernetes_namespace.do-monitoring.metadata[0].name
   }
 }
@@ -104,7 +104,11 @@ resource "helm_release" "do-prometheus" {
             "hosts" : [local.do-grafana.hostname],
             "secretName" : "grafana-tls"
           }]
-        }
+        },
+        "persistence" : {
+          "enabled" : true,
+          "size" : "10Gi",
+        },
         "adminPassword" : random_password.grafana-admin-pw.result,
         "admin" : {
           "existingSecret" : kubernetes_secret.do-grafana-admin.metadata[0].name,
