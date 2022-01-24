@@ -7,6 +7,13 @@ ARG USERNAME=vscode
 ARG USER_UID=1000
 ARG USER_GID=$USER_UID
 
+# https://github.com/docker-library/mysql/blob/master/5.7/Dockerfile.debian
+mysql-public-key:
+    ARG KEY=859BE8D7C586F538430B19C2467B942D3A79BD29
+    RUN gpg --batch --keyserver keyserver.ubuntu.com --recv-keys "$KEY"
+    RUN gpg --batch --armor --export "$KEY" > mysql-public-key
+    SAVE ARTIFACT mysql-public-key AS LOCAL .devcontainer/mysql-public-key
+
 devcontainer-base:
     ARG TARGETARCH
 
@@ -25,10 +32,7 @@ devcontainer-base:
         # Clean up
         && apt-get autoremove -y && apt-get clean -y && rm -rf /var/lib/apt/lists/* /tmp/library-scripts/
 
-    # https://github.com/docker-library/mysql/blob/master/5.7/Dockerfile.debian
-    # apt-key adv --keyserver ha.pool.sks-keyservers.net --recv-keys A4A9406876FCBD3C456770C88C718D3B5072E1F5 || \
-    # apt-key adv --keyserver pgp.mit.edu --recv-keys A4A9406876FCBD3C456770C88C718D3B5072E1F5 || \
-    # apt-key adv --keyserver keyserver.pgp.com --recv-keys A4A9406876FCBD3C456770C88C718D3B5072E1F5
+    # +mysql-public-key
     COPY .devcontainer/mysql-public-key /tmp/mysql-public-key
     RUN apt-key add /tmp/mysql-public-key
 
