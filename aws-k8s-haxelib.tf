@@ -89,7 +89,14 @@ data "aws_iam_policy_document" "haxelib-operator" {
   # for aws_canonical_user_id data source
   statement {
     effect    = "Allow"
-    actions   = ["s3:ListAllMyBuckets"]
+    actions   = ["cloudfront:*"]
+    resources = ["*"]
+  }
+
+  # manage CloudFront dist
+  statement {
+    effect    = "Allow"
+    actions   = ["route53:GetChange"]
     resources = ["*"]
   }
 }
