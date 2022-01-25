@@ -36,11 +36,3 @@ resource "kubernetes_cluster_role_binding" "fullaccess" {
     name = "k8s-dashboard-kubernetes-dashboard"
   }
 }
-
-resource "aws_route53_record" "k8s-haxe-org" {
-  zone_id = aws_route53_zone.haxe-org.zone_id
-  name    = "k8s"
-  type    = "CNAME"
-  ttl     = "86400"
-  records = [local.ingress_hostname]
-}

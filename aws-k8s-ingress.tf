@@ -66,3 +66,11 @@ data "kubernetes_service" "ingress-nginx" {
     name = "ingress-nginx-controller"
   }
 }
+
+resource "aws_route53_record" "aws-k8s-haxe-org" {
+  zone_id = aws_route53_zone.haxe-org.zone_id
+  name    = "aws-k8s"
+  type    = "CNAME"
+  ttl     = "86400"
+  records = [local.ingress_hostname]
+}

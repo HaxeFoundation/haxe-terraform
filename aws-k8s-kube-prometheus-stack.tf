@@ -140,18 +140,18 @@ resource "helm_release" "prometheus" {
   ]
 }
 
-resource "aws_route53_record" "prom-haxe-org" {
+resource "aws_route53_record" "aws-prom-haxe-org" {
   zone_id = aws_route53_zone.haxe-org.zone_id
-  name    = "prom"
+  name    = "aws-prom"
   type    = "CNAME"
   ttl     = "86400"
-  records = [local.ingress_hostname]
+  records = ["aws-k8s.haxe.org"]
 }
 
-resource "aws_route53_record" "grafana-haxe-org" {
+resource "aws_route53_record" "aws-grafana-haxe-org" {
   zone_id = aws_route53_zone.haxe-org.zone_id
-  name    = "grafana"
+  name    = "aws-grafana"
   type    = "CNAME"
   ttl     = "86400"
-  records = [local.ingress_hostname]
+  records = ["aws-k8s.haxe.org"]
 }

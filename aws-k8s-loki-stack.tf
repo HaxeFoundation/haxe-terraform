@@ -147,10 +147,10 @@ resource "helm_release" "loki-stack" {
   ]
 }
 
-resource "aws_route53_record" "loki-haxe-org" {
+resource "aws_route53_record" "aws-loki-haxe-org" {
   zone_id = aws_route53_zone.haxe-org.zone_id
-  name    = "loki"
+  name    = "aws-loki"
   type    = "CNAME"
   ttl     = "86400"
-  records = [local.ingress_hostname]
+  records = ["aws-k8s.haxe.org"]
 }
