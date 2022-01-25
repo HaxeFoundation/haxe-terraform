@@ -1,5 +1,5 @@
 locals {
-  ingress_hostname = data.kubernetes_service.ingress-nginx.status[0].load_balancer[0].ingress[0].hostname
+  aws-ingress-hostname = data.kubernetes_service.ingress-nginx.status[0].load_balancer[0].ingress[0].hostname
 }
 
 # https://github.com/kubernetes/ingress-nginx/tree/main/charts/ingress-nginx
@@ -72,5 +72,5 @@ resource "aws_route53_record" "aws-k8s-haxe-org" {
   name    = "aws-k8s"
   type    = "CNAME"
   ttl     = "86400"
-  records = [local.ingress_hostname]
+  records = [local.aws-ingress-hostname]
 }

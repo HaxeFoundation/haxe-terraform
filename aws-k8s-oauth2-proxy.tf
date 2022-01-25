@@ -1,5 +1,5 @@
 locals {
-  oauth2-proxy = {
+  aws-oauth2-proxy = {
     domains = {
       oauth2-proxy  = "oauth2-proxy.haxe.org"
       k8s-dashboard = "k8s.haxe.org"
@@ -48,16 +48,16 @@ resource "kubernetes_deployment" "oauth2-proxy" {
           name  = "oauth2-proxy"
 
           port {
-            container_port = local.oauth2-proxy.container_port
+            container_port = local.aws-oauth2-proxy.container_port
           }
 
           env {
             name  = "OAUTH2_PROXY_HTTP_ADDRESS"
-            value = "0.0.0.0:${local.oauth2-proxy.container_port}"
+            value = "0.0.0.0:${local.aws-oauth2-proxy.container_port}"
           }
           env {
             name  = "OAUTH2_PROXY_WHITELIST_DOMAINS"
-            value = join(",", values(local.oauth2-proxy.domains))
+            value = join(",", values(local.aws-oauth2-proxy.domains))
           }
           env {
             name  = "OAUTH2_PROXY_COOKIE_DOMAINS"
@@ -114,13 +114,13 @@ resource "kubernetes_service" "oauth2-proxy" {
     port {
       name     = "http"
       protocol = "TCP"
-      port     = local.oauth2-proxy.container_port
+      port     = local.aws-oauth2-proxy.container_port
     }
   }
 }
 
 resource "kubernetes_ingress" "oauth2-proxy" {
-  for_each = local.oauth2-proxy.domains
+  for_each = local.aws-oauth2-proxy.domains
 
   metadata {
     name = "oauth2-proxy-${each.key}"
@@ -133,7 +133,7 @@ resource "kubernetes_ingress" "oauth2-proxy" {
         path {
           backend {
             service_name = kubernetes_service.oauth2-proxy.metadata[0].name
-            service_port = local.oauth2-proxy.container_port
+            service_port = local.aws-oauth2-proxy.container_port
           }
           path = "/oauth2"
         }
@@ -147,5 +147,5 @@ resource "aws_route53_record" "oauth2-proxy" {
   name    = "oauth2-proxy"
   type    = "CNAME"
   ttl     = "86400"
-  records = [local.ingress_hostname]
+  records = [local.aws-ingress-hostname]
 }

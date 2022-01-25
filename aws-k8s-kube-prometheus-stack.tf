@@ -1,8 +1,8 @@
 locals {
-  prometheus = {
+  aws-prometheus = {
     hostname = "prom.haxe.org"
   }
-  grafana = {
+  aws-grafana = {
     hostname = "grafana.haxe.org"
     user     = "admin"
     password = random_password.grafana-admin-pw.result
@@ -10,7 +10,7 @@ locals {
 }
 
 output "grafana" {
-  value     = local.grafana
+  value     = local.aws-grafana
   sensitive = true
 }
 
@@ -26,8 +26,8 @@ resource "kubernetes_secret" "grafana-admin" {
   }
 
   data = {
-    admin-user     = local.grafana.user
-    admin-password = local.grafana.password
+    admin-user     = local.aws-grafana.user
+    admin-password = local.aws-grafana.password
   }
 }
 
@@ -62,9 +62,9 @@ resource "helm_release" "prometheus" {
       "prometheus" : {
         "ingress" : {
           "enabled" : true,
-          "hosts" : [local.prometheus.hostname],
+          "hosts" : [local.aws-prometheus.hostname],
           "pathType" : "Prefix",
-          "annotations" : local.oauth2-proxy.ingress_annotations,
+          "annotations" : local.aws-oauth2-proxy.ingress_annotations,
         }
         "prometheusSpec" : {
           # https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-prometheus-stack#prometheusioscrape
@@ -96,7 +96,7 @@ resource "helm_release" "prometheus" {
       "grafana" : {
         "ingress" : {
           "enabled" : true,
-          "hosts" : [local.grafana.hostname]
+          "hosts" : [local.aws-grafana.hostname]
           "pathType" : "Prefix",
         },
         "persistence" : {
@@ -108,12 +108,12 @@ resource "helm_release" "prometheus" {
           "existingSecret" : kubernetes_secret.grafana-admin.metadata[0].name,
         },
         "env" : {
-          "HOSTNAME" : local.grafana.hostname,
+          "HOSTNAME" : local.aws-grafana.hostname,
         },
         "grafana.ini" : {
           "server" : {
             # https://grafana.com/docs/grafana/latest/administration/configuration/#root_url
-            "root_url" : "https://${local.grafana.hostname}/",
+            "root_url" : "https://${local.aws-grafana.hostname}/",
           },
           # https://grafana.com/docs/grafana/latest/auth/github/
           "auth.github" : {

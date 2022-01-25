@@ -15,7 +15,7 @@ resource "helm_release" "k8s-dashboard" {
       "hosts" : [
         "k8s.haxe.org",
       ],
-      "annotations" : local.oauth2-proxy.ingress_annotations,
+      "annotations" : local.aws-oauth2-proxy.ingress_annotations,
     },
     "extraArgs" : ["--enable-skip-login"], // the whole dashboard is guarded by oauth2-proxy
   })]

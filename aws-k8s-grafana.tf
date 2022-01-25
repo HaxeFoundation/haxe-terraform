@@ -1,6 +1,6 @@
 provider "grafana" {
-  url  = "https://${local.grafana.hostname}"
-  auth = "${local.grafana.user}:${local.grafana.password}"
+  url  = "https://${local.aws-grafana.hostname}"
+  auth = "${local.aws-grafana.user}:${local.aws-grafana.password}"
 }
 
 module "grafana" {

@@ -1,5 +1,5 @@
 locals {
-  loki = {
+  aws-loki = {
     hostname     = "loki.haxe.org"
     user         = "loki"
     password     = random_pet.loki-pw.keepers.loki-pw
@@ -8,7 +8,7 @@ locals {
 }
 
 output "loki" {
-  value     = local.loki
+  value     = local.aws-loki
   sensitive = true
 }
 
@@ -70,7 +70,7 @@ resource "kubernetes_secret" "loki-basic-auth" {
   }
 
   data = {
-    (local.loki.user) = bcrypt(random_pet.loki-pw.keepers.loki-pw)
+    (local.aws-loki.user) = bcrypt(random_pet.loki-pw.keepers.loki-pw)
   }
 
   lifecycle {
@@ -97,7 +97,7 @@ resource "helm_release" "loki-stack" {
           "enabled" : true,
           "hosts" : [
             {
-              "host" : local.loki.hostname,
+              "host" : local.aws-loki.hostname,
               "paths" : ["/"],
             },
           ],
@@ -120,7 +120,7 @@ resource "helm_release" "loki-stack" {
                 "object_store" : "s3"
                 "schema" : "v11"
                 "index" : {
-                  "prefix" : local.loki.index_prefix
+                  "prefix" : local.aws-loki.index_prefix
                   "period" : "24h"
                 }
               }
