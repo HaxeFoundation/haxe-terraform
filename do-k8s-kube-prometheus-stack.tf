@@ -1,9 +1,9 @@
 locals {
   do-prometheus = {
-    hostnames = ["do-prom.haxe.org", "prom.haxe.org"]
+    hostnames = ["do-prom.haxe.org"]
   }
   do-grafana = {
-    hostnames = ["do-grafana.haxe.org", "grafana.haxe.org"]
+    hostnames = ["do-grafana.haxe.org"]
     user     = "admin"
     password = random_password.grafana-admin-pw.result
   }
