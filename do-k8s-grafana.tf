@@ -1,7 +1,7 @@
 provider "grafana" {
   alias = "do"
 
-  url  = "https://${local.do-grafana.hostname}"
+  url  = "https://${local.do-grafana.hostnames[0]}"
   auth = "${local.do-grafana.user}:${local.do-grafana.password}"
 }
 

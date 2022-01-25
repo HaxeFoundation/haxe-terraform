@@ -1,9 +1,9 @@
 locals {
   do-prometheus = {
-    hostname = "do-prom.haxe.org"
+    hostnames = ["do-prom.haxe.org", "prom.haxe.org"]
   }
   do-grafana = {
-    hostname = "do-grafana.haxe.org"
+    hostnames = ["do-grafana.haxe.org", "grafana.haxe.org"]
     user     = "admin"
     password = random_password.grafana-admin-pw.result
   }
@@ -64,14 +64,14 @@ resource "helm_release" "do-prometheus" {
         "enabled" : true,
         "ingress" : {
           "enabled" : true,
-          "hosts" : [local.do-prometheus.hostname],
+          "hosts" : local.do-prometheus.hostnames,
           "pathType" : "Prefix",
           "annotations" : merge(
             local.do-oauth2-proxy.ingress_annotations,
             local.do-cert-manager.ingress_annotations,
           ),
           "tls" : [{
-            "hosts" : [local.do-prometheus.hostname],
+            "hosts" : local.do-prometheus.hostnames,
             "secretName" : "prometheus-tls"
           }]
         }
@@ -105,11 +105,11 @@ resource "helm_release" "do-prometheus" {
       "grafana" : {
         "ingress" : {
           "enabled" : true,
-          "hosts" : [local.do-grafana.hostname]
+          "hosts" : local.do-grafana.hostnames
           "pathType" : "Prefix",
           "annotations" : local.do-cert-manager.ingress_annotations,
           "tls" : [{
-            "hosts" : [local.do-grafana.hostname],
+            "hosts" : local.do-grafana.hostnames,
             "secretName" : "grafana-tls"
           }]
         },
@@ -122,12 +122,12 @@ resource "helm_release" "do-prometheus" {
           "existingSecret" : kubernetes_secret.do-grafana-admin.metadata[0].name,
         },
         "env" : {
-          "HOSTNAME" : local.do-grafana.hostname,
+          "HOSTNAME" : local.do-grafana.hostnames[0],
         },
         "grafana.ini" : {
           "server" : {
             # https://grafana.com/docs/grafana/latest/administration/configuration/#root_url
-            "root_url" : "https://${local.do-grafana.hostname}/",
+            "root_url" : "https://${local.do-grafana.hostnames[0]}/",
           },
           # https://grafana.com/docs/grafana/latest/auth/github/
           "auth.github" : {
