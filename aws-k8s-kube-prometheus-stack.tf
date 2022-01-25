@@ -45,7 +45,7 @@ resource "helm_release" "prometheus" {
   repository = "https://prometheus-community.github.io/helm-charts"
   chart      = "kube-prometheus-stack"
   namespace  = kubernetes_namespace.monitoring.metadata[0].name
-  version    = "23.3.2"
+  version    = "30.1.0"
   values = [
     yamlencode({
       # https://github.com/aws/containers-roadmap/issues/657
