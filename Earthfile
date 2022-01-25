@@ -159,7 +159,7 @@ cert-manager.crds:
     FROM +devcontainer
     RUN curl -fsSL https://github.com/jetstack/cert-manager/releases/download/v1.6.1/cert-manager.crds.yaml \
         | tfk8s --output cert-manager.crds.tf
-    SAVE ARTIFACT cert-manager.crds.tf AS LOCAL cert-manager.crds/cert-manager.crds.tf
+    SAVE ARTIFACT --keep-ts cert-manager.crds.tf AS LOCAL cert-manager.crds/cert-manager.crds.tf
 
 # Usage:
 # COPY +earthly/earthly /usr/local/bin/
@@ -260,3 +260,9 @@ do-kubeconfig:
         . ./.envrc \
         && KUBECONFIG="kubeconfig" doctl kubernetes cluster kubeconfig save "$CLUSTER_ID"
     SAVE ARTIFACT --keep-ts kubeconfig
+
+kube-prometheus-stack.crds:
+    FROM +devcontainer
+    COPY (+github-src/prometheus-community-helm-charts/charts/kube-prometheus-stack/crds/*.yaml --REPO=prometheus-community/helm-charts --COMMIT=a197e47f6e7edcbde63ccaabdd8813083232a0fb --DIR=/prometheus-community-helm-charts) .
+    RUN find . -name '*.yaml' -exec tfk8s --strip --file {} --output {}.tf \;
+    SAVE ARTIFACT --keep-ts *.tf AS LOCAL kube-prometheus-stack.crds/

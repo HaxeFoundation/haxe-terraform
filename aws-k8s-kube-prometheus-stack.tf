@@ -35,6 +35,11 @@ data "aws_ssm_parameter" "GRAFANA_GITHUB_OAUTH_CLIENT_SECRET" {
   name = "GRAFANA_GITHUB_OAUTH_CLIENT_SECRET"
 }
 
+# earthly +kube-prometheus-stack.crds
+module "kube-prometheus-stack-crds" {
+  source = "./kube-prometheus-stack.crds"
+}
+
 resource "helm_release" "prometheus" {
   name       = "prometheus-stack"
   repository = "https://prometheus-community.github.io/helm-charts"
@@ -126,6 +131,12 @@ resource "helm_release" "prometheus" {
         },
       }
     }),
+  ]
+
+  skip_crds = true
+
+  depends_on = [
+    module.kube-prometheus-stack-crds
   ]
 }
 

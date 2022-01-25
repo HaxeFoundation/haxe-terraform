@@ -31,6 +31,14 @@ data "kubernetes_secret" "do-grafana-github-oauth-client-secret" {
   }
 }
 
+# earthly +kube-prometheus-stack.crds
+module "do-kube-prometheus-stack-crds" {
+  source = "./kube-prometheus-stack.crds"
+  providers = {
+    kubernetes = kubernetes.do
+  }
+}
+
 resource "helm_release" "do-prometheus" {
   provider = helm.do
 
@@ -137,6 +145,12 @@ resource "helm_release" "do-prometheus" {
         },
       }
     }),
+  ]
+
+  skip_crds = true
+
+  depends_on = [
+    module.do-kube-prometheus-stack-crds
   ]
 }
 
