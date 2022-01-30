@@ -124,13 +124,6 @@ github-src:
     SAVE ARTIFACT "$DIR"
 
 # Usage:
-# COPY +tfenv/tfenv /tfenv
-# RUN ln -s /tfenv/bin/* /usr/local/bin
-tfenv:
-    FROM +github-src --REPO=tfutils/tfenv --COMMIT=459d15b63f55c2f507bfa6a18e9dec5937e45daf --DIR=/tfenv
-    SAVE ARTIFACT /tfenv
-
-# Usage:
 # COPY +terraform-ls/terraform-ls /usr/local/bin/
 terraform-ls:
     ARG --required TARGETARCH
@@ -140,13 +133,6 @@ terraform-ls:
         && mv ./terraform-ls /usr/local/bin/ \
         && rm terraform-ls.zip
     SAVE ARTIFACT /usr/local/bin/terraform-ls
-
-terraform:
-    FROM +tfenv
-    RUN ln -s /tfenv/bin/* /usr/local/bin
-    ARG --required TERRAFORM_VERSION
-    RUN tfenv install "$TERRAFORM_VERSION"
-    RUN tfenv use "$TERRAFORM_VERSION"
 
 # Usage:
 # COPY +tfk8s/tfk8s /usr/local/bin/
@@ -184,7 +170,7 @@ devcontainer:
     COPY +doctl/doctl /usr/local/bin/
 
     # tfenv
-    COPY +tfenv/tfenv /tfenv
+    COPY (+github-src/src --REPO=tfutils/tfenv --COMMIT=459d15b63f55c2f507bfa6a18e9dec5937e45daf) /tfenv
     RUN ln -s /tfenv/bin/* /usr/local/bin/
     COPY --chown=$USER_UID:$USER_GID .terraform-version "/home/$USERNAME/"
     RUN tfenv install "$(cat /home/$USERNAME/.terraform-version)"
@@ -263,6 +249,6 @@ do-kubeconfig:
 
 kube-prometheus-stack.crds:
     FROM +devcontainer
-    COPY (+github-src/prometheus-community-helm-charts/charts/kube-prometheus-stack/crds/*.yaml --REPO=prometheus-community/helm-charts --COMMIT=a197e47f6e7edcbde63ccaabdd8813083232a0fb --DIR=/prometheus-community-helm-charts) .
+    COPY (+github-src/src/charts/kube-prometheus-stack/crds/*.yaml --REPO=prometheus-community/helm-charts --COMMIT=a197e47f6e7edcbde63ccaabdd8813083232a0fb) .
     RUN find . -name '*.yaml' -exec tfk8s --strip --file {} --output {}.tf \;
     SAVE ARTIFACT --keep-ts *.tf AS LOCAL kube-prometheus-stack.crds/
