@@ -7,7 +7,7 @@ on:
 jobs:
   plan:
     runs-on: ubuntu-latest
-    container: "haxe/terraform_devcontainer_workspace:20220111023757"
+    container: "haxe/terraform_devcontainer_workspace:20220130025223"
     env:
       TF_INPUT: 0
       TF_IN_AUTOMATION: 1
