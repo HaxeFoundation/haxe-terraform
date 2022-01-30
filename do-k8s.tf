@@ -59,3 +59,10 @@ resource "kubernetes_namespace" "do-monitoring" {
     name = "monitoring"
   }
 }
+
+resource "kubernetes_namespace" "do-mysql-operator" {
+  provider = kubernetes.do
+  metadata {
+    name = "mysql-operator"
+  }
+}

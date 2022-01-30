@@ -252,3 +252,9 @@ kube-prometheus-stack.crds:
     COPY (+github-src/src/charts/kube-prometheus-stack/crds/*.yaml --REPO=prometheus-community/helm-charts --COMMIT=a197e47f6e7edcbde63ccaabdd8813083232a0fb) .
     RUN find . -name '*.yaml' -exec tfk8s --strip --file {} --output {}.tf \;
     SAVE ARTIFACT --keep-ts *.tf AS LOCAL kube-prometheus-stack.crds/
+
+mysql-operator.crds:
+    FROM +devcontainer
+    COPY mysql-operator/helm/mysql-operator/crds/*.yaml .
+    RUN find . -name '*.yaml' -exec tfk8s --strip --file {} --output {}.tf \;
+    SAVE ARTIFACT --keep-ts *.tf AS LOCAL mysql-operator.crds/

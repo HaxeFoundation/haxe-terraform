@@ -1,0 +1,3 @@
+[submodule "mysql-operator"]
+	path = mysql-operator
+	url = https://github.com/mysql/mysql-operator.git
