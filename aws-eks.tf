@@ -76,7 +76,7 @@ module "eks" {
       "t3.medium", "t3a.medium", "t4g.medium", "t2.medium",
     ]
 
-    asg_min_size                             = 3
+    asg_min_size                             = 2
     asg_max_size                             = 4
     on_demand_base_capacity                  = 0
     on_demand_percentage_above_base_capacity = 0
