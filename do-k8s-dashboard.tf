@@ -5,7 +5,7 @@ resource "helm_release" "do-k8s-dashboard" {
   name       = "k8s-dashboard"
   repository = "https://kubernetes.github.io/dashboard/"
   chart      = "kubernetes-dashboard"
-  version    = "5.0.5"
+  version    = "5.1.1"
 
   values = [yamlencode({
     "protocolHttp" : true,
