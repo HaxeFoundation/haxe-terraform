@@ -17,8 +17,8 @@ resource "digitalocean_kubernetes_cluster" "cluster" {
     name       = "worker-pool"
     size       = "s-2vcpu-4gb"
     auto_scale = true
-    min_nodes  = 2
-    max_nodes  = 3
+    min_nodes  = 3
+    max_nodes  = 4
   }
 
   lifecycle {
