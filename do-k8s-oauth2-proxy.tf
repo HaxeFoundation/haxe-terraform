@@ -58,7 +58,7 @@ resource "kubernetes_deployment" "do-oauth2-proxy" {
           }
           env {
             name  = "OAUTH2_PROXY_WHITELIST_DOMAINS"
-            value = join(",", values(local.do-oauth2-proxy.domains))
+            value = "haxe.org,.haxe.org"
           }
           env {
             name  = "OAUTH2_PROXY_COOKIE_DOMAINS"
