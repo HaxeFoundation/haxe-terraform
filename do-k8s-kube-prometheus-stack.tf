@@ -9,6 +9,16 @@ locals {
   }
 }
 
+output "grafana" {
+  value     = local.do-grafana
+  sensitive = true
+}
+
+resource "random_password" "grafana-admin-pw" {
+  length  = 32
+  special = false
+}
+
 resource "kubernetes_secret" "do-grafana-admin" {
   provider = kubernetes.do
   metadata {

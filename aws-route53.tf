@@ -43,35 +43,3 @@ resource "aws_route53_record" "acm-nekovm-org-us-east-1-dns" {
   type            = each.value.type
   zone_id         = aws_route53_zone.nekovm-org.zone_id
 }
-
-resource "aws_route53_record" "k8s-haxe-org" {
-  zone_id = aws_route53_zone.haxe-org.zone_id
-  name    = "k8s"
-  type    = "CNAME"
-  ttl     = "86400"
-  records = ["aws-k8s.haxe.org"]
-}
-
-resource "aws_route53_record" "prom-haxe-org" {
-  zone_id = aws_route53_zone.haxe-org.zone_id
-  name    = "prom"
-  type    = "CNAME"
-  ttl     = "86400"
-  records = ["aws-prom.haxe.org"]
-}
-
-resource "aws_route53_record" "grafana-haxe-org" {
-  zone_id = aws_route53_zone.haxe-org.zone_id
-  name    = "grafana"
-  type    = "CNAME"
-  ttl     = "86400"
-  records = ["aws-grafana.haxe.org"]
-}
-
-resource "aws_route53_record" "loki-haxe-org" {
-  zone_id = aws_route53_zone.haxe-org.zone_id
-  name    = "loki"
-  type    = "CNAME"
-  ttl     = "86400"
-  records = ["aws-loki.haxe.org"]
-}

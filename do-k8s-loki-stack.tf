@@ -21,6 +21,17 @@ resource "digitalocean_spaces_bucket" "loki" {
   force_destroy = true
 }
 
+resource "random_password" "loki-pw" {
+  length  = 32
+  special = false
+}
+
+resource "random_pet" "loki-pw" {
+  keepers = {
+    loki-pw = random_password.loki-pw.result
+  }
+}
+
 # kubectl -n monitoring create secret generic loki-do-spaces --from-literal=SPACES_KEY=FIXME --from-literal=SPACES_SECRET=FIXME
 data "kubernetes_secret" "loki-do-spaces" {
   provider = kubernetes.do

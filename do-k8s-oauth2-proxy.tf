@@ -12,6 +12,10 @@ locals {
   }
 }
 
+resource "random_password" "cookie_secret" {
+  length = 32
+}
+
 # kubectl create secret generic oauth2-proxy-client-secret --from-literal=OAUTH2_PROXY_CLIENT_SECRET=FIXME
 data "kubernetes_secret" "do-oauth2-proxy-client-secret" {
   provider = kubernetes.do
