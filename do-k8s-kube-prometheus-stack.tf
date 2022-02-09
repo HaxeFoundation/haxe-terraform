@@ -4,8 +4,8 @@ locals {
   }
   do-grafana = {
     hostnames = ["do-grafana.haxe.org"]
-    user     = "admin"
-    password = random_password.grafana-admin-pw.result
+    user      = "admin"
+    password  = random_password.grafana-admin-pw.result
   }
 }
 
@@ -153,6 +153,7 @@ resource "helm_release" "do-prometheus" {
             "team_ids" : data.github_team.system-admin.id,
           }
         },
+        "defaultDashboardsTimezone" : "browser",
       }
     }),
   ]
