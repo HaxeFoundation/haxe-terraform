@@ -75,6 +75,6 @@ resource "aws_route53_record" "do-k8s-haxe-org" {
   zone_id = aws_route53_zone.haxe-org.zone_id
   name    = "do-k8s"
   type    = "A"
-  ttl     = "600"
+  ttl     = "86400"
   records = [local.do-ingress-ip]
 }
