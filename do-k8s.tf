@@ -10,7 +10,7 @@ data "digitalocean_kubernetes_versions" "k8s-1-21" {
 resource "digitalocean_kubernetes_cluster" "cluster" {
   name         = local.do_cluster_name
   region       = "lon1"
-  version      = data.digitalocean_kubernetes_versions.k8s-1-21.latest_version
+  version      = "1.21.9-do.0" # data.digitalocean_kubernetes_versions.k8s-1-21.latest_version
   auto_upgrade = true
 
   node_pool {
