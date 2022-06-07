@@ -100,14 +100,6 @@ awscli:
     SAVE ARTIFACT /aws
 
 # Usage:
-# COPY +aws-iam-authenticator/aws-iam-authenticator /usr/local/bin/
-aws-iam-authenticator:
-    RUN curl -o aws-iam-authenticator https://amazon-eks.s3.us-west-2.amazonaws.com/1.21.2/2021-07-05/bin/linux/amd64/aws-iam-authenticator \
-        && chmod +x ./aws-iam-authenticator \
-        && mv ./aws-iam-authenticator /usr/local/bin/
-    SAVE ARTIFACT /usr/local/bin/aws-iam-authenticator
-
-# Usage:
 # COPY +doctl/doctl /usr/local/bin/
 doctl:
     ARG TARGETARCH
@@ -153,7 +145,7 @@ cert-manager.crds:
 earthly:
     FROM +devcontainer-base
     ARG --required TARGETARCH
-    RUN curl -fsSL https://github.com/earthly/earthly/releases/download/v0.6.6/earthly-linux-${TARGETARCH} -o /usr/local/bin/earthly \
+    RUN curl -fsSL https://github.com/earthly/earthly/releases/download/v0.6.15/earthly-linux-${TARGETARCH} -o /usr/local/bin/earthly \
         && chmod +x /usr/local/bin/earthly
     SAVE ARTIFACT /usr/local/bin/earthly
 
@@ -163,8 +155,6 @@ devcontainer:
     # AWS cli
     COPY +awscli/aws /aws
     RUN /aws/install
-
-    COPY +aws-iam-authenticator/aws-iam-authenticator /usr/local/bin/
 
     # doctl
     COPY +doctl/doctl /usr/local/bin/
