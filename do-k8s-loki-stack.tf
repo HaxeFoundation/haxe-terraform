@@ -49,15 +49,7 @@ resource "kubernetes_secret" "do-loki-basic-auth" {
   }
 
   data = {
-    (local.do-loki.user) = bcrypt(random_pet.loki-pw.keepers.loki-pw)
-  }
-
-  lifecycle {
-    # bcrypt is not a pure function...
-    # The random_pet will take care of recreating this secret when loki-pw changes.
-    ignore_changes = [
-      data
-    ]
+    (local.do-loki.user) = random_password.loki-pw.bcrypt_hash
   }
 }
 
