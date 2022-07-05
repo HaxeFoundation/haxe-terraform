@@ -61,7 +61,7 @@ resource "helm_release" "do-loki-stack" {
   name       = "loki-stack"
   repository = "https://grafana.github.io/helm-charts"
   chart      = "loki-stack"
-  version    = "2.5.1"
+  version    = "2.6.3"
   values = [
     yamlencode({
       "loki" : {
@@ -122,7 +122,11 @@ resource "helm_release" "do-loki-stack" {
             }
           }
           "compactor" : {
-            "shared_store" : "s3"
+            "shared_store" : "s3",
+            "retention_enabled" : true,
+          }
+          "limits_config" : {
+            "retention_period" : "1440h" # 60 days
           }
         }
       },
