@@ -4,7 +4,7 @@ resource "kubernetes_manifest" "customresourcedefinition_servicemonitors_monitor
     "kind" = "CustomResourceDefinition"
     "metadata" = {
       "annotations" = {
-        "controller-gen.kubebuilder.io/version" = "v0.6.2"
+        "controller-gen.kubebuilder.io/version" = "v0.9.2"
       }
       "name" = "servicemonitors.monitoring.coreos.com"
     }
@@ -17,6 +17,9 @@ resource "kubernetes_manifest" "customresourcedefinition_servicemonitors_monitor
         "kind" = "ServiceMonitor"
         "listKind" = "ServiceMonitorList"
         "plural" = "servicemonitors"
+        "shortNames" = [
+          "smon",
+        ]
         "singular" = "servicemonitor"
       }
       "scope" = "Namespaced"
@@ -69,6 +72,7 @@ resource "kubernetes_manifest" "customresourcedefinition_servicemonitors_monitor
                                   "key",
                                 ]
                                 "type" = "object"
+                                "x-kubernetes-map-type" = "atomic"
                               }
                               "type" = {
                                 "description" = "Set the authentication type. Defaults to Bearer, Basic will cause an error"
@@ -100,6 +104,7 @@ resource "kubernetes_manifest" "customresourcedefinition_servicemonitors_monitor
                                   "key",
                                 ]
                                 "type" = "object"
+                                "x-kubernetes-map-type" = "atomic"
                               }
                               "username" = {
                                 "description" = "The secret in the service monitor namespace that contains the username for authentication."
@@ -121,6 +126,7 @@ resource "kubernetes_manifest" "customresourcedefinition_servicemonitors_monitor
                                   "key",
                                 ]
                                 "type" = "object"
+                                "x-kubernetes-map-type" = "atomic"
                               }
                             }
                             "type" = "object"
@@ -149,6 +155,15 @@ resource "kubernetes_manifest" "customresourcedefinition_servicemonitors_monitor
                               "key",
                             ]
                             "type" = "object"
+                            "x-kubernetes-map-type" = "atomic"
+                          }
+                          "enableHttp2" = {
+                            "description" = "Whether to enable HTTP2."
+                            "type" = "boolean"
+                          }
+                          "followRedirects" = {
+                            "description" = "FollowRedirects configures whether scrape requests follow HTTP 3xx redirects."
+                            "type" = "boolean"
                           }
                           "honorLabels" = {
                             "description" = "HonorLabels chooses the metric's labels on collisions with target labels."
@@ -159,7 +174,8 @@ resource "kubernetes_manifest" "customresourcedefinition_servicemonitors_monitor
                             "type" = "boolean"
                           }
                           "interval" = {
-                            "description" = "Interval at which metrics should be scraped"
+                            "description" = "Interval at which metrics should be scraped If not specified Prometheus' global scrape interval is used."
+                            "pattern" = "^(0|(([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?(([0-9]+)ms)?)$"
                             "type" = "string"
                           }
                           "metricRelabelings" = {
@@ -168,7 +184,28 @@ resource "kubernetes_manifest" "customresourcedefinition_servicemonitors_monitor
                               "description" = "RelabelConfig allows dynamic rewriting of the label set, being applied to samples before ingestion. It defines `<metric_relabel_configs>`-section of Prometheus configuration. More info: https://prometheus.io/docs/prometheus/latest/configuration/configuration/#metric_relabel_configs"
                               "properties" = {
                                 "action" = {
-                                  "description" = "Action to perform based on regex matching. Default is 'replace'"
+                                  "default" = "replace"
+                                  "description" = "Action to perform based on regex matching. Default is 'replace'. uppercase and lowercase actions require Prometheus >= 2.36."
+                                  "enum" = [
+                                    "replace",
+                                    "Replace",
+                                    "keep",
+                                    "Keep",
+                                    "drop",
+                                    "Drop",
+                                    "hashmod",
+                                    "HashMod",
+                                    "labelmap",
+                                    "LabelMap",
+                                    "labeldrop",
+                                    "LabelDrop",
+                                    "labelkeep",
+                                    "LabelKeep",
+                                    "lowercase",
+                                    "Lowercase",
+                                    "uppercase",
+                                    "Uppercase",
+                                  ]
                                   "type" = "string"
                                 }
                                 "modulus" = {
@@ -191,6 +228,8 @@ resource "kubernetes_manifest" "customresourcedefinition_servicemonitors_monitor
                                 "sourceLabels" = {
                                   "description" = "The source labels select values from existing labels. Their content is concatenated using the configured separator and matched against the configured regular expression for the replace, keep, and drop actions."
                                   "items" = {
+                                    "description" = "LabelName is a valid Prometheus label name which may only contain ASCII letters, numbers, as well as underscores."
+                                    "pattern" = "^[a-zA-Z_][a-zA-Z0-9_]*$"
                                     "type" = "string"
                                   }
                                   "type" = "array"
@@ -230,6 +269,7 @@ resource "kubernetes_manifest" "customresourcedefinition_servicemonitors_monitor
                                       "key",
                                     ]
                                     "type" = "object"
+                                    "x-kubernetes-map-type" = "atomic"
                                   }
                                   "secret" = {
                                     "description" = "Secret containing data to use for the targets."
@@ -251,6 +291,7 @@ resource "kubernetes_manifest" "customresourcedefinition_servicemonitors_monitor
                                       "key",
                                     ]
                                     "type" = "object"
+                                    "x-kubernetes-map-type" = "atomic"
                                   }
                                 }
                                 "type" = "object"
@@ -275,6 +316,7 @@ resource "kubernetes_manifest" "customresourcedefinition_servicemonitors_monitor
                                   "key",
                                 ]
                                 "type" = "object"
+                                "x-kubernetes-map-type" = "atomic"
                               }
                               "endpointParams" = {
                                 "additionalProperties" = {
@@ -314,7 +356,7 @@ resource "kubernetes_manifest" "customresourcedefinition_servicemonitors_monitor
                             "type" = "object"
                           }
                           "path" = {
-                            "description" = "HTTP path to scrape for metrics."
+                            "description" = "HTTP path to scrape for metrics. If empty, Prometheus uses the default value (e.g. `/metrics`)."
                             "type" = "string"
                           }
                           "port" = {
@@ -326,12 +368,33 @@ resource "kubernetes_manifest" "customresourcedefinition_servicemonitors_monitor
                             "type" = "string"
                           }
                           "relabelings" = {
-                            "description" = "RelabelConfigs to apply to samples before scraping. Prometheus Operator automatically adds relabelings for a few standard Kubernetes fields and replaces original scrape job name with __tmp_prometheus_job_name. More info: https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config"
+                            "description" = "RelabelConfigs to apply to samples before scraping. Prometheus Operator automatically adds relabelings for a few standard Kubernetes fields. The original scrape job's name is available via the `__tmp_prometheus_job_name` label. More info: https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config"
                             "items" = {
                               "description" = "RelabelConfig allows dynamic rewriting of the label set, being applied to samples before ingestion. It defines `<metric_relabel_configs>`-section of Prometheus configuration. More info: https://prometheus.io/docs/prometheus/latest/configuration/configuration/#metric_relabel_configs"
                               "properties" = {
                                 "action" = {
-                                  "description" = "Action to perform based on regex matching. Default is 'replace'"
+                                  "default" = "replace"
+                                  "description" = "Action to perform based on regex matching. Default is 'replace'. uppercase and lowercase actions require Prometheus >= 2.36."
+                                  "enum" = [
+                                    "replace",
+                                    "Replace",
+                                    "keep",
+                                    "Keep",
+                                    "drop",
+                                    "Drop",
+                                    "hashmod",
+                                    "HashMod",
+                                    "labelmap",
+                                    "LabelMap",
+                                    "labeldrop",
+                                    "LabelDrop",
+                                    "labelkeep",
+                                    "LabelKeep",
+                                    "lowercase",
+                                    "Lowercase",
+                                    "uppercase",
+                                    "Uppercase",
+                                  ]
                                   "type" = "string"
                                 }
                                 "modulus" = {
@@ -354,6 +417,8 @@ resource "kubernetes_manifest" "customresourcedefinition_servicemonitors_monitor
                                 "sourceLabels" = {
                                   "description" = "The source labels select values from existing labels. Their content is concatenated using the configured separator and matched against the configured regular expression for the replace, keep, and drop actions."
                                   "items" = {
+                                    "description" = "LabelName is a valid Prometheus label name which may only contain ASCII letters, numbers, as well as underscores."
+                                    "pattern" = "^[a-zA-Z_][a-zA-Z0-9_]*$"
                                     "type" = "string"
                                   }
                                   "type" = "array"
@@ -372,7 +437,8 @@ resource "kubernetes_manifest" "customresourcedefinition_servicemonitors_monitor
                             "type" = "string"
                           }
                           "scrapeTimeout" = {
-                            "description" = "Timeout after which the scrape is ended"
+                            "description" = "Timeout after which the scrape is ended If not specified, the Prometheus global scrape timeout is used unless it is less than `Interval` in which the latter is used."
+                            "pattern" = "^(0|(([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?(([0-9]+)ms)?)$"
                             "type" = "string"
                           }
                           "targetPort" = {
@@ -413,6 +479,7 @@ resource "kubernetes_manifest" "customresourcedefinition_servicemonitors_monitor
                                       "key",
                                     ]
                                     "type" = "object"
+                                    "x-kubernetes-map-type" = "atomic"
                                   }
                                   "secret" = {
                                     "description" = "Secret containing data to use for the targets."
@@ -434,6 +501,7 @@ resource "kubernetes_manifest" "customresourcedefinition_servicemonitors_monitor
                                       "key",
                                     ]
                                     "type" = "object"
+                                    "x-kubernetes-map-type" = "atomic"
                                   }
                                 }
                                 "type" = "object"
@@ -465,6 +533,7 @@ resource "kubernetes_manifest" "customresourcedefinition_servicemonitors_monitor
                                       "key",
                                     ]
                                     "type" = "object"
+                                    "x-kubernetes-map-type" = "atomic"
                                   }
                                   "secret" = {
                                     "description" = "Secret containing data to use for the targets."
@@ -486,6 +555,7 @@ resource "kubernetes_manifest" "customresourcedefinition_servicemonitors_monitor
                                       "key",
                                     ]
                                     "type" = "object"
+                                    "x-kubernetes-map-type" = "atomic"
                                   }
                                 }
                                 "type" = "object"
@@ -522,6 +592,7 @@ resource "kubernetes_manifest" "customresourcedefinition_servicemonitors_monitor
                                   "key",
                                 ]
                                 "type" = "object"
+                                "x-kubernetes-map-type" = "atomic"
                               }
                               "serverName" = {
                                 "description" = "Used to verify the hostname for the targets."
@@ -537,8 +608,9 @@ resource "kubernetes_manifest" "customresourcedefinition_servicemonitors_monitor
                     }
                     "jobLabel" = {
                       "description" = <<-EOT
-                      Chooses the label of the Kubernetes `Endpoints`. Its value will be used for the `job`-label's value of the created metrics. 
-                       Default & fallback value: the name of the respective Kubernetes `Endpoint`.
+                      JobLabel selects the label from the associated Kubernetes service which will be used as the `job` label for all metrics. 
+                       For example: If in `ServiceMonitor.spec.jobLabel: foo` and in `Service.metadata.labels.foo: bar`, then the `job="bar"` label is added to all metrics. 
+                       If the value of this field is empty or if the label doesn't exist for the given Service, the `job` label of the metrics defaults to the name of the Kubernetes Service.
                       EOT
                       "type" = "string"
                     }
@@ -565,7 +637,7 @@ resource "kubernetes_manifest" "customresourcedefinition_servicemonitors_monitor
                           "type" = "boolean"
                         }
                         "matchNames" = {
-                          "description" = "List of namespace names."
+                          "description" = "List of namespace names to select from."
                           "items" = {
                             "type" = "string"
                           }
@@ -627,9 +699,10 @@ resource "kubernetes_manifest" "customresourcedefinition_servicemonitors_monitor
                         }
                       }
                       "type" = "object"
+                      "x-kubernetes-map-type" = "atomic"
                     }
                     "targetLabels" = {
-                      "description" = "TargetLabels transfers labels from the Kubernetes `Service` onto the created metrics. All labels set in `selector.matchLabels` are automatically transferred."
+                      "description" = "TargetLabels transfers labels from the Kubernetes `Service` onto the created metrics."
                       "items" = {
                         "type" = "string"
                       }

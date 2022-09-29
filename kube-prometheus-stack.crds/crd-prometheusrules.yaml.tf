@@ -4,7 +4,7 @@ resource "kubernetes_manifest" "customresourcedefinition_prometheusrules_monitor
     "kind" = "CustomResourceDefinition"
     "metadata" = {
       "annotations" = {
-        "controller-gen.kubebuilder.io/version" = "v0.6.2"
+        "controller-gen.kubebuilder.io/version" = "v0.9.2"
       }
       "name" = "prometheusrules.monitoring.coreos.com"
     }
@@ -17,6 +17,9 @@ resource "kubernetes_manifest" "customresourcedefinition_prometheusrules_monitor
         "kind" = "PrometheusRule"
         "listKind" = "PrometheusRuleList"
         "plural" = "prometheusrules"
+        "shortNames" = [
+          "promrule",
+        ]
         "singular" = "prometheusrule"
       }
       "scope" = "Namespaced"
