@@ -6,19 +6,7 @@
 	"remoteEnv": {
 		"LOCAL_WORKSPACE_FOLDER": "${localWorkspaceFolder}"
 	},
-	"settings": {
-		"terminal.integrated.profiles.linux": {
-			"bash": {
-				"path": "/bin/bash",
-				"args": [
-					"-l"
-				]
-			}
-		},
-		"terraform.languageServer": {
-			"pathToBinary": "/usr/local/bin/terraform-ls"
-		}
-	},
+	"settings": {},
 	"extensions": [
 		"ms-azuretools.vscode-docker",
 		"nadako.vshaxe",
