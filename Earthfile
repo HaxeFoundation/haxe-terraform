@@ -62,7 +62,7 @@ devcontainer-base:
         && curl -fsSL https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add - \
         && echo "deb https://apt.kubernetes.io/ kubernetes-xenial main" | tee -a /etc/apt/sources.list.d/kubernetes.list \
         && apt-get update \
-        && apt-get -y install --no-install-recommends kubectl=1.21.* \
+        && apt-get -y install --no-install-recommends kubectl=1.23.* \
         # install helm
         && curl -fsSL https://baltocdn.com/helm/signing.asc | apt-key add - \
         && echo "deb https://baltocdn.com/helm/stable/debian/ all main" | tee /etc/apt/sources.list.d/helm-stable-debian.list \
@@ -119,7 +119,7 @@ github-src:
 # COPY +terraform-ls/terraform-ls /usr/local/bin/
 terraform-ls:
     ARG --required TARGETARCH
-    ARG TERRAFORM_LS_VERSION=0.29.2
+    ARG TERRAFORM_LS_VERSION=0.30.1
     RUN curl -fsSL -o terraform-ls.zip https://github.com/hashicorp/terraform-ls/releases/download/v${TERRAFORM_LS_VERSION}/terraform-ls_${TERRAFORM_LS_VERSION}_linux_${TARGETARCH}.zip \
         && unzip -qq terraform-ls.zip \
         && mv ./terraform-ls /usr/local/bin/ \
@@ -145,7 +145,7 @@ cert-manager.crds:
 earthly:
     FROM +devcontainer-base
     ARG --required TARGETARCH
-    RUN curl -fsSL https://github.com/earthly/earthly/releases/download/v0.6.24/earthly-linux-${TARGETARCH} -o /usr/local/bin/earthly \
+    RUN curl -fsSL https://github.com/earthly/earthly/releases/download/v0.6.30/earthly-linux-${TARGETARCH} -o /usr/local/bin/earthly \
         && chmod +x /usr/local/bin/earthly
     SAVE ARTIFACT /usr/local/bin/earthly
 
