@@ -33,7 +33,7 @@ resource "random_pet" "loki-pw" {
 }
 
 # kubectl -n monitoring create secret generic loki-do-spaces --from-literal=SPACES_KEY=FIXME --from-literal=SPACES_SECRET=FIXME
-data "kubernetes_secret" "loki-do-spaces" {
+data "kubernetes_secret_v1" "loki-do-spaces" {
   provider = kubernetes.do
   metadata {
     namespace = kubernetes_namespace.do-monitoring.metadata[0].name
@@ -41,7 +41,7 @@ data "kubernetes_secret" "loki-do-spaces" {
   }
 }
 
-resource "kubernetes_secret" "do-loki-basic-auth" {
+resource "kubernetes_secret_v1" "do-loki-basic-auth" {
   provider = kubernetes.do
   metadata {
     namespace = kubernetes_namespace.do-monitoring.metadata[0].name
@@ -77,7 +77,7 @@ resource "helm_release" "do-loki-stack" {
           "annotations" : merge(
             {
               "nginx.ingress.kubernetes.io/auth-type" : "basic",
-              "nginx.ingress.kubernetes.io/auth-secret" : kubernetes_secret.do-loki-basic-auth.metadata[0].name,
+              "nginx.ingress.kubernetes.io/auth-secret" : kubernetes_secret_v1.do-loki-basic-auth.metadata[0].name,
               "nginx.ingress.kubernetes.io/auth-secret-type" : "auth-map",
               "nginx.ingress.kubernetes.io/auth-realm" : "Authentication Required",
             },
@@ -108,13 +108,13 @@ resource "helm_release" "do-loki-stack" {
           }
           "storage_config" : {
             "aws" : {
-              # "s3" : "https://${data.kubernetes_secret.loki-do-spaces.data.SPACES_KEY}:${urlencode(data.kubernetes_secret.loki-do-spaces.data.SPACES_SECRET)}@${digitalocean_spaces_bucket.loki.region}.digitaloceanspaces.com/${digitalocean_spaces_bucket.loki.name}"
-              # "s3" : "https://${data.kubernetes_secret.loki-do-spaces.data.SPACES_KEY}:${urlencode(data.kubernetes_secret.loki-do-spaces.data.SPACES_SECRET)}@${digitalocean_spaces_bucket.loki.bucket_domain_name}"
+              # "s3" : "https://${data.kubernetes_secret_v1.loki-do-spaces.data.SPACES_KEY}:${urlencode(data.kubernetes_secret_v1.loki-do-spaces.data.SPACES_SECRET)}@${digitalocean_spaces_bucket.loki.region}.digitaloceanspaces.com/${digitalocean_spaces_bucket.loki.name}"
+              # "s3" : "https://${data.kubernetes_secret_v1.loki-do-spaces.data.SPACES_KEY}:${urlencode(data.kubernetes_secret_v1.loki-do-spaces.data.SPACES_SECRET)}@${digitalocean_spaces_bucket.loki.bucket_domain_name}"
               "bucketnames" : digitalocean_spaces_bucket.loki.name,
               "endpoint" : "${digitalocean_spaces_bucket.loki.region}.digitaloceanspaces.com",
               "region" : digitalocean_spaces_bucket.loki.region,
-              "access_key_id" : data.kubernetes_secret.loki-do-spaces.data.SPACES_KEY,
-              "secret_access_key" : data.kubernetes_secret.loki-do-spaces.data.SPACES_SECRET,
+              "access_key_id" : data.kubernetes_secret_v1.loki-do-spaces.data.SPACES_KEY,
+              "secret_access_key" : data.kubernetes_secret_v1.loki-do-spaces.data.SPACES_SECRET,
               "s3forcepathstyle" : true,
             }
             "boltdb_shipper" : {

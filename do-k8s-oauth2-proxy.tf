@@ -17,14 +17,14 @@ resource "random_password" "cookie_secret" {
 }
 
 # kubectl create secret generic oauth2-proxy-client-secret --from-literal=OAUTH2_PROXY_CLIENT_SECRET=FIXME
-data "kubernetes_secret" "do-oauth2-proxy-client-secret" {
+data "kubernetes_secret_v1" "do-oauth2-proxy-client-secret" {
   provider = kubernetes.do
   metadata {
     name = "oauth2-proxy-client-secret"
   }
 }
 
-resource "kubernetes_deployment" "do-oauth2-proxy" {
+resource "kubernetes_deployment_v1" "do-oauth2-proxy" {
   provider = kubernetes.do
   metadata {
     name = "oauth2-proxy"
@@ -90,7 +90,7 @@ resource "kubernetes_deployment" "do-oauth2-proxy" {
           }
           env {
             name  = "OAUTH2_PROXY_CLIENT_SECRET"
-            value = data.kubernetes_secret.do-oauth2-proxy-client-secret.data.OAUTH2_PROXY_CLIENT_SECRET
+            value = data.kubernetes_secret_v1.do-oauth2-proxy-client-secret.data.OAUTH2_PROXY_CLIENT_SECRET
           }
           env {
             name  = "OAUTH2_PROXY_GITHUB_ORG"
@@ -106,7 +106,7 @@ resource "kubernetes_deployment" "do-oauth2-proxy" {
   }
 }
 
-resource "kubernetes_service" "do-oauth2-proxy" {
+resource "kubernetes_service_v1" "do-oauth2-proxy" {
   provider = kubernetes.do
   metadata {
     name = "oauth2-proxy"
@@ -125,7 +125,7 @@ resource "kubernetes_service" "do-oauth2-proxy" {
   }
 }
 
-resource "kubernetes_ingress" "do-oauth2-proxy" {
+resource "kubernetes_ingress_v1" "do-oauth2-proxy" {
   for_each = local.do-oauth2-proxy.domains
   provider = kubernetes.do
   metadata {
@@ -136,6 +136,7 @@ resource "kubernetes_ingress" "do-oauth2-proxy" {
   }
 
   spec {
+    ingress_class_name = "nginx"
     tls {
       hosts       = [each.value]
       secret_name = "oauth2-proxy-${each.key}-tls"
@@ -145,8 +146,12 @@ resource "kubernetes_ingress" "do-oauth2-proxy" {
       http {
         path {
           backend {
-            service_name = kubernetes_service.do-oauth2-proxy.metadata[0].name
-            service_port = local.do-oauth2-proxy.container_port
+            service {
+              name = kubernetes_service_v1.do-oauth2-proxy.metadata[0].name
+              port {
+                number = local.do-oauth2-proxy.container_port
+              }
+            }
           }
           path = "/oauth2"
         }

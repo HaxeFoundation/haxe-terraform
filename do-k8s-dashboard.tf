@@ -31,7 +31,7 @@ resource "helm_release" "do-k8s-dashboard" {
 }
 
 # https://github.com/kubernetes/dashboard/blob/master/docs/user/access-control/README.md#admin-privileges
-resource "kubernetes_cluster_role_binding" "do-fullaccess" {
+resource "kubernetes_cluster_role_binding_v1" "do-fullaccess" {
   provider = kubernetes.do
   metadata {
     name = "k8s-dashboard"

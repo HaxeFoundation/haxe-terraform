@@ -19,7 +19,7 @@ resource "random_password" "grafana-admin-pw" {
   special = false
 }
 
-resource "kubernetes_secret" "do-grafana-admin" {
+resource "kubernetes_secret_v1" "do-grafana-admin" {
   provider = kubernetes.do
   metadata {
     name      = "grafana-admin"
@@ -33,7 +33,7 @@ resource "kubernetes_secret" "do-grafana-admin" {
 }
 
 # kubectl -n monitoring create secret generic grafana-github-oauth-client-secret --from-literal=GRAFANA_GITHUB_OAUTH_CLIENT_SECRET=FIXME
-data "kubernetes_secret" "do-grafana-github-oauth-client-secret" {
+data "kubernetes_secret_v1" "do-grafana-github-oauth-client-secret" {
   provider = kubernetes.do
   metadata {
     name      = "grafana-github-oauth-client-secret"
@@ -129,7 +129,7 @@ resource "helm_release" "do-prometheus" {
         },
         "adminPassword" : random_password.grafana-admin-pw.result,
         "admin" : {
-          "existingSecret" : kubernetes_secret.do-grafana-admin.metadata[0].name,
+          "existingSecret" : kubernetes_secret_v1.do-grafana-admin.metadata[0].name,
         },
         "env" : {
           "HOSTNAME" : local.do-grafana.hostnames[0],
@@ -144,7 +144,7 @@ resource "helm_release" "do-prometheus" {
             "enabled" : true,
             "allow_sign_up" : true,
             "client_id" : "3bcf3d74e9be175a63ab",
-            "client_secret" : data.kubernetes_secret.do-grafana-github-oauth-client-secret.data.GRAFANA_GITHUB_OAUTH_CLIENT_SECRET,
+            "client_secret" : data.kubernetes_secret_v1.do-grafana-github-oauth-client-secret.data.GRAFANA_GITHUB_OAUTH_CLIENT_SECRET,
             "scopes" : "user:email,read:org",
             "auth_url" : "https://github.com/login/oauth/authorize",
             "token_url" : "https://github.com/login/oauth/access_token",

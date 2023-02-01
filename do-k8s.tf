@@ -3,14 +3,14 @@ locals {
 }
 
 data "digitalocean_kubernetes_versions" "k8s-1-21" {
-  version_prefix = "1.21."
+  version_prefix = "1.23."
 }
 
 # List available Droplet sizes by `doctl compute size list`
 resource "digitalocean_kubernetes_cluster" "cluster" {
   name         = local.do_cluster_name
   region       = "lon1"
-  version      = "1.21.14-do.2" # data.digitalocean_kubernetes_versions.k8s-1-21.latest_version
+  version      = "1.23.14-do.0" # data.digitalocean_kubernetes_versions.k8s-1-21.latest_version
   auto_upgrade = true
 
   node_pool {
