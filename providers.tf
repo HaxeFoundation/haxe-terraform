@@ -17,6 +17,10 @@ terraform {
       source  = "hashicorp/helm"
       version = "~> 2.5"
     }
+    gandi = {
+      source = "go-gandi/gandi"
+      version = "~> 2.2"
+    }
     cloudflare = {
       source  = "cloudflare/cloudflare"
       version = "~> 3.16"
@@ -70,4 +74,12 @@ data "aws_availability_zones" "available" {}
 
 provider "github" {
   owner = "HaxeFoundation"
+}
+
+provider "gandi" {
+  key = data.aws_ssm_parameter.gandi_api_key.value
+}
+
+provider "cloudflare" {
+  api_token = data.aws_ssm_parameter.cloudflare_api_token.value
 }
