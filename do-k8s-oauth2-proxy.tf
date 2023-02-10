@@ -167,3 +167,11 @@ resource "aws_route53_record" "do-oauth2-proxy" {
   ttl     = "86400"
   records = ["do-k8s.haxe.org"]
 }
+
+resource "cloudflare_record" "do-oauth2-proxy" {
+  zone_id = local.cloudflare.zones.haxe-org.zone_id
+  name    = "do-oauth2-proxy"
+  type    = "CNAME"
+  ttl     = "86400"
+  value   = "do-k8s.haxe.org"
+}

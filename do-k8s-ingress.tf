@@ -78,3 +78,11 @@ resource "aws_route53_record" "do-k8s-haxe-org" {
   ttl     = "86400"
   records = [local.do-ingress-ip]
 }
+
+resource "cloudflare_record" "do-k8s-haxe-org" {
+  zone_id = local.cloudflare.zones.haxe-org.zone_id
+  name    = "do-k8s"
+  type    = "A"
+  ttl     = "86400"
+  value   = local.do-ingress-ip
+}

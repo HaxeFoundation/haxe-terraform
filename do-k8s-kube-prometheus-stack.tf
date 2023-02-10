@@ -180,3 +180,20 @@ resource "aws_route53_record" "do-grafana-haxe-org" {
   ttl     = "86400"
   records = ["do-k8s.haxe.org"]
 }
+
+
+resource "cloudflare_record" "do-prom-haxe-org" {
+  zone_id = local.cloudflare.zones.haxe-org.zone_id
+  name    = "do-prom"
+  type    = "CNAME"
+  ttl     = "86400"
+  value   = "do-k8s.haxe.org"
+}
+
+resource "cloudflare_record" "do-grafana-haxe-org" {
+  zone_id = local.cloudflare.zones.haxe-org.zone_id
+  name    = "do-grafana"
+  type    = "CNAME"
+  ttl     = "86400"
+  value   = "do-k8s.haxe.org"
+}
