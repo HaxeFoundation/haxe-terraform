@@ -86,6 +86,19 @@ data "aws_iam_policy_document" "haxelib-operator" {
     resources = ["*"]
   }
 
+  # SSM
+  statement {
+    effect    = "Allow"
+    actions   = [
+      "ssm:DescribeParameters",
+      "ssm:GetParametersByPath",
+      "ssm:GetParameters",
+      "ssm:GetParameter",
+      "kms:Decrypt",
+    ]
+    resources = ["*"]
+  }
+
   # for aws_canonical_user_id data source
   statement {
     effect    = "Allow"
