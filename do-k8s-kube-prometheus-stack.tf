@@ -56,7 +56,7 @@ resource "helm_release" "do-prometheus" {
   repository = "https://prometheus-community.github.io/helm-charts"
   chart      = "kube-prometheus-stack"
   namespace  = kubernetes_namespace.do-monitoring.metadata[0].name
-  version    = "40.2.0"
+  version    = "45.3.0"
   values = [
     yamlencode({
       # https://github.com/aws/containers-roadmap/issues/657
@@ -159,6 +159,8 @@ resource "helm_release" "do-prometheus" {
   ]
 
   skip_crds = true
+
+  timeout = 60 * 20 # 20 minutes
 
   depends_on = [
     module.do-kube-prometheus-stack-crds

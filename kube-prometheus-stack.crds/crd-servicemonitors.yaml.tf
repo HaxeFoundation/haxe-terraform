@@ -4,7 +4,7 @@ resource "kubernetes_manifest" "customresourcedefinition_servicemonitors_monitor
     "kind" = "CustomResourceDefinition"
     "metadata" = {
       "annotations" = {
-        "controller-gen.kubebuilder.io/version" = "v0.9.2"
+        "controller-gen.kubebuilder.io/version" = "v0.11.1"
       }
       "name" = "servicemonitors.monitoring.coreos.com"
     }
@@ -44,6 +44,16 @@ resource "kubernetes_manifest" "customresourcedefinition_servicemonitors_monitor
                 "spec" = {
                   "description" = "Specification of desired Service selection for target discovery by Prometheus."
                   "properties" = {
+                    "attachMetadata" = {
+                      "description" = "Attaches node metadata to discovered targets. Requires Prometheus v2.37.0 and above."
+                      "properties" = {
+                        "node" = {
+                          "description" = "When set to true, Prometheus must have permissions to get Nodes."
+                          "type" = "boolean"
+                        }
+                      }
+                      "type" = "object"
+                    }
                     "endpoints" = {
                       "description" = "A list of endpoints allowed as part of this ServiceMonitor."
                       "items" = {
@@ -159,6 +169,10 @@ resource "kubernetes_manifest" "customresourcedefinition_servicemonitors_monitor
                           }
                           "enableHttp2" = {
                             "description" = "Whether to enable HTTP2."
+                            "type" = "boolean"
+                          }
+                          "filterRunning" = {
+                            "description" = "Drop pods that are not running. (Failed, Succeeded). Enabled by default. More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/#pod-phase"
                             "type" = "boolean"
                           }
                           "followRedirects" = {
@@ -457,7 +471,7 @@ resource "kubernetes_manifest" "customresourcedefinition_servicemonitors_monitor
                             "description" = "TLS configuration to use when scraping the endpoint"
                             "properties" = {
                               "ca" = {
-                                "description" = "Struct containing the CA cert to use for the targets."
+                                "description" = "Certificate authority used when verifying server certificates."
                                 "properties" = {
                                   "configMap" = {
                                     "description" = "ConfigMap containing data to use for the targets."
@@ -511,7 +525,7 @@ resource "kubernetes_manifest" "customresourcedefinition_servicemonitors_monitor
                                 "type" = "string"
                               }
                               "cert" = {
-                                "description" = "Struct containing the client cert file for the targets."
+                                "description" = "Client certificate to present when doing client-authentication."
                                 "properties" = {
                                   "configMap" = {
                                     "description" = "ConfigMap containing data to use for the targets."

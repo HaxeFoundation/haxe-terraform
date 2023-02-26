@@ -4,7 +4,7 @@ resource "kubernetes_manifest" "customresourcedefinition_alertmanagers_monitorin
     "kind" = "CustomResourceDefinition"
     "metadata" = {
       "annotations" = {
-        "controller-gen.kubebuilder.io/version" = "v0.9.2"
+        "controller-gen.kubebuilder.io/version" = "v0.11.1"
       }
       "name" = "alertmanagers.monitoring.coreos.com"
     }
@@ -33,15 +33,38 @@ resource "kubernetes_manifest" "customresourcedefinition_alertmanagers_monitorin
               "type" = "string"
             },
             {
-              "description" = "The desired replicas number of Alertmanagers"
+              "description" = "The number of desired replicas"
               "jsonPath" = ".spec.replicas"
               "name" = "Replicas"
               "type" = "integer"
             },
             {
+              "description" = "The number of ready replicas"
+              "jsonPath" = ".status.availableReplicas"
+              "name" = "Ready"
+              "type" = "integer"
+            },
+            {
+              "jsonPath" = ".status.conditions[?(@.type == 'Reconciled')].status"
+              "name" = "Reconciled"
+              "type" = "string"
+            },
+            {
+              "jsonPath" = ".status.conditions[?(@.type == 'Available')].status"
+              "name" = "Available"
+              "type" = "string"
+            },
+            {
               "jsonPath" = ".metadata.creationTimestamp"
               "name" = "Age"
               "type" = "date"
+            },
+            {
+              "description" = "Whether the resource reconciliation is paused or not"
+              "jsonPath" = ".status.paused"
+              "name" = "Paused"
+              "priority" = 1
+              "type" = "boolean"
             },
           ]
           "name" = "v1"
@@ -727,6 +750,21 @@ resource "kubernetes_manifest" "customresourcedefinition_alertmanagers_monitorin
                       }
                       "type" = "object"
                     }
+                    "alertmanagerConfigMatcherStrategy" = {
+                      "description" = "The AlertmanagerConfigMatcherStrategy defines how AlertmanagerConfig objects match the alerts. In the future more options may be added."
+                      "properties" = {
+                        "type" = {
+                          "default" = "OnNamespace"
+                          "description" = "If set to `OnNamespace`, the operator injects a label matcher matching the namespace of the AlertmanagerConfig object for all its routes and inhibition rules. `None` will not add any additional matchers other than the ones specified in the AlertmanagerConfig. Default is `OnNamespace`."
+                          "enum" = [
+                            "OnNamespace",
+                            "None",
+                          ]
+                          "type" = "string"
+                        }
+                      }
+                      "type" = "object"
+                    }
                     "alertmanagerConfigNamespaceSelector" = {
                       "description" = "Namespaces to be selected for AlertmanagerConfig discovery. If nil, only check own namespace."
                       "properties" = {
@@ -1040,7 +1078,7 @@ resource "kubernetes_manifest" "customresourcedefinition_alertmanagers_monitorin
                                   "description" = "TLS configuration for the client."
                                   "properties" = {
                                     "ca" = {
-                                      "description" = "Struct containing the CA cert to use for the targets."
+                                      "description" = "Certificate authority used when verifying server certificates."
                                       "properties" = {
                                         "configMap" = {
                                           "description" = "ConfigMap containing data to use for the targets."
@@ -1090,7 +1128,7 @@ resource "kubernetes_manifest" "customresourcedefinition_alertmanagers_monitorin
                                       "type" = "object"
                                     }
                                     "cert" = {
-                                      "description" = "Struct containing the client cert file for the targets."
+                                      "description" = "Client certificate to present when doing client-authentication."
                                       "properties" = {
                                         "configMap" = {
                                           "description" = "ConfigMap containing data to use for the targets."
@@ -1188,6 +1226,60 @@ resource "kubernetes_manifest" "customresourcedefinition_alertmanagers_monitorin
                           "minLength" = 1
                           "type" = "string"
                         }
+                        "templates" = {
+                          "description" = "Custom notification templates."
+                          "items" = {
+                            "description" = "SecretOrConfigMap allows to specify data as a Secret or ConfigMap. Fields are mutually exclusive."
+                            "properties" = {
+                              "configMap" = {
+                                "description" = "ConfigMap containing data to use for the targets."
+                                "properties" = {
+                                  "key" = {
+                                    "description" = "The key to select."
+                                    "type" = "string"
+                                  }
+                                  "name" = {
+                                    "description" = "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names TODO: Add other useful fields. apiVersion, kind, uid?"
+                                    "type" = "string"
+                                  }
+                                  "optional" = {
+                                    "description" = "Specify whether the ConfigMap or its key must be defined"
+                                    "type" = "boolean"
+                                  }
+                                }
+                                "required" = [
+                                  "key",
+                                ]
+                                "type" = "object"
+                                "x-kubernetes-map-type" = "atomic"
+                              }
+                              "secret" = {
+                                "description" = "Secret containing data to use for the targets."
+                                "properties" = {
+                                  "key" = {
+                                    "description" = "The key of the secret to select from.  Must be a valid secret key."
+                                    "type" = "string"
+                                  }
+                                  "name" = {
+                                    "description" = "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names TODO: Add other useful fields. apiVersion, kind, uid?"
+                                    "type" = "string"
+                                  }
+                                  "optional" = {
+                                    "description" = "Specify whether the Secret or its key must be defined"
+                                    "type" = "boolean"
+                                  }
+                                }
+                                "required" = [
+                                  "key",
+                                ]
+                                "type" = "object"
+                                "x-kubernetes-map-type" = "atomic"
+                              }
+                            }
+                            "type" = "object"
+                          }
+                          "type" = "array"
+                        }
                       }
                       "type" = "object"
                     }
@@ -1215,7 +1307,7 @@ resource "kubernetes_manifest" "customresourcedefinition_alertmanagers_monitorin
                       "type" = "string"
                     }
                     "configMaps" = {
-                      "description" = "ConfigMaps is a list of ConfigMaps in the same namespace as the Alertmanager object, which shall be mounted into the Alertmanager Pods. The ConfigMaps are mounted into /etc/alertmanager/configmaps/<configmap-name>."
+                      "description" = "ConfigMaps is a list of ConfigMaps in the same namespace as the Alertmanager object, which shall be mounted into the Alertmanager Pods. Each ConfigMap is added to the StatefulSet definition as a volume named `configmap-<configmap-name>`. The ConfigMaps are mounted into `/etc/alertmanager/configmaps/<configmap-name>` in the 'alertmanager' container."
                       "items" = {
                         "type" = "string"
                       }
@@ -1223,9 +1315,9 @@ resource "kubernetes_manifest" "customresourcedefinition_alertmanagers_monitorin
                     }
                     "configSecret" = {
                       "description" = <<-EOT
-                      ConfigSecret is the name of a Kubernetes Secret in the same namespace as the Alertmanager object, which contains the configuration for this Alertmanager instance. If empty, it defaults to 'alertmanager-<alertmanager-name>'. 
-                       The Alertmanager configuration should be available under the `alertmanager.yaml` key. Additional keys from the original secret are copied to the generated secret. 
-                       If either the secret or the `alertmanager.yaml` key is missing, the operator provisions an Alertmanager configuration with one empty receiver (effectively dropping alert notifications).
+                      ConfigSecret is the name of a Kubernetes Secret in the same namespace as the Alertmanager object, which contains the configuration for this Alertmanager instance. If empty, it defaults to `alertmanager-<alertmanager-name>`. 
+                       The Alertmanager configuration should be available under the `alertmanager.yaml` key. Additional keys from the original secret are copied to the generated secret and mounted into the `/etc/alertmanager/config` directory in the `alertmanager` container. 
+                       If either the secret or the `alertmanager.yaml` key is missing, the operator provisions a minimal Alertmanager configuration with one empty receiver (effectively dropping alert notifications).
                       EOT
                       "type" = "string"
                     }
@@ -1972,6 +2064,31 @@ resource "kubernetes_manifest" "customresourcedefinition_alertmanagers_monitorin
                           "resources" = {
                             "description" = "Compute Resources required by this container. Cannot be updated. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/"
                             "properties" = {
+                              "claims" = {
+                                "description" = <<-EOT
+                                Claims lists the names of resources, defined in spec.resourceClaims, that are used by this container. 
+                                 This is an alpha field and requires enabling the DynamicResourceAllocation feature gate. 
+                                 This field is immutable.
+                                EOT
+                                "items" = {
+                                  "description" = "ResourceClaim references one entry in PodSpec.ResourceClaims."
+                                  "properties" = {
+                                    "name" = {
+                                      "description" = "Name must match the name of one entry in pod.spec.resourceClaims of the Pod where this field is used. It makes that resource available inside a container."
+                                      "type" = "string"
+                                    }
+                                  }
+                                  "required" = [
+                                    "name",
+                                  ]
+                                  "type" = "object"
+                                }
+                                "type" = "array"
+                                "x-kubernetes-list-map-keys" = [
+                                  "name",
+                                ]
+                                "x-kubernetes-list-type" = "map"
+                              }
                               "limits" = {
                                 "additionalProperties" = {
                                   "anyOf" = [
@@ -2410,6 +2527,16 @@ resource "kubernetes_manifest" "customresourcedefinition_alertmanagers_monitorin
                     }
                     "image" = {
                       "description" = "Image if specified has precedence over baseImage, tag and sha combinations. Specifying the version is still necessary to ensure the Prometheus Operator knows what version of Alertmanager is being configured."
+                      "type" = "string"
+                    }
+                    "imagePullPolicy" = {
+                      "description" = "Image pull policy for the 'alertmanager', 'init-config-reloader' and 'config-reloader' containers. See https://kubernetes.io/docs/concepts/containers/images/#image-pull-policy for more details."
+                      "enum" = [
+                        "",
+                        "Always",
+                        "Never",
+                        "IfNotPresent",
+                      ]
                       "type" = "string"
                     }
                     "imagePullSecrets" = {
@@ -3170,6 +3297,31 @@ resource "kubernetes_manifest" "customresourcedefinition_alertmanagers_monitorin
                           "resources" = {
                             "description" = "Compute Resources required by this container. Cannot be updated. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/"
                             "properties" = {
+                              "claims" = {
+                                "description" = <<-EOT
+                                Claims lists the names of resources, defined in spec.resourceClaims, that are used by this container. 
+                                 This is an alpha field and requires enabling the DynamicResourceAllocation feature gate. 
+                                 This field is immutable.
+                                EOT
+                                "items" = {
+                                  "description" = "ResourceClaim references one entry in PodSpec.ResourceClaims."
+                                  "properties" = {
+                                    "name" = {
+                                      "description" = "Name must match the name of one entry in pod.spec.resourceClaims of the Pod where this field is used. It makes that resource available inside a container."
+                                      "type" = "string"
+                                    }
+                                  }
+                                  "required" = [
+                                    "name",
+                                  ]
+                                  "type" = "object"
+                                }
+                                "type" = "array"
+                                "x-kubernetes-list-map-keys" = [
+                                  "name",
+                                ]
+                                "x-kubernetes-list-type" = "map"
+                              }
                               "limits" = {
                                 "additionalProperties" = {
                                   "anyOf" = [
@@ -3594,7 +3746,7 @@ resource "kubernetes_manifest" "customresourcedefinition_alertmanagers_monitorin
                       "type" = "string"
                     }
                     "minReadySeconds" = {
-                      "description" = "Minimum number of seconds for which a newly created pod should be ready without any of its container crashing for it to be considered available. Defaults to 0 (pod will be considered available as soon as it is ready) This is an alpha field and requires enabling StatefulSetMinReadySeconds feature gate."
+                      "description" = "Minimum number of seconds for which a newly created pod should be ready without any of its container crashing for it to be considered available. Defaults to 0 (pod will be considered available as soon as it is ready) This is an alpha field from kubernetes 1.22 until 1.24 which requires enabling the StatefulSetMinReadySeconds feature gate."
                       "format" = "int32"
                       "type" = "integer"
                     }
@@ -3649,6 +3801,31 @@ resource "kubernetes_manifest" "customresourcedefinition_alertmanagers_monitorin
                     "resources" = {
                       "description" = "Define resources requests and limits for single Pods."
                       "properties" = {
+                        "claims" = {
+                          "description" = <<-EOT
+                          Claims lists the names of resources, defined in spec.resourceClaims, that are used by this container. 
+                           This is an alpha field and requires enabling the DynamicResourceAllocation feature gate. 
+                           This field is immutable.
+                          EOT
+                          "items" = {
+                            "description" = "ResourceClaim references one entry in PodSpec.ResourceClaims."
+                            "properties" = {
+                              "name" = {
+                                "description" = "Name must match the name of one entry in pod.spec.resourceClaims of the Pod where this field is used. It makes that resource available inside a container."
+                                "type" = "string"
+                              }
+                            }
+                            "required" = [
+                              "name",
+                            ]
+                            "type" = "object"
+                          }
+                          "type" = "array"
+                          "x-kubernetes-list-map-keys" = [
+                            "name",
+                          ]
+                          "x-kubernetes-list-type" = "map"
+                        }
                         "limits" = {
                           "additionalProperties" = {
                             "anyOf" = [
@@ -3695,7 +3872,7 @@ resource "kubernetes_manifest" "customresourcedefinition_alertmanagers_monitorin
                       "type" = "string"
                     }
                     "secrets" = {
-                      "description" = "Secrets is a list of Secrets in the same namespace as the Alertmanager object, which shall be mounted into the Alertmanager Pods. The Secrets are mounted into /etc/alertmanager/secrets/<secret-name>."
+                      "description" = "Secrets is a list of Secrets in the same namespace as the Alertmanager object, which shall be mounted into the Alertmanager Pods. Each Secret is added to the StatefulSet definition as a volume named `secret-<secret-name>`. The Secrets are mounted into `/etc/alertmanager/secrets/<secret-name>` in the 'alertmanager' container."
                       "items" = {
                         "type" = "string"
                       }
@@ -3774,7 +3951,7 @@ resource "kubernetes_manifest" "customresourcedefinition_alertmanagers_monitorin
                           "type" = "object"
                         }
                         "supplementalGroups" = {
-                          "description" = "A list of groups applied to the first process run in each container, in addition to the container's primary GID.  If unspecified, no groups will be added to any container. Note that this field cannot be set when spec.os.name is windows."
+                          "description" = "A list of groups applied to the first process run in each container, in addition to the container's primary GID, the fsGroup (if specified), and group memberships defined in the container image for the uid of the container process. If unspecified, no additional groups are added to any container. Note that group memberships defined in the container image for the uid of the container process are still effective, even if they are not included in this list. Note that this field cannot be set when spec.os.name is windows."
                           "items" = {
                             "format" = "int64"
                             "type" = "integer"
@@ -3844,7 +4021,7 @@ resource "kubernetes_manifest" "customresourcedefinition_alertmanagers_monitorin
                           "type" = "boolean"
                         }
                         "emptyDir" = {
-                          "description" = "EmptyDirVolumeSource to be used by the Prometheus StatefulSets. If specified, used in place of any volumeClaimTemplate. More info: https://kubernetes.io/docs/concepts/storage/volumes/#emptydir"
+                          "description" = "EmptyDirVolumeSource to be used by the StatefulSet. If specified, used in place of any volumeClaimTemplate. More info: https://kubernetes.io/docs/concepts/storage/volumes/#emptydir"
                           "properties" = {
                             "medium" = {
                               "description" = "medium represents what type of storage medium should back this directory. The default is \"\" which means to use the node's default medium. Must be an empty string (default) or Memory. More info: https://kubernetes.io/docs/concepts/storage/volumes#emptydir"
@@ -3867,7 +4044,7 @@ resource "kubernetes_manifest" "customresourcedefinition_alertmanagers_monitorin
                           "type" = "object"
                         }
                         "ephemeral" = {
-                          "description" = "EphemeralVolumeSource to be used by the Prometheus StatefulSets. This is a beta field in k8s 1.21, for lower versions, starting with k8s 1.19, it requires enabling the GenericEphemeralVolume feature gate. More info: https://kubernetes.io/docs/concepts/storage/ephemeral-volumes/#generic-ephemeral-volumes"
+                          "description" = "EphemeralVolumeSource to be used by the StatefulSet. This is a beta field in k8s 1.21, for lower versions, starting with k8s 1.19, it requires enabling the GenericEphemeralVolume feature gate. More info: https://kubernetes.io/docs/concepts/storage/ephemeral-volumes/#generic-ephemeral-volumes"
                           "properties" = {
                             "volumeClaimTemplate" = {
                               "description" = <<-EOT
@@ -3892,7 +4069,7 @@ resource "kubernetes_manifest" "customresourcedefinition_alertmanagers_monitorin
                                       "type" = "array"
                                     }
                                     "dataSource" = {
-                                      "description" = "dataSource field can be used to specify either: * An existing VolumeSnapshot object (snapshot.storage.k8s.io/VolumeSnapshot) * An existing PVC (PersistentVolumeClaim) If the provisioner or an external controller can support the specified data source, it will create a new volume based on the contents of the specified data source. If the AnyVolumeDataSource feature gate is enabled, this field will always have the same contents as the DataSourceRef field."
+                                      "description" = "dataSource field can be used to specify either: * An existing VolumeSnapshot object (snapshot.storage.k8s.io/VolumeSnapshot) * An existing PVC (PersistentVolumeClaim) If the provisioner or an external controller can support the specified data source, it will create a new volume based on the contents of the specified data source. When the AnyVolumeDataSource feature gate is enabled, dataSource contents will be copied to dataSourceRef, and dataSourceRef contents will be copied to dataSource when dataSourceRef.namespace is not specified. If the namespace is specified, then dataSourceRef will not be copied to dataSource."
                                       "properties" = {
                                         "apiGroup" = {
                                           "description" = "APIGroup is the group for the resource being referenced. If APIGroup is not specified, the specified Kind must be in the core API group. For any other third-party types, APIGroup is required."
@@ -3915,7 +4092,7 @@ resource "kubernetes_manifest" "customresourcedefinition_alertmanagers_monitorin
                                       "x-kubernetes-map-type" = "atomic"
                                     }
                                     "dataSourceRef" = {
-                                      "description" = "dataSourceRef specifies the object from which to populate the volume with data, if a non-empty volume is desired. This may be any local object from a non-empty API group (non core object) or a PersistentVolumeClaim object. When this field is specified, volume binding will only succeed if the type of the specified object matches some installed volume populator or dynamic provisioner. This field will replace the functionality of the DataSource field and as such if both fields are non-empty, they must have the same value. For backwards compatibility, both fields (DataSource and DataSourceRef) will be set to the same value automatically if one of them is empty and the other is non-empty. There are two important differences between DataSource and DataSourceRef: * While DataSource only allows two specific types of objects, DataSourceRef allows any non-core object, as well as PersistentVolumeClaim objects. * While DataSource ignores disallowed values (dropping them), DataSourceRef preserves all values, and generates an error if a disallowed value is specified. (Beta) Using this field requires the AnyVolumeDataSource feature gate to be enabled."
+                                      "description" = "dataSourceRef specifies the object from which to populate the volume with data, if a non-empty volume is desired. This may be any object from a non-empty API group (non core object) or a PersistentVolumeClaim object. When this field is specified, volume binding will only succeed if the type of the specified object matches some installed volume populator or dynamic provisioner. This field will replace the functionality of the dataSource field and as such if both fields are non-empty, they must have the same value. For backwards compatibility, when namespace isn't specified in dataSourceRef, both fields (dataSource and dataSourceRef) will be set to the same value automatically if one of them is empty and the other is non-empty. When namespace is specified in dataSourceRef, dataSource isn't set to the same value and must be empty. There are three important differences between dataSource and dataSourceRef: * While dataSource only allows two specific types of objects, dataSourceRef allows any non-core object, as well as PersistentVolumeClaim objects. * While dataSource ignores disallowed values (dropping them), dataSourceRef preserves all values, and generates an error if a disallowed value is specified. * While dataSource only allows local objects, dataSourceRef allows objects in any namespaces. (Beta) Using this field requires the AnyVolumeDataSource feature gate to be enabled. (Alpha) Using the namespace field of dataSourceRef requires the CrossNamespaceVolumeDataSource feature gate to be enabled."
                                       "properties" = {
                                         "apiGroup" = {
                                           "description" = "APIGroup is the group for the resource being referenced. If APIGroup is not specified, the specified Kind must be in the core API group. For any other third-party types, APIGroup is required."
@@ -3929,17 +4106,45 @@ resource "kubernetes_manifest" "customresourcedefinition_alertmanagers_monitorin
                                           "description" = "Name is the name of resource being referenced"
                                           "type" = "string"
                                         }
+                                        "namespace" = {
+                                          "description" = "Namespace is the namespace of resource being referenced Note that when a namespace is specified, a gateway.networking.k8s.io/ReferenceGrant object is required in the referent namespace to allow that namespace's owner to accept the reference. See the ReferenceGrant documentation for details. (Alpha) This field requires the CrossNamespaceVolumeDataSource feature gate to be enabled."
+                                          "type" = "string"
+                                        }
                                       }
                                       "required" = [
                                         "kind",
                                         "name",
                                       ]
                                       "type" = "object"
-                                      "x-kubernetes-map-type" = "atomic"
                                     }
                                     "resources" = {
                                       "description" = "resources represents the minimum resources the volume should have. If RecoverVolumeExpansionFailure feature is enabled users are allowed to specify resource requirements that are lower than previous value but must still be higher than capacity recorded in the status field of the claim. More info: https://kubernetes.io/docs/concepts/storage/persistent-volumes#resources"
                                       "properties" = {
+                                        "claims" = {
+                                          "description" = <<-EOT
+                                          Claims lists the names of resources, defined in spec.resourceClaims, that are used by this container. 
+                                           This is an alpha field and requires enabling the DynamicResourceAllocation feature gate. 
+                                           This field is immutable.
+                                          EOT
+                                          "items" = {
+                                            "description" = "ResourceClaim references one entry in PodSpec.ResourceClaims."
+                                            "properties" = {
+                                              "name" = {
+                                                "description" = "Name must match the name of one entry in pod.spec.resourceClaims of the Pod where this field is used. It makes that resource available inside a container."
+                                                "type" = "string"
+                                              }
+                                            }
+                                            "required" = [
+                                              "name",
+                                            ]
+                                            "type" = "object"
+                                          }
+                                          "type" = "array"
+                                          "x-kubernetes-list-map-keys" = [
+                                            "name",
+                                          ]
+                                          "x-kubernetes-list-type" = "map"
+                                        }
                                         "limits" = {
                                           "additionalProperties" = {
                                             "anyOf" = [
@@ -4043,7 +4248,7 @@ resource "kubernetes_manifest" "customresourcedefinition_alertmanagers_monitorin
                           "type" = "object"
                         }
                         "volumeClaimTemplate" = {
-                          "description" = "A PVC spec to be used by the Prometheus StatefulSets."
+                          "description" = "A PVC spec to be used by the StatefulSet. The easiest way to use a volume that cannot be automatically provisioned (for whatever reason) is to use a label selector alongside manually created PersistentVolumes."
                           "properties" = {
                             "apiVersion" = {
                               "description" = "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources"
@@ -4088,7 +4293,7 @@ resource "kubernetes_manifest" "customresourcedefinition_alertmanagers_monitorin
                                   "type" = "array"
                                 }
                                 "dataSource" = {
-                                  "description" = "dataSource field can be used to specify either: * An existing VolumeSnapshot object (snapshot.storage.k8s.io/VolumeSnapshot) * An existing PVC (PersistentVolumeClaim) If the provisioner or an external controller can support the specified data source, it will create a new volume based on the contents of the specified data source. If the AnyVolumeDataSource feature gate is enabled, this field will always have the same contents as the DataSourceRef field."
+                                  "description" = "dataSource field can be used to specify either: * An existing VolumeSnapshot object (snapshot.storage.k8s.io/VolumeSnapshot) * An existing PVC (PersistentVolumeClaim) If the provisioner or an external controller can support the specified data source, it will create a new volume based on the contents of the specified data source. When the AnyVolumeDataSource feature gate is enabled, dataSource contents will be copied to dataSourceRef, and dataSourceRef contents will be copied to dataSource when dataSourceRef.namespace is not specified. If the namespace is specified, then dataSourceRef will not be copied to dataSource."
                                   "properties" = {
                                     "apiGroup" = {
                                       "description" = "APIGroup is the group for the resource being referenced. If APIGroup is not specified, the specified Kind must be in the core API group. For any other third-party types, APIGroup is required."
@@ -4111,7 +4316,7 @@ resource "kubernetes_manifest" "customresourcedefinition_alertmanagers_monitorin
                                   "x-kubernetes-map-type" = "atomic"
                                 }
                                 "dataSourceRef" = {
-                                  "description" = "dataSourceRef specifies the object from which to populate the volume with data, if a non-empty volume is desired. This may be any local object from a non-empty API group (non core object) or a PersistentVolumeClaim object. When this field is specified, volume binding will only succeed if the type of the specified object matches some installed volume populator or dynamic provisioner. This field will replace the functionality of the DataSource field and as such if both fields are non-empty, they must have the same value. For backwards compatibility, both fields (DataSource and DataSourceRef) will be set to the same value automatically if one of them is empty and the other is non-empty. There are two important differences between DataSource and DataSourceRef: * While DataSource only allows two specific types of objects, DataSourceRef allows any non-core object, as well as PersistentVolumeClaim objects. * While DataSource ignores disallowed values (dropping them), DataSourceRef preserves all values, and generates an error if a disallowed value is specified. (Beta) Using this field requires the AnyVolumeDataSource feature gate to be enabled."
+                                  "description" = "dataSourceRef specifies the object from which to populate the volume with data, if a non-empty volume is desired. This may be any object from a non-empty API group (non core object) or a PersistentVolumeClaim object. When this field is specified, volume binding will only succeed if the type of the specified object matches some installed volume populator or dynamic provisioner. This field will replace the functionality of the dataSource field and as such if both fields are non-empty, they must have the same value. For backwards compatibility, when namespace isn't specified in dataSourceRef, both fields (dataSource and dataSourceRef) will be set to the same value automatically if one of them is empty and the other is non-empty. When namespace is specified in dataSourceRef, dataSource isn't set to the same value and must be empty. There are three important differences between dataSource and dataSourceRef: * While dataSource only allows two specific types of objects, dataSourceRef allows any non-core object, as well as PersistentVolumeClaim objects. * While dataSource ignores disallowed values (dropping them), dataSourceRef preserves all values, and generates an error if a disallowed value is specified. * While dataSource only allows local objects, dataSourceRef allows objects in any namespaces. (Beta) Using this field requires the AnyVolumeDataSource feature gate to be enabled. (Alpha) Using the namespace field of dataSourceRef requires the CrossNamespaceVolumeDataSource feature gate to be enabled."
                                   "properties" = {
                                     "apiGroup" = {
                                       "description" = "APIGroup is the group for the resource being referenced. If APIGroup is not specified, the specified Kind must be in the core API group. For any other third-party types, APIGroup is required."
@@ -4125,17 +4330,45 @@ resource "kubernetes_manifest" "customresourcedefinition_alertmanagers_monitorin
                                       "description" = "Name is the name of resource being referenced"
                                       "type" = "string"
                                     }
+                                    "namespace" = {
+                                      "description" = "Namespace is the namespace of resource being referenced Note that when a namespace is specified, a gateway.networking.k8s.io/ReferenceGrant object is required in the referent namespace to allow that namespace's owner to accept the reference. See the ReferenceGrant documentation for details. (Alpha) This field requires the CrossNamespaceVolumeDataSource feature gate to be enabled."
+                                      "type" = "string"
+                                    }
                                   }
                                   "required" = [
                                     "kind",
                                     "name",
                                   ]
                                   "type" = "object"
-                                  "x-kubernetes-map-type" = "atomic"
                                 }
                                 "resources" = {
                                   "description" = "resources represents the minimum resources the volume should have. If RecoverVolumeExpansionFailure feature is enabled users are allowed to specify resource requirements that are lower than previous value but must still be higher than capacity recorded in the status field of the claim. More info: https://kubernetes.io/docs/concepts/storage/persistent-volumes#resources"
                                   "properties" = {
+                                    "claims" = {
+                                      "description" = <<-EOT
+                                      Claims lists the names of resources, defined in spec.resourceClaims, that are used by this container. 
+                                       This is an alpha field and requires enabling the DynamicResourceAllocation feature gate. 
+                                       This field is immutable.
+                                      EOT
+                                      "items" = {
+                                        "description" = "ResourceClaim references one entry in PodSpec.ResourceClaims."
+                                        "properties" = {
+                                          "name" = {
+                                            "description" = "Name must match the name of one entry in pod.spec.resourceClaims of the Pod where this field is used. It makes that resource available inside a container."
+                                            "type" = "string"
+                                          }
+                                        }
+                                        "required" = [
+                                          "name",
+                                        ]
+                                        "type" = "object"
+                                      }
+                                      "type" = "array"
+                                      "x-kubernetes-list-map-keys" = [
+                                        "name",
+                                      ]
+                                      "x-kubernetes-list-type" = "map"
+                                    }
                                     "limits" = {
                                       "additionalProperties" = {
                                         "anyOf" = [
@@ -4435,14 +4668,14 @@ resource "kubernetes_manifest" "customresourcedefinition_alertmanagers_monitorin
                           "nodeAffinityPolicy" = {
                             "description" = <<-EOT
                             NodeAffinityPolicy indicates how we will treat Pod's nodeAffinity/nodeSelector when calculating pod topology spread skew. Options are: - Honor: only nodes matching nodeAffinity/nodeSelector are included in the calculations. - Ignore: nodeAffinity/nodeSelector are ignored. All nodes are included in the calculations. 
-                             If this value is nil, the behavior is equivalent to the Honor policy. This is a alpha-level feature enabled by the NodeInclusionPolicyInPodTopologySpread feature flag.
+                             If this value is nil, the behavior is equivalent to the Honor policy. This is a beta-level feature default enabled by the NodeInclusionPolicyInPodTopologySpread feature flag.
                             EOT
                             "type" = "string"
                           }
                           "nodeTaintsPolicy" = {
                             "description" = <<-EOT
                             NodeTaintsPolicy indicates how we will treat node taints when calculating pod topology spread skew. Options are: - Honor: nodes without taints, along with tainted nodes for which the incoming pod has a toleration, are included. - Ignore: node taints are ignored. All nodes are included. 
-                             If this value is nil, the behavior is equivalent to the Ignore policy. This is a alpha-level feature enabled by the NodeInclusionPolicyInPodTopologySpread feature flag.
+                             If this value is nil, the behavior is equivalent to the Ignore policy. This is a beta-level feature default enabled by the NodeInclusionPolicyInPodTopologySpread feature flag.
                             EOT
                             "type" = "string"
                           }
@@ -4891,7 +5124,7 @@ resource "kubernetes_manifest" "customresourcedefinition_alertmanagers_monitorin
                                         "type" = "array"
                                       }
                                       "dataSource" = {
-                                        "description" = "dataSource field can be used to specify either: * An existing VolumeSnapshot object (snapshot.storage.k8s.io/VolumeSnapshot) * An existing PVC (PersistentVolumeClaim) If the provisioner or an external controller can support the specified data source, it will create a new volume based on the contents of the specified data source. If the AnyVolumeDataSource feature gate is enabled, this field will always have the same contents as the DataSourceRef field."
+                                        "description" = "dataSource field can be used to specify either: * An existing VolumeSnapshot object (snapshot.storage.k8s.io/VolumeSnapshot) * An existing PVC (PersistentVolumeClaim) If the provisioner or an external controller can support the specified data source, it will create a new volume based on the contents of the specified data source. When the AnyVolumeDataSource feature gate is enabled, dataSource contents will be copied to dataSourceRef, and dataSourceRef contents will be copied to dataSource when dataSourceRef.namespace is not specified. If the namespace is specified, then dataSourceRef will not be copied to dataSource."
                                         "properties" = {
                                           "apiGroup" = {
                                             "description" = "APIGroup is the group for the resource being referenced. If APIGroup is not specified, the specified Kind must be in the core API group. For any other third-party types, APIGroup is required."
@@ -4914,7 +5147,7 @@ resource "kubernetes_manifest" "customresourcedefinition_alertmanagers_monitorin
                                         "x-kubernetes-map-type" = "atomic"
                                       }
                                       "dataSourceRef" = {
-                                        "description" = "dataSourceRef specifies the object from which to populate the volume with data, if a non-empty volume is desired. This may be any local object from a non-empty API group (non core object) or a PersistentVolumeClaim object. When this field is specified, volume binding will only succeed if the type of the specified object matches some installed volume populator or dynamic provisioner. This field will replace the functionality of the DataSource field and as such if both fields are non-empty, they must have the same value. For backwards compatibility, both fields (DataSource and DataSourceRef) will be set to the same value automatically if one of them is empty and the other is non-empty. There are two important differences between DataSource and DataSourceRef: * While DataSource only allows two specific types of objects, DataSourceRef allows any non-core object, as well as PersistentVolumeClaim objects. * While DataSource ignores disallowed values (dropping them), DataSourceRef preserves all values, and generates an error if a disallowed value is specified. (Beta) Using this field requires the AnyVolumeDataSource feature gate to be enabled."
+                                        "description" = "dataSourceRef specifies the object from which to populate the volume with data, if a non-empty volume is desired. This may be any object from a non-empty API group (non core object) or a PersistentVolumeClaim object. When this field is specified, volume binding will only succeed if the type of the specified object matches some installed volume populator or dynamic provisioner. This field will replace the functionality of the dataSource field and as such if both fields are non-empty, they must have the same value. For backwards compatibility, when namespace isn't specified in dataSourceRef, both fields (dataSource and dataSourceRef) will be set to the same value automatically if one of them is empty and the other is non-empty. When namespace is specified in dataSourceRef, dataSource isn't set to the same value and must be empty. There are three important differences between dataSource and dataSourceRef: * While dataSource only allows two specific types of objects, dataSourceRef allows any non-core object, as well as PersistentVolumeClaim objects. * While dataSource ignores disallowed values (dropping them), dataSourceRef preserves all values, and generates an error if a disallowed value is specified. * While dataSource only allows local objects, dataSourceRef allows objects in any namespaces. (Beta) Using this field requires the AnyVolumeDataSource feature gate to be enabled. (Alpha) Using the namespace field of dataSourceRef requires the CrossNamespaceVolumeDataSource feature gate to be enabled."
                                         "properties" = {
                                           "apiGroup" = {
                                             "description" = "APIGroup is the group for the resource being referenced. If APIGroup is not specified, the specified Kind must be in the core API group. For any other third-party types, APIGroup is required."
@@ -4928,17 +5161,45 @@ resource "kubernetes_manifest" "customresourcedefinition_alertmanagers_monitorin
                                             "description" = "Name is the name of resource being referenced"
                                             "type" = "string"
                                           }
+                                          "namespace" = {
+                                            "description" = "Namespace is the namespace of resource being referenced Note that when a namespace is specified, a gateway.networking.k8s.io/ReferenceGrant object is required in the referent namespace to allow that namespace's owner to accept the reference. See the ReferenceGrant documentation for details. (Alpha) This field requires the CrossNamespaceVolumeDataSource feature gate to be enabled."
+                                            "type" = "string"
+                                          }
                                         }
                                         "required" = [
                                           "kind",
                                           "name",
                                         ]
                                         "type" = "object"
-                                        "x-kubernetes-map-type" = "atomic"
                                       }
                                       "resources" = {
                                         "description" = "resources represents the minimum resources the volume should have. If RecoverVolumeExpansionFailure feature is enabled users are allowed to specify resource requirements that are lower than previous value but must still be higher than capacity recorded in the status field of the claim. More info: https://kubernetes.io/docs/concepts/storage/persistent-volumes#resources"
                                         "properties" = {
+                                          "claims" = {
+                                            "description" = <<-EOT
+                                            Claims lists the names of resources, defined in spec.resourceClaims, that are used by this container. 
+                                             This is an alpha field and requires enabling the DynamicResourceAllocation feature gate. 
+                                             This field is immutable.
+                                            EOT
+                                            "items" = {
+                                              "description" = "ResourceClaim references one entry in PodSpec.ResourceClaims."
+                                              "properties" = {
+                                                "name" = {
+                                                  "description" = "Name must match the name of one entry in pod.spec.resourceClaims of the Pod where this field is used. It makes that resource available inside a container."
+                                                  "type" = "string"
+                                                }
+                                              }
+                                              "required" = [
+                                                "name",
+                                              ]
+                                              "type" = "object"
+                                            }
+                                            "type" = "array"
+                                            "x-kubernetes-list-map-keys" = [
+                                              "name",
+                                            ]
+                                            "x-kubernetes-list-type" = "map"
+                                          }
                                           "limits" = {
                                             "additionalProperties" = {
                                               "anyOf" = [
@@ -6037,29 +6298,74 @@ resource "kubernetes_manifest" "customresourcedefinition_alertmanagers_monitorin
                   "type" = "object"
                 }
                 "status" = {
-                  "description" = "Most recent observed status of the Alertmanager cluster. Read-only. Not included when requesting from the apiserver, only from the Prometheus Operator API itself. More info: https://github.com/kubernetes/community/blob/master/contributors/devel/sig-architecture/api-conventions.md#spec-and-status"
+                  "description" = "Most recent observed status of the Alertmanager cluster. Read-only. More info: https://github.com/kubernetes/community/blob/master/contributors/devel/sig-architecture/api-conventions.md#spec-and-status"
                   "properties" = {
                     "availableReplicas" = {
                       "description" = "Total number of available pods (ready for at least minReadySeconds) targeted by this Alertmanager cluster."
                       "format" = "int32"
                       "type" = "integer"
                     }
+                    "conditions" = {
+                      "description" = "The current state of the Alertmanager object."
+                      "items" = {
+                        "description" = "Condition represents the state of the resources associated with the Prometheus or Alertmanager resource."
+                        "properties" = {
+                          "lastTransitionTime" = {
+                            "description" = "lastTransitionTime is the time of the last update to the current status property."
+                            "format" = "date-time"
+                            "type" = "string"
+                          }
+                          "message" = {
+                            "description" = "Human-readable message indicating details for the condition's last transition."
+                            "type" = "string"
+                          }
+                          "observedGeneration" = {
+                            "description" = "ObservedGeneration represents the .metadata.generation that the condition was set based upon. For instance, if `.metadata.generation` is currently 12, but the `.status.conditions[].observedGeneration` is 9, the condition is out of date with respect to the current state of the instance."
+                            "format" = "int64"
+                            "type" = "integer"
+                          }
+                          "reason" = {
+                            "description" = "Reason for the condition's last transition."
+                            "type" = "string"
+                          }
+                          "status" = {
+                            "description" = "Status of the condition."
+                            "type" = "string"
+                          }
+                          "type" = {
+                            "description" = "Type of the condition being reported."
+                            "type" = "string"
+                          }
+                        }
+                        "required" = [
+                          "lastTransitionTime",
+                          "status",
+                          "type",
+                        ]
+                        "type" = "object"
+                      }
+                      "type" = "array"
+                      "x-kubernetes-list-map-keys" = [
+                        "type",
+                      ]
+                      "x-kubernetes-list-type" = "map"
+                    }
                     "paused" = {
                       "description" = "Represents whether any actions on the underlying managed objects are being performed. Only delete actions will be performed."
                       "type" = "boolean"
                     }
                     "replicas" = {
-                      "description" = "Total number of non-terminated pods targeted by this Alertmanager cluster (their labels match the selector)."
+                      "description" = "Total number of non-terminated pods targeted by this Alertmanager object (their labels match the selector)."
                       "format" = "int32"
                       "type" = "integer"
                     }
                     "unavailableReplicas" = {
-                      "description" = "Total number of unavailable pods targeted by this Alertmanager cluster."
+                      "description" = "Total number of unavailable pods targeted by this Alertmanager object."
                       "format" = "int32"
                       "type" = "integer"
                     }
                     "updatedReplicas" = {
-                      "description" = "Total number of non-terminated pods targeted by this Alertmanager cluster that have the desired version spec."
+                      "description" = "Total number of non-terminated pods targeted by this Alertmanager object that have the desired version spec."
                       "format" = "int32"
                       "type" = "integer"
                     }
@@ -6082,7 +6388,9 @@ resource "kubernetes_manifest" "customresourcedefinition_alertmanagers_monitorin
           }
           "served" = true
           "storage" = true
-          "subresources" = {}
+          "subresources" = {
+            "status" = {}
+          }
         },
       ]
     }

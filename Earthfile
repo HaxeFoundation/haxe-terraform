@@ -239,7 +239,7 @@ do-kubeconfig:
 
 kube-prometheus-stack.crds:
     FROM +devcontainer
-    COPY (+github-src/src/charts/kube-prometheus-stack/crds/*.yaml --REPO=prometheus-community/helm-charts --COMMIT=ebf538e58f48ca40241056dd886f97b94e775a13) .
+    COPY (+github-src/src/charts/kube-prometheus-stack/crds/*.yaml --REPO=prometheus-community/helm-charts --COMMIT=0b928f341240c76d8513534035a825686ed28a4b) .
     RUN find . -name '*.yaml' -exec tfk8s --strip --file {} --output {}.tf \;
     SAVE ARTIFACT --keep-ts *.tf AS LOCAL kube-prometheus-stack.crds/
 

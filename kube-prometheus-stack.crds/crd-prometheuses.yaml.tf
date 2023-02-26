@@ -4,7 +4,7 @@ resource "kubernetes_manifest" "customresourcedefinition_prometheuses_monitoring
     "kind" = "CustomResourceDefinition"
     "metadata" = {
       "annotations" = {
-        "controller-gen.kubebuilder.io/version" = "v0.9.2"
+        "controller-gen.kubebuilder.io/version" = "v0.11.1"
       }
       "name" = "prometheuses.monitoring.coreos.com"
     }
@@ -33,15 +33,38 @@ resource "kubernetes_manifest" "customresourcedefinition_prometheuses_monitoring
               "type" = "string"
             },
             {
-              "description" = "The desired replicas number of Prometheuses"
+              "description" = "The number of desired replicas"
               "jsonPath" = ".spec.replicas"
-              "name" = "Replicas"
+              "name" = "Desired"
               "type" = "integer"
+            },
+            {
+              "description" = "The number of ready replicas"
+              "jsonPath" = ".status.availableReplicas"
+              "name" = "Ready"
+              "type" = "integer"
+            },
+            {
+              "jsonPath" = ".status.conditions[?(@.type == 'Reconciled')].status"
+              "name" = "Reconciled"
+              "type" = "string"
+            },
+            {
+              "jsonPath" = ".status.conditions[?(@.type == 'Available')].status"
+              "name" = "Available"
+              "type" = "string"
             },
             {
               "jsonPath" = ".metadata.creationTimestamp"
               "name" = "Age"
               "type" = "date"
+            },
+            {
+              "description" = "Whether the resource reconciliation is paused or not"
+              "jsonPath" = ".status.paused"
+              "name" = "Paused"
+              "priority" = 1
+              "type" = "boolean"
             },
           ]
           "name" = "v1"
@@ -108,7 +131,7 @@ resource "kubernetes_manifest" "customresourcedefinition_prometheuses_monitoring
                       "x-kubernetes-map-type" = "atomic"
                     }
                     "additionalArgs" = {
-                      "description" = "AdditionalArgs allows setting additional arguments for the Prometheus container. It is intended for e.g. activating hidden flags which are not supported by the dedicated configuration options yet. The arguments are passed as-is to the Prometheus container which may cause issues if they are invalid or not supporeted by the given Prometheus version. In case of an argument conflict (e.g. an argument which is already set by the operator itself) or when providing an invalid argument the reconciliation will fail and an error will be logged."
+                      "description" = "AdditionalArgs allows setting additional arguments for the Prometheus container. It is intended for e.g. activating hidden flags which are not supported by the dedicated configuration options yet. The arguments are passed as-is to the Prometheus container which may cause issues if they are invalid or not supported by the given Prometheus version. In case of an argument conflict (e.g. an argument which is already set by the operator itself) or when providing an invalid argument the reconciliation will fail and an error will be logged."
                       "items" = {
                         "description" = "Argument as part of the AdditionalArgs list."
                         "properties" = {
@@ -852,9 +875,63 @@ resource "kubernetes_manifest" "customresourcedefinition_prometheuses_monitoring
                                 }
                                 "type" = "object"
                               }
+                              "basicAuth" = {
+                                "description" = "BasicAuth allow an endpoint to authenticate over basic authentication"
+                                "properties" = {
+                                  "password" = {
+                                    "description" = "The secret in the service monitor namespace that contains the password for authentication."
+                                    "properties" = {
+                                      "key" = {
+                                        "description" = "The key of the secret to select from.  Must be a valid secret key."
+                                        "type" = "string"
+                                      }
+                                      "name" = {
+                                        "description" = "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names TODO: Add other useful fields. apiVersion, kind, uid?"
+                                        "type" = "string"
+                                      }
+                                      "optional" = {
+                                        "description" = "Specify whether the Secret or its key must be defined"
+                                        "type" = "boolean"
+                                      }
+                                    }
+                                    "required" = [
+                                      "key",
+                                    ]
+                                    "type" = "object"
+                                    "x-kubernetes-map-type" = "atomic"
+                                  }
+                                  "username" = {
+                                    "description" = "The secret in the service monitor namespace that contains the username for authentication."
+                                    "properties" = {
+                                      "key" = {
+                                        "description" = "The key of the secret to select from.  Must be a valid secret key."
+                                        "type" = "string"
+                                      }
+                                      "name" = {
+                                        "description" = "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names TODO: Add other useful fields. apiVersion, kind, uid?"
+                                        "type" = "string"
+                                      }
+                                      "optional" = {
+                                        "description" = "Specify whether the Secret or its key must be defined"
+                                        "type" = "boolean"
+                                      }
+                                    }
+                                    "required" = [
+                                      "key",
+                                    ]
+                                    "type" = "object"
+                                    "x-kubernetes-map-type" = "atomic"
+                                  }
+                                }
+                                "type" = "object"
+                              }
                               "bearerTokenFile" = {
                                 "description" = "BearerTokenFile to read from filesystem to use when authenticating to Alertmanager."
                                 "type" = "string"
+                              }
+                              "enableHttp2" = {
+                                "description" = "Whether to enable HTTP2."
+                                "type" = "boolean"
                               }
                               "name" = {
                                 "description" = "Name of Endpoints object in Namespace."
@@ -893,7 +970,7 @@ resource "kubernetes_manifest" "customresourcedefinition_prometheuses_monitoring
                                 "description" = "TLS Config to use for alertmanager connection."
                                 "properties" = {
                                   "ca" = {
-                                    "description" = "Struct containing the CA cert to use for the targets."
+                                    "description" = "Certificate authority used when verifying server certificates."
                                     "properties" = {
                                       "configMap" = {
                                         "description" = "ConfigMap containing data to use for the targets."
@@ -947,7 +1024,7 @@ resource "kubernetes_manifest" "customresourcedefinition_prometheuses_monitoring
                                     "type" = "string"
                                   }
                                   "cert" = {
-                                    "description" = "Struct containing the client cert file for the targets."
+                                    "description" = "Client certificate to present when doing client-authentication."
                                     "properties" = {
                                       "configMap" = {
                                         "description" = "ConfigMap containing data to use for the targets."
@@ -1162,7 +1239,7 @@ resource "kubernetes_manifest" "customresourcedefinition_prometheuses_monitoring
                           "description" = "TLS Config to use for accessing apiserver."
                           "properties" = {
                             "ca" = {
-                              "description" = "Struct containing the CA cert to use for the targets."
+                              "description" = "Certificate authority used when verifying server certificates."
                               "properties" = {
                                 "configMap" = {
                                   "description" = "ConfigMap containing data to use for the targets."
@@ -1216,7 +1293,7 @@ resource "kubernetes_manifest" "customresourcedefinition_prometheuses_monitoring
                               "type" = "string"
                             }
                             "cert" = {
-                              "description" = "Struct containing the client cert file for the targets."
+                              "description" = "Client certificate to present when doing client-authentication."
                               "properties" = {
                                 "configMap" = {
                                   "description" = "ConfigMap containing data to use for the targets."
@@ -1326,7 +1403,7 @@ resource "kubernetes_manifest" "customresourcedefinition_prometheuses_monitoring
                       "type" = "string"
                     }
                     "configMaps" = {
-                      "description" = "ConfigMaps is a list of ConfigMaps in the same namespace as the Prometheus object, which shall be mounted into the Prometheus Pods. The ConfigMaps are mounted into /etc/prometheus/configmaps/<configmap-name>."
+                      "description" = "ConfigMaps is a list of ConfigMaps in the same namespace as the Prometheus object, which shall be mounted into the Prometheus Pods. Each ConfigMap is added to the StatefulSet definition as a volume named `configmap-<configmap-name>`. The ConfigMaps are mounted into /etc/prometheus/configmaps/<configmap-name> in the 'prometheus' container."
                       "items" = {
                         "type" = "string"
                       }
@@ -2075,6 +2152,31 @@ resource "kubernetes_manifest" "customresourcedefinition_prometheuses_monitoring
                           "resources" = {
                             "description" = "Compute Resources required by this container. Cannot be updated. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/"
                             "properties" = {
+                              "claims" = {
+                                "description" = <<-EOT
+                                Claims lists the names of resources, defined in spec.resourceClaims, that are used by this container. 
+                                 This is an alpha field and requires enabling the DynamicResourceAllocation feature gate. 
+                                 This field is immutable.
+                                EOT
+                                "items" = {
+                                  "description" = "ResourceClaim references one entry in PodSpec.ResourceClaims."
+                                  "properties" = {
+                                    "name" = {
+                                      "description" = "Name must match the name of one entry in pod.spec.resourceClaims of the Pod where this field is used. It makes that resource available inside a container."
+                                      "type" = "string"
+                                    }
+                                  }
+                                  "required" = [
+                                    "name",
+                                  ]
+                                  "type" = "object"
+                                }
+                                "type" = "array"
+                                "x-kubernetes-list-map-keys" = [
+                                  "name",
+                                ]
+                                "x-kubernetes-list-type" = "map"
+                              }
                               "limits" = {
                                 "additionalProperties" = {
                                   "anyOf" = [
@@ -2629,12 +2731,26 @@ resource "kubernetes_manifest" "customresourcedefinition_prometheuses_monitoring
                       ]
                       "x-kubernetes-list-type" = "map"
                     }
+                    "hostNetwork" = {
+                      "description" = "Use the host's network namespace if true. Make sure to understand the security implications if you want to enable it. When hostNetwork is enabled, this will set dnsPolicy to ClusterFirstWithHostNet automatically."
+                      "type" = "boolean"
+                    }
                     "ignoreNamespaceSelectors" = {
                       "description" = "IgnoreNamespaceSelectors if set to true will ignore NamespaceSelector settings from all PodMonitor, ServiceMonitor and Probe objects. They will only discover endpoints within the namespace of the PodMonitor, ServiceMonitor and Probe objects. Defaults to false."
                       "type" = "boolean"
                     }
                     "image" = {
                       "description" = "Image if specified has precedence over baseImage, tag and sha combinations. Specifying the version is still necessary to ensure the Prometheus Operator knows what version of Prometheus is being configured."
+                      "type" = "string"
+                    }
+                    "imagePullPolicy" = {
+                      "description" = "Image pull policy for the 'prometheus', 'init-config-reloader' and 'config-reloader' containers. See https://kubernetes.io/docs/concepts/containers/images/#image-pull-policy for more details."
+                      "enum" = [
+                        "",
+                        "Always",
+                        "Never",
+                        "IfNotPresent",
+                      ]
                       "type" = "string"
                     }
                     "imagePullSecrets" = {
@@ -3395,6 +3511,31 @@ resource "kubernetes_manifest" "customresourcedefinition_prometheuses_monitoring
                           "resources" = {
                             "description" = "Compute Resources required by this container. Cannot be updated. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/"
                             "properties" = {
+                              "claims" = {
+                                "description" = <<-EOT
+                                Claims lists the names of resources, defined in spec.resourceClaims, that are used by this container. 
+                                 This is an alpha field and requires enabling the DynamicResourceAllocation feature gate. 
+                                 This field is immutable.
+                                EOT
+                                "items" = {
+                                  "description" = "ResourceClaim references one entry in PodSpec.ResourceClaims."
+                                  "properties" = {
+                                    "name" = {
+                                      "description" = "Name must match the name of one entry in pod.spec.resourceClaims of the Pod where this field is used. It makes that resource available inside a container."
+                                      "type" = "string"
+                                    }
+                                  }
+                                  "required" = [
+                                    "name",
+                                  ]
+                                  "type" = "object"
+                                }
+                                "type" = "array"
+                                "x-kubernetes-list-map-keys" = [
+                                  "name",
+                                ]
+                                "x-kubernetes-list-type" = "map"
+                              }
                               "limits" = {
                                 "additionalProperties" = {
                                   "anyOf" = [
@@ -3819,7 +3960,7 @@ resource "kubernetes_manifest" "customresourcedefinition_prometheuses_monitoring
                       "type" = "string"
                     }
                     "minReadySeconds" = {
-                      "description" = "Minimum number of seconds for which a newly created pod should be ready without any of its container crashing for it to be considered available. Defaults to 0 (pod will be considered available as soon as it is ready) This is an alpha field and requires enabling StatefulSetMinReadySeconds feature gate."
+                      "description" = "Minimum number of seconds for which a newly created pod should be ready without any of its container crashing for it to be considered available. Defaults to 0 (pod will be considered available as soon as it is ready) This is an alpha field from kubernetes 1.22 until 1.24 which requires enabling the StatefulSetMinReadySeconds feature gate."
                       "format" = "int32"
                       "type" = "integer"
                     }
@@ -3910,7 +4051,10 @@ resource "kubernetes_manifest" "customresourcedefinition_prometheuses_monitoring
                       "x-kubernetes-map-type" = "atomic"
                     }
                     "podMonitorSelector" = {
-                      "description" = "*Experimental* PodMonitors to be selected for target discovery. *Deprecated:* if neither this nor serviceMonitorSelector are specified, configuration is unmanaged."
+                      "description" = <<-EOT
+                      *Experimental* PodMonitors to be selected for target discovery. 
+                       If `spec.serviceMonitorSelector`, `spec.podMonitorSelector` and `spec.probeSelector` are null, the Prometheus configuration is unmanaged. The Prometheus operator will ensure that the Prometheus configuration's Secret exists, but it is the responsibility of the user to provide the raw gzipped Prometheus configuration under the `prometheus.yaml.gz` key. This behavior is deprecated and will be removed in the next major version of the custom resource definition. It is recommended to use `spec.additionalScrapeConfigs` instead.
+                      EOT
                       "properties" = {
                         "matchExpressions" = {
                           "description" = "matchExpressions is a list of label selector requirements. The requirements are ANDed."
@@ -3951,6 +4095,13 @@ resource "kubernetes_manifest" "customresourcedefinition_prometheuses_monitoring
                       }
                       "type" = "object"
                       "x-kubernetes-map-type" = "atomic"
+                    }
+                    "podTargetLabels" = {
+                      "description" = "PodTargetLabels are added to all Pod/ServiceMonitors' podTargetLabels"
+                      "items" = {
+                        "type" = "string"
+                      }
+                      "type" = "array"
                     }
                     "portName" = {
                       "description" = "Port name used for the pods and governing service. This defaults to web"
@@ -4004,7 +4155,10 @@ resource "kubernetes_manifest" "customresourcedefinition_prometheuses_monitoring
                       "x-kubernetes-map-type" = "atomic"
                     }
                     "probeSelector" = {
-                      "description" = "*Experimental* Probes to be selected for target discovery."
+                      "description" = <<-EOT
+                      *Experimental* Probes to be selected for target discovery. 
+                       If `spec.serviceMonitorSelector`, `spec.podMonitorSelector` and `spec.probeSelector` are null, the Prometheus configuration is unmanaged. The Prometheus operator will ensure that the Prometheus configuration's Secret exists, but it is the responsibility of the user to provide the raw gzipped Prometheus configuration under the `prometheus.yaml.gz` key. This behavior is deprecated and will be removed in the next major version of the custom resource definition. It is recommended to use `spec.additionalScrapeConfigs` instead.
+                      EOT
                       "properties" = {
                         "matchExpressions" = {
                           "description" = "matchExpressions is a list of label selector requirements. The requirements are ANDed."
@@ -4082,6 +4236,7 @@ resource "kubernetes_manifest" "customresourcedefinition_prometheuses_monitoring
                         "maxConcurrency" = {
                           "description" = "Number of concurrent queries that can be run at once."
                           "format" = "int32"
+                          "minimum" = 1
                           "type" = "integer"
                         }
                         "maxSamples" = {
@@ -4199,6 +4354,10 @@ resource "kubernetes_manifest" "customresourcedefinition_prometheuses_monitoring
                           "bearerTokenFile" = {
                             "description" = "File to read bearer token for remote read."
                             "type" = "string"
+                          }
+                          "filterExternalLabels" = {
+                            "description" = "Whether to use the external labels as selectors for the remote read endpoint. Requires Prometheus v2.34.0 and above."
+                            "type" = "boolean"
                           }
                           "headers" = {
                             "additionalProperties" = {
@@ -4337,7 +4496,7 @@ resource "kubernetes_manifest" "customresourcedefinition_prometheuses_monitoring
                             "description" = "TLS Config to use for remote read."
                             "properties" = {
                               "ca" = {
-                                "description" = "Struct containing the CA cert to use for the targets."
+                                "description" = "Certificate authority used when verifying server certificates."
                                 "properties" = {
                                   "configMap" = {
                                     "description" = "ConfigMap containing data to use for the targets."
@@ -4391,7 +4550,7 @@ resource "kubernetes_manifest" "customresourcedefinition_prometheuses_monitoring
                                 "type" = "string"
                               }
                               "cert" = {
-                                "description" = "Struct containing the client cert file for the targets."
+                                "description" = "Client certificate to present when doing client-authentication."
                                 "properties" = {
                                   "configMap" = {
                                     "description" = "ConfigMap containing data to use for the targets."
@@ -4841,7 +5000,7 @@ resource "kubernetes_manifest" "customresourcedefinition_prometheuses_monitoring
                             "description" = "TLS Config to use for remote write."
                             "properties" = {
                               "ca" = {
-                                "description" = "Struct containing the CA cert to use for the targets."
+                                "description" = "Certificate authority used when verifying server certificates."
                                 "properties" = {
                                   "configMap" = {
                                     "description" = "ConfigMap containing data to use for the targets."
@@ -4895,7 +5054,7 @@ resource "kubernetes_manifest" "customresourcedefinition_prometheuses_monitoring
                                 "type" = "string"
                               }
                               "cert" = {
-                                "description" = "Struct containing the client cert file for the targets."
+                                "description" = "Client certificate to present when doing client-authentication."
                                 "properties" = {
                                   "configMap" = {
                                     "description" = "ConfigMap containing data to use for the targets."
@@ -5074,6 +5233,31 @@ resource "kubernetes_manifest" "customresourcedefinition_prometheuses_monitoring
                     "resources" = {
                       "description" = "Define resources requests and limits for single Pods."
                       "properties" = {
+                        "claims" = {
+                          "description" = <<-EOT
+                          Claims lists the names of resources, defined in spec.resourceClaims, that are used by this container. 
+                           This is an alpha field and requires enabling the DynamicResourceAllocation feature gate. 
+                           This field is immutable.
+                          EOT
+                          "items" = {
+                            "description" = "ResourceClaim references one entry in PodSpec.ResourceClaims."
+                            "properties" = {
+                              "name" = {
+                                "description" = "Name must match the name of one entry in pod.spec.resourceClaims of the Pod where this field is used. It makes that resource available inside a container."
+                                "type" = "string"
+                              }
+                            }
+                            "required" = [
+                              "name",
+                            ]
+                            "type" = "object"
+                          }
+                          "type" = "array"
+                          "x-kubernetes-list-map-keys" = [
+                            "name",
+                          ]
+                          "x-kubernetes-list-type" = "map"
+                        }
                         "limits" = {
                           "additionalProperties" = {
                             "anyOf" = [
@@ -5245,7 +5429,7 @@ resource "kubernetes_manifest" "customresourcedefinition_prometheuses_monitoring
                       "type" = "string"
                     }
                     "secrets" = {
-                      "description" = "Secrets is a list of Secrets in the same namespace as the Prometheus object, which shall be mounted into the Prometheus Pods. The Secrets are mounted into /etc/prometheus/secrets/<secret-name>."
+                      "description" = "Secrets is a list of Secrets in the same namespace as the Prometheus object, which shall be mounted into the Prometheus Pods. Each Secret is added to the StatefulSet definition as a volume named `secret-<secret-name>`. The Secrets are mounted into /etc/prometheus/secrets/<secret-name> in the 'prometheus' container."
                       "items" = {
                         "type" = "string"
                       }
@@ -5324,7 +5508,7 @@ resource "kubernetes_manifest" "customresourcedefinition_prometheuses_monitoring
                           "type" = "object"
                         }
                         "supplementalGroups" = {
-                          "description" = "A list of groups applied to the first process run in each container, in addition to the container's primary GID.  If unspecified, no groups will be added to any container. Note that this field cannot be set when spec.os.name is windows."
+                          "description" = "A list of groups applied to the first process run in each container, in addition to the container's primary GID, the fsGroup (if specified), and group memberships defined in the container image for the uid of the container process. If unspecified, no additional groups are added to any container. Note that group memberships defined in the container image for the uid of the container process are still effective, even if they are not included in this list. Note that this field cannot be set when spec.os.name is windows."
                           "items" = {
                             "format" = "int64"
                             "type" = "integer"
@@ -5426,7 +5610,10 @@ resource "kubernetes_manifest" "customresourcedefinition_prometheuses_monitoring
                       "x-kubernetes-map-type" = "atomic"
                     }
                     "serviceMonitorSelector" = {
-                      "description" = "ServiceMonitors to be selected for target discovery. *Deprecated:* if neither this nor podMonitorSelector are specified, configuration is unmanaged."
+                      "description" = <<-EOT
+                      ServiceMonitors to be selected for target discovery. 
+                       If `spec.serviceMonitorSelector`, `spec.podMonitorSelector` and `spec.probeSelector` are null, the Prometheus configuration is unmanaged. The Prometheus operator will ensure that the Prometheus configuration's Secret exists, but it is the responsibility of the user to provide the raw gzipped Prometheus configuration under the `prometheus.yaml.gz` key. This behavior is deprecated and will be removed in the next major version of the custom resource definition. It is recommended to use `spec.additionalScrapeConfigs` instead.
+                      EOT
                       "properties" = {
                         "matchExpressions" = {
                           "description" = "matchExpressions is a list of label selector requirements. The requirements are ANDed."
@@ -5485,7 +5672,7 @@ resource "kubernetes_manifest" "customresourcedefinition_prometheuses_monitoring
                           "type" = "boolean"
                         }
                         "emptyDir" = {
-                          "description" = "EmptyDirVolumeSource to be used by the Prometheus StatefulSets. If specified, used in place of any volumeClaimTemplate. More info: https://kubernetes.io/docs/concepts/storage/volumes/#emptydir"
+                          "description" = "EmptyDirVolumeSource to be used by the StatefulSet. If specified, used in place of any volumeClaimTemplate. More info: https://kubernetes.io/docs/concepts/storage/volumes/#emptydir"
                           "properties" = {
                             "medium" = {
                               "description" = "medium represents what type of storage medium should back this directory. The default is \"\" which means to use the node's default medium. Must be an empty string (default) or Memory. More info: https://kubernetes.io/docs/concepts/storage/volumes#emptydir"
@@ -5508,7 +5695,7 @@ resource "kubernetes_manifest" "customresourcedefinition_prometheuses_monitoring
                           "type" = "object"
                         }
                         "ephemeral" = {
-                          "description" = "EphemeralVolumeSource to be used by the Prometheus StatefulSets. This is a beta field in k8s 1.21, for lower versions, starting with k8s 1.19, it requires enabling the GenericEphemeralVolume feature gate. More info: https://kubernetes.io/docs/concepts/storage/ephemeral-volumes/#generic-ephemeral-volumes"
+                          "description" = "EphemeralVolumeSource to be used by the StatefulSet. This is a beta field in k8s 1.21, for lower versions, starting with k8s 1.19, it requires enabling the GenericEphemeralVolume feature gate. More info: https://kubernetes.io/docs/concepts/storage/ephemeral-volumes/#generic-ephemeral-volumes"
                           "properties" = {
                             "volumeClaimTemplate" = {
                               "description" = <<-EOT
@@ -5533,7 +5720,7 @@ resource "kubernetes_manifest" "customresourcedefinition_prometheuses_monitoring
                                       "type" = "array"
                                     }
                                     "dataSource" = {
-                                      "description" = "dataSource field can be used to specify either: * An existing VolumeSnapshot object (snapshot.storage.k8s.io/VolumeSnapshot) * An existing PVC (PersistentVolumeClaim) If the provisioner or an external controller can support the specified data source, it will create a new volume based on the contents of the specified data source. If the AnyVolumeDataSource feature gate is enabled, this field will always have the same contents as the DataSourceRef field."
+                                      "description" = "dataSource field can be used to specify either: * An existing VolumeSnapshot object (snapshot.storage.k8s.io/VolumeSnapshot) * An existing PVC (PersistentVolumeClaim) If the provisioner or an external controller can support the specified data source, it will create a new volume based on the contents of the specified data source. When the AnyVolumeDataSource feature gate is enabled, dataSource contents will be copied to dataSourceRef, and dataSourceRef contents will be copied to dataSource when dataSourceRef.namespace is not specified. If the namespace is specified, then dataSourceRef will not be copied to dataSource."
                                       "properties" = {
                                         "apiGroup" = {
                                           "description" = "APIGroup is the group for the resource being referenced. If APIGroup is not specified, the specified Kind must be in the core API group. For any other third-party types, APIGroup is required."
@@ -5556,7 +5743,7 @@ resource "kubernetes_manifest" "customresourcedefinition_prometheuses_monitoring
                                       "x-kubernetes-map-type" = "atomic"
                                     }
                                     "dataSourceRef" = {
-                                      "description" = "dataSourceRef specifies the object from which to populate the volume with data, if a non-empty volume is desired. This may be any local object from a non-empty API group (non core object) or a PersistentVolumeClaim object. When this field is specified, volume binding will only succeed if the type of the specified object matches some installed volume populator or dynamic provisioner. This field will replace the functionality of the DataSource field and as such if both fields are non-empty, they must have the same value. For backwards compatibility, both fields (DataSource and DataSourceRef) will be set to the same value automatically if one of them is empty and the other is non-empty. There are two important differences between DataSource and DataSourceRef: * While DataSource only allows two specific types of objects, DataSourceRef allows any non-core object, as well as PersistentVolumeClaim objects. * While DataSource ignores disallowed values (dropping them), DataSourceRef preserves all values, and generates an error if a disallowed value is specified. (Beta) Using this field requires the AnyVolumeDataSource feature gate to be enabled."
+                                      "description" = "dataSourceRef specifies the object from which to populate the volume with data, if a non-empty volume is desired. This may be any object from a non-empty API group (non core object) or a PersistentVolumeClaim object. When this field is specified, volume binding will only succeed if the type of the specified object matches some installed volume populator or dynamic provisioner. This field will replace the functionality of the dataSource field and as such if both fields are non-empty, they must have the same value. For backwards compatibility, when namespace isn't specified in dataSourceRef, both fields (dataSource and dataSourceRef) will be set to the same value automatically if one of them is empty and the other is non-empty. When namespace is specified in dataSourceRef, dataSource isn't set to the same value and must be empty. There are three important differences between dataSource and dataSourceRef: * While dataSource only allows two specific types of objects, dataSourceRef allows any non-core object, as well as PersistentVolumeClaim objects. * While dataSource ignores disallowed values (dropping them), dataSourceRef preserves all values, and generates an error if a disallowed value is specified. * While dataSource only allows local objects, dataSourceRef allows objects in any namespaces. (Beta) Using this field requires the AnyVolumeDataSource feature gate to be enabled. (Alpha) Using the namespace field of dataSourceRef requires the CrossNamespaceVolumeDataSource feature gate to be enabled."
                                       "properties" = {
                                         "apiGroup" = {
                                           "description" = "APIGroup is the group for the resource being referenced. If APIGroup is not specified, the specified Kind must be in the core API group. For any other third-party types, APIGroup is required."
@@ -5570,17 +5757,45 @@ resource "kubernetes_manifest" "customresourcedefinition_prometheuses_monitoring
                                           "description" = "Name is the name of resource being referenced"
                                           "type" = "string"
                                         }
+                                        "namespace" = {
+                                          "description" = "Namespace is the namespace of resource being referenced Note that when a namespace is specified, a gateway.networking.k8s.io/ReferenceGrant object is required in the referent namespace to allow that namespace's owner to accept the reference. See the ReferenceGrant documentation for details. (Alpha) This field requires the CrossNamespaceVolumeDataSource feature gate to be enabled."
+                                          "type" = "string"
+                                        }
                                       }
                                       "required" = [
                                         "kind",
                                         "name",
                                       ]
                                       "type" = "object"
-                                      "x-kubernetes-map-type" = "atomic"
                                     }
                                     "resources" = {
                                       "description" = "resources represents the minimum resources the volume should have. If RecoverVolumeExpansionFailure feature is enabled users are allowed to specify resource requirements that are lower than previous value but must still be higher than capacity recorded in the status field of the claim. More info: https://kubernetes.io/docs/concepts/storage/persistent-volumes#resources"
                                       "properties" = {
+                                        "claims" = {
+                                          "description" = <<-EOT
+                                          Claims lists the names of resources, defined in spec.resourceClaims, that are used by this container. 
+                                           This is an alpha field and requires enabling the DynamicResourceAllocation feature gate. 
+                                           This field is immutable.
+                                          EOT
+                                          "items" = {
+                                            "description" = "ResourceClaim references one entry in PodSpec.ResourceClaims."
+                                            "properties" = {
+                                              "name" = {
+                                                "description" = "Name must match the name of one entry in pod.spec.resourceClaims of the Pod where this field is used. It makes that resource available inside a container."
+                                                "type" = "string"
+                                              }
+                                            }
+                                            "required" = [
+                                              "name",
+                                            ]
+                                            "type" = "object"
+                                          }
+                                          "type" = "array"
+                                          "x-kubernetes-list-map-keys" = [
+                                            "name",
+                                          ]
+                                          "x-kubernetes-list-type" = "map"
+                                        }
                                         "limits" = {
                                           "additionalProperties" = {
                                             "anyOf" = [
@@ -5684,7 +5899,7 @@ resource "kubernetes_manifest" "customresourcedefinition_prometheuses_monitoring
                           "type" = "object"
                         }
                         "volumeClaimTemplate" = {
-                          "description" = "A PVC spec to be used by the Prometheus StatefulSets."
+                          "description" = "A PVC spec to be used by the StatefulSet. The easiest way to use a volume that cannot be automatically provisioned (for whatever reason) is to use a label selector alongside manually created PersistentVolumes."
                           "properties" = {
                             "apiVersion" = {
                               "description" = "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources"
@@ -5729,7 +5944,7 @@ resource "kubernetes_manifest" "customresourcedefinition_prometheuses_monitoring
                                   "type" = "array"
                                 }
                                 "dataSource" = {
-                                  "description" = "dataSource field can be used to specify either: * An existing VolumeSnapshot object (snapshot.storage.k8s.io/VolumeSnapshot) * An existing PVC (PersistentVolumeClaim) If the provisioner or an external controller can support the specified data source, it will create a new volume based on the contents of the specified data source. If the AnyVolumeDataSource feature gate is enabled, this field will always have the same contents as the DataSourceRef field."
+                                  "description" = "dataSource field can be used to specify either: * An existing VolumeSnapshot object (snapshot.storage.k8s.io/VolumeSnapshot) * An existing PVC (PersistentVolumeClaim) If the provisioner or an external controller can support the specified data source, it will create a new volume based on the contents of the specified data source. When the AnyVolumeDataSource feature gate is enabled, dataSource contents will be copied to dataSourceRef, and dataSourceRef contents will be copied to dataSource when dataSourceRef.namespace is not specified. If the namespace is specified, then dataSourceRef will not be copied to dataSource."
                                   "properties" = {
                                     "apiGroup" = {
                                       "description" = "APIGroup is the group for the resource being referenced. If APIGroup is not specified, the specified Kind must be in the core API group. For any other third-party types, APIGroup is required."
@@ -5752,7 +5967,7 @@ resource "kubernetes_manifest" "customresourcedefinition_prometheuses_monitoring
                                   "x-kubernetes-map-type" = "atomic"
                                 }
                                 "dataSourceRef" = {
-                                  "description" = "dataSourceRef specifies the object from which to populate the volume with data, if a non-empty volume is desired. This may be any local object from a non-empty API group (non core object) or a PersistentVolumeClaim object. When this field is specified, volume binding will only succeed if the type of the specified object matches some installed volume populator or dynamic provisioner. This field will replace the functionality of the DataSource field and as such if both fields are non-empty, they must have the same value. For backwards compatibility, both fields (DataSource and DataSourceRef) will be set to the same value automatically if one of them is empty and the other is non-empty. There are two important differences between DataSource and DataSourceRef: * While DataSource only allows two specific types of objects, DataSourceRef allows any non-core object, as well as PersistentVolumeClaim objects. * While DataSource ignores disallowed values (dropping them), DataSourceRef preserves all values, and generates an error if a disallowed value is specified. (Beta) Using this field requires the AnyVolumeDataSource feature gate to be enabled."
+                                  "description" = "dataSourceRef specifies the object from which to populate the volume with data, if a non-empty volume is desired. This may be any object from a non-empty API group (non core object) or a PersistentVolumeClaim object. When this field is specified, volume binding will only succeed if the type of the specified object matches some installed volume populator or dynamic provisioner. This field will replace the functionality of the dataSource field and as such if both fields are non-empty, they must have the same value. For backwards compatibility, when namespace isn't specified in dataSourceRef, both fields (dataSource and dataSourceRef) will be set to the same value automatically if one of them is empty and the other is non-empty. When namespace is specified in dataSourceRef, dataSource isn't set to the same value and must be empty. There are three important differences between dataSource and dataSourceRef: * While dataSource only allows two specific types of objects, dataSourceRef allows any non-core object, as well as PersistentVolumeClaim objects. * While dataSource ignores disallowed values (dropping them), dataSourceRef preserves all values, and generates an error if a disallowed value is specified. * While dataSource only allows local objects, dataSourceRef allows objects in any namespaces. (Beta) Using this field requires the AnyVolumeDataSource feature gate to be enabled. (Alpha) Using the namespace field of dataSourceRef requires the CrossNamespaceVolumeDataSource feature gate to be enabled."
                                   "properties" = {
                                     "apiGroup" = {
                                       "description" = "APIGroup is the group for the resource being referenced. If APIGroup is not specified, the specified Kind must be in the core API group. For any other third-party types, APIGroup is required."
@@ -5766,17 +5981,45 @@ resource "kubernetes_manifest" "customresourcedefinition_prometheuses_monitoring
                                       "description" = "Name is the name of resource being referenced"
                                       "type" = "string"
                                     }
+                                    "namespace" = {
+                                      "description" = "Namespace is the namespace of resource being referenced Note that when a namespace is specified, a gateway.networking.k8s.io/ReferenceGrant object is required in the referent namespace to allow that namespace's owner to accept the reference. See the ReferenceGrant documentation for details. (Alpha) This field requires the CrossNamespaceVolumeDataSource feature gate to be enabled."
+                                      "type" = "string"
+                                    }
                                   }
                                   "required" = [
                                     "kind",
                                     "name",
                                   ]
                                   "type" = "object"
-                                  "x-kubernetes-map-type" = "atomic"
                                 }
                                 "resources" = {
                                   "description" = "resources represents the minimum resources the volume should have. If RecoverVolumeExpansionFailure feature is enabled users are allowed to specify resource requirements that are lower than previous value but must still be higher than capacity recorded in the status field of the claim. More info: https://kubernetes.io/docs/concepts/storage/persistent-volumes#resources"
                                   "properties" = {
+                                    "claims" = {
+                                      "description" = <<-EOT
+                                      Claims lists the names of resources, defined in spec.resourceClaims, that are used by this container. 
+                                       This is an alpha field and requires enabling the DynamicResourceAllocation feature gate. 
+                                       This field is immutable.
+                                      EOT
+                                      "items" = {
+                                        "description" = "ResourceClaim references one entry in PodSpec.ResourceClaims."
+                                        "properties" = {
+                                          "name" = {
+                                            "description" = "Name must match the name of one entry in pod.spec.resourceClaims of the Pod where this field is used. It makes that resource available inside a container."
+                                            "type" = "string"
+                                          }
+                                        }
+                                        "required" = [
+                                          "name",
+                                        ]
+                                        "type" = "object"
+                                      }
+                                      "type" = "array"
+                                      "x-kubernetes-list-map-keys" = [
+                                        "name",
+                                      ]
+                                      "x-kubernetes-list-type" = "map"
+                                    }
                                     "limits" = {
                                       "additionalProperties" = {
                                         "anyOf" = [
@@ -5980,7 +6223,7 @@ resource "kubernetes_manifest" "customresourcedefinition_prometheuses_monitoring
                       EOT
                       "properties" = {
                         "additionalArgs" = {
-                          "description" = "AdditionalArgs allows setting additional arguments for the Thanos container. The arguments are passed as-is to the Thanos container which may cause issues if they are invalid or not supporeted the given Thanos version. In case of an argument conflict (e.g. an argument which is already set by the operator itself) or when providing an invalid argument the reconciliation will fail and an error will be logged."
+                          "description" = "AdditionalArgs allows setting additional arguments for the Thanos container. The arguments are passed as-is to the Thanos container which may cause issues if they are invalid or not supported the given Thanos version. In case of an argument conflict (e.g. an argument which is already set by the operator itself) or when providing an invalid argument the reconciliation will fail and an error will be logged."
                           "items" = {
                             "description" = "Argument as part of the AdditionalArgs list."
                             "properties" = {
@@ -6005,11 +6248,15 @@ resource "kubernetes_manifest" "customresourcedefinition_prometheuses_monitoring
                           "description" = "Thanos base image if other than default. Deprecated: use 'image' instead"
                           "type" = "string"
                         }
+                        "grpcListenLocal" = {
+                          "description" = "If true, the Thanos sidecar listens on the loopback interface for the gRPC endpoints. It has no effect if `listenLocal` is true."
+                          "type" = "boolean"
+                        }
                         "grpcServerTlsConfig" = {
-                          "description" = "GRPCServerTLSConfig configures the gRPC server from which Thanos Querier reads recorded rule data. Note: Currently only the CAFile, CertFile, and KeyFile fields are supported. Maps to the '--grpc-server-tls-*' CLI args."
+                          "description" = "GRPCServerTLSConfig configures the TLS parameters for the gRPC server providing the StoreAPI. Note: Currently only the CAFile, CertFile, and KeyFile fields are supported. Maps to the '--grpc-server-tls-*' CLI args."
                           "properties" = {
                             "ca" = {
-                              "description" = "Struct containing the CA cert to use for the targets."
+                              "description" = "Certificate authority used when verifying server certificates."
                               "properties" = {
                                 "configMap" = {
                                   "description" = "ConfigMap containing data to use for the targets."
@@ -6063,7 +6310,7 @@ resource "kubernetes_manifest" "customresourcedefinition_prometheuses_monitoring
                               "type" = "string"
                             }
                             "cert" = {
-                              "description" = "Struct containing the client cert file for the targets."
+                              "description" = "Client certificate to present when doing client-authentication."
                               "properties" = {
                                 "configMap" = {
                                   "description" = "ConfigMap containing data to use for the targets."
@@ -6153,12 +6400,16 @@ resource "kubernetes_manifest" "customresourcedefinition_prometheuses_monitoring
                           }
                           "type" = "object"
                         }
+                        "httpListenLocal" = {
+                          "description" = "If true, the Thanos sidecar listens on the loopback interface for the HTTP endpoints. It has no effect if `listenLocal` is true."
+                          "type" = "boolean"
+                        }
                         "image" = {
                           "description" = "Image if specified has precedence over baseImage, tag and sha combinations. Specifying the version is still necessary to ensure the Prometheus Operator knows what version of Thanos is being configured."
                           "type" = "string"
                         }
                         "listenLocal" = {
-                          "description" = "ListenLocal makes the Thanos sidecar listen on loopback, so that it does not bind against the Pod IP."
+                          "description" = "If true, the Thanos sidecar listens on the loopback interface for the HTTP and gRPC endpoints. It takes precedence over `grpcListenLocal` and `httpListenLocal`. Deprecated: use `grpcListenLocal` and `httpListenLocal` instead."
                           "type" = "boolean"
                         }
                         "logFormat" = {
@@ -6219,6 +6470,31 @@ resource "kubernetes_manifest" "customresourcedefinition_prometheuses_monitoring
                         "resources" = {
                           "description" = "Resources defines the resource requirements for the Thanos sidecar. If not provided, no requests/limits will be set"
                           "properties" = {
+                            "claims" = {
+                              "description" = <<-EOT
+                              Claims lists the names of resources, defined in spec.resourceClaims, that are used by this container. 
+                               This is an alpha field and requires enabling the DynamicResourceAllocation feature gate. 
+                               This field is immutable.
+                              EOT
+                              "items" = {
+                                "description" = "ResourceClaim references one entry in PodSpec.ResourceClaims."
+                                "properties" = {
+                                  "name" = {
+                                    "description" = "Name must match the name of one entry in pod.spec.resourceClaims of the Pod where this field is used. It makes that resource available inside a container."
+                                    "type" = "string"
+                                  }
+                                }
+                                "required" = [
+                                  "name",
+                                ]
+                                "type" = "object"
+                              }
+                              "type" = "array"
+                              "x-kubernetes-list-map-keys" = [
+                                "name",
+                              ]
+                              "x-kubernetes-list-type" = "map"
+                            }
                             "limits" = {
                               "additionalProperties" = {
                                 "anyOf" = [
@@ -6437,14 +6713,14 @@ resource "kubernetes_manifest" "customresourcedefinition_prometheuses_monitoring
                           "nodeAffinityPolicy" = {
                             "description" = <<-EOT
                             NodeAffinityPolicy indicates how we will treat Pod's nodeAffinity/nodeSelector when calculating pod topology spread skew. Options are: - Honor: only nodes matching nodeAffinity/nodeSelector are included in the calculations. - Ignore: nodeAffinity/nodeSelector are ignored. All nodes are included in the calculations. 
-                             If this value is nil, the behavior is equivalent to the Honor policy. This is a alpha-level feature enabled by the NodeInclusionPolicyInPodTopologySpread feature flag.
+                             If this value is nil, the behavior is equivalent to the Honor policy. This is a beta-level feature default enabled by the NodeInclusionPolicyInPodTopologySpread feature flag.
                             EOT
                             "type" = "string"
                           }
                           "nodeTaintsPolicy" = {
                             "description" = <<-EOT
                             NodeTaintsPolicy indicates how we will treat node taints when calculating pod topology spread skew. Options are: - Honor: nodes without taints, along with tainted nodes for which the incoming pod has a toleration, are included. - Ignore: node taints are ignored. All nodes are included. 
-                             If this value is nil, the behavior is equivalent to the Ignore policy. This is a alpha-level feature enabled by the NodeInclusionPolicyInPodTopologySpread feature flag.
+                             If this value is nil, the behavior is equivalent to the Ignore policy. This is a beta-level feature default enabled by the NodeInclusionPolicyInPodTopologySpread feature flag.
                             EOT
                             "type" = "string"
                           }
@@ -6465,6 +6741,17 @@ resource "kubernetes_manifest" "customresourcedefinition_prometheuses_monitoring
                         "type" = "object"
                       }
                       "type" = "array"
+                    }
+                    "tsdb" = {
+                      "description" = "Defines the runtime reloadable configuration of the timeseries database (TSDB)."
+                      "properties" = {
+                        "outOfOrderTimeWindow" = {
+                          "description" = "Configures how old an out-of-order/out-of-bounds sample can be w.r.t. the TSDB max time. An out-of-order/out-of-bounds sample is ingested into the TSDB as long as the timestamp of the sample is >= (TSDB.MaxTime - outOfOrderTimeWindow). Out of order ingestion is an experimental feature and requires Prometheus >= v2.39.0."
+                          "pattern" = "^(0|(([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?(([0-9]+)ms)?)$"
+                          "type" = "string"
+                        }
+                      }
+                      "type" = "object"
                     }
                     "version" = {
                       "description" = "Version of Prometheus to be deployed."
@@ -6893,7 +7180,7 @@ resource "kubernetes_manifest" "customresourcedefinition_prometheuses_monitoring
                                         "type" = "array"
                                       }
                                       "dataSource" = {
-                                        "description" = "dataSource field can be used to specify either: * An existing VolumeSnapshot object (snapshot.storage.k8s.io/VolumeSnapshot) * An existing PVC (PersistentVolumeClaim) If the provisioner or an external controller can support the specified data source, it will create a new volume based on the contents of the specified data source. If the AnyVolumeDataSource feature gate is enabled, this field will always have the same contents as the DataSourceRef field."
+                                        "description" = "dataSource field can be used to specify either: * An existing VolumeSnapshot object (snapshot.storage.k8s.io/VolumeSnapshot) * An existing PVC (PersistentVolumeClaim) If the provisioner or an external controller can support the specified data source, it will create a new volume based on the contents of the specified data source. When the AnyVolumeDataSource feature gate is enabled, dataSource contents will be copied to dataSourceRef, and dataSourceRef contents will be copied to dataSource when dataSourceRef.namespace is not specified. If the namespace is specified, then dataSourceRef will not be copied to dataSource."
                                         "properties" = {
                                           "apiGroup" = {
                                             "description" = "APIGroup is the group for the resource being referenced. If APIGroup is not specified, the specified Kind must be in the core API group. For any other third-party types, APIGroup is required."
@@ -6916,7 +7203,7 @@ resource "kubernetes_manifest" "customresourcedefinition_prometheuses_monitoring
                                         "x-kubernetes-map-type" = "atomic"
                                       }
                                       "dataSourceRef" = {
-                                        "description" = "dataSourceRef specifies the object from which to populate the volume with data, if a non-empty volume is desired. This may be any local object from a non-empty API group (non core object) or a PersistentVolumeClaim object. When this field is specified, volume binding will only succeed if the type of the specified object matches some installed volume populator or dynamic provisioner. This field will replace the functionality of the DataSource field and as such if both fields are non-empty, they must have the same value. For backwards compatibility, both fields (DataSource and DataSourceRef) will be set to the same value automatically if one of them is empty and the other is non-empty. There are two important differences between DataSource and DataSourceRef: * While DataSource only allows two specific types of objects, DataSourceRef allows any non-core object, as well as PersistentVolumeClaim objects. * While DataSource ignores disallowed values (dropping them), DataSourceRef preserves all values, and generates an error if a disallowed value is specified. (Beta) Using this field requires the AnyVolumeDataSource feature gate to be enabled."
+                                        "description" = "dataSourceRef specifies the object from which to populate the volume with data, if a non-empty volume is desired. This may be any object from a non-empty API group (non core object) or a PersistentVolumeClaim object. When this field is specified, volume binding will only succeed if the type of the specified object matches some installed volume populator or dynamic provisioner. This field will replace the functionality of the dataSource field and as such if both fields are non-empty, they must have the same value. For backwards compatibility, when namespace isn't specified in dataSourceRef, both fields (dataSource and dataSourceRef) will be set to the same value automatically if one of them is empty and the other is non-empty. When namespace is specified in dataSourceRef, dataSource isn't set to the same value and must be empty. There are three important differences between dataSource and dataSourceRef: * While dataSource only allows two specific types of objects, dataSourceRef allows any non-core object, as well as PersistentVolumeClaim objects. * While dataSource ignores disallowed values (dropping them), dataSourceRef preserves all values, and generates an error if a disallowed value is specified. * While dataSource only allows local objects, dataSourceRef allows objects in any namespaces. (Beta) Using this field requires the AnyVolumeDataSource feature gate to be enabled. (Alpha) Using the namespace field of dataSourceRef requires the CrossNamespaceVolumeDataSource feature gate to be enabled."
                                         "properties" = {
                                           "apiGroup" = {
                                             "description" = "APIGroup is the group for the resource being referenced. If APIGroup is not specified, the specified Kind must be in the core API group. For any other third-party types, APIGroup is required."
@@ -6930,17 +7217,45 @@ resource "kubernetes_manifest" "customresourcedefinition_prometheuses_monitoring
                                             "description" = "Name is the name of resource being referenced"
                                             "type" = "string"
                                           }
+                                          "namespace" = {
+                                            "description" = "Namespace is the namespace of resource being referenced Note that when a namespace is specified, a gateway.networking.k8s.io/ReferenceGrant object is required in the referent namespace to allow that namespace's owner to accept the reference. See the ReferenceGrant documentation for details. (Alpha) This field requires the CrossNamespaceVolumeDataSource feature gate to be enabled."
+                                            "type" = "string"
+                                          }
                                         }
                                         "required" = [
                                           "kind",
                                           "name",
                                         ]
                                         "type" = "object"
-                                        "x-kubernetes-map-type" = "atomic"
                                       }
                                       "resources" = {
                                         "description" = "resources represents the minimum resources the volume should have. If RecoverVolumeExpansionFailure feature is enabled users are allowed to specify resource requirements that are lower than previous value but must still be higher than capacity recorded in the status field of the claim. More info: https://kubernetes.io/docs/concepts/storage/persistent-volumes#resources"
                                         "properties" = {
+                                          "claims" = {
+                                            "description" = <<-EOT
+                                            Claims lists the names of resources, defined in spec.resourceClaims, that are used by this container. 
+                                             This is an alpha field and requires enabling the DynamicResourceAllocation feature gate. 
+                                             This field is immutable.
+                                            EOT
+                                            "items" = {
+                                              "description" = "ResourceClaim references one entry in PodSpec.ResourceClaims."
+                                              "properties" = {
+                                                "name" = {
+                                                  "description" = "Name must match the name of one entry in pod.spec.resourceClaims of the Pod where this field is used. It makes that resource available inside a container."
+                                                  "type" = "string"
+                                                }
+                                              }
+                                              "required" = [
+                                                "name",
+                                              ]
+                                              "type" = "object"
+                                            }
+                                            "type" = "array"
+                                            "x-kubernetes-list-map-keys" = [
+                                              "name",
+                                            ]
+                                            "x-kubernetes-list-type" = "map"
+                                          }
                                           "limits" = {
                                             "additionalProperties" = {
                                               "anyOf" = [
@@ -7874,6 +8189,12 @@ resource "kubernetes_manifest" "customresourcedefinition_prometheuses_monitoring
                           }
                           "type" = "object"
                         }
+                        "maxConnections" = {
+                          "description" = "Defines the maximum number of simultaneous connections A zero value means that Prometheus doesn't accept any incoming connection."
+                          "format" = "int32"
+                          "minimum" = 0
+                          "type" = "integer"
+                        }
                         "pageTitle" = {
                           "description" = "The prometheus web page title"
                           "type" = "string"
@@ -8057,7 +8378,7 @@ resource "kubernetes_manifest" "customresourcedefinition_prometheuses_monitoring
                     "conditions" = {
                       "description" = "The current state of the Prometheus deployment."
                       "items" = {
-                        "description" = "PrometheusCondition represents the state of the resources associated with the Prometheus resource."
+                        "description" = "Condition represents the state of the resources associated with the Prometheus or Alertmanager resource."
                         "properties" = {
                           "lastTransitionTime" = {
                             "description" = "lastTransitionTime is the time of the last update to the current status property."
@@ -8068,12 +8389,17 @@ resource "kubernetes_manifest" "customresourcedefinition_prometheuses_monitoring
                             "description" = "Human-readable message indicating details for the condition's last transition."
                             "type" = "string"
                           }
+                          "observedGeneration" = {
+                            "description" = "ObservedGeneration represents the .metadata.generation that the condition was set based upon. For instance, if `.metadata.generation` is currently 12, but the `.status.conditions[].observedGeneration` is 9, the condition is out of date with respect to the current state of the instance."
+                            "format" = "int64"
+                            "type" = "integer"
+                          }
                           "reason" = {
                             "description" = "Reason for the condition's last transition."
                             "type" = "string"
                           }
                           "status" = {
-                            "description" = "status of the condition."
+                            "description" = "Status of the condition."
                             "type" = "string"
                           }
                           "type" = {

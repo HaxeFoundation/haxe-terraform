@@ -4,7 +4,7 @@ resource "kubernetes_manifest" "customresourcedefinition_probes_monitoring_coreo
     "kind" = "CustomResourceDefinition"
     "metadata" = {
       "annotations" = {
-        "controller-gen.kubebuilder.io/version" = "v0.9.2"
+        "controller-gen.kubebuilder.io/version" = "v0.11.1"
       }
       "name" = "probes.monitoring.coreos.com"
     }
@@ -610,7 +610,7 @@ resource "kubernetes_manifest" "customresourcedefinition_probes_monitoring_coreo
                       "description" = "TLS configuration to use when scraping the endpoint."
                       "properties" = {
                         "ca" = {
-                          "description" = "Struct containing the CA cert to use for the targets."
+                          "description" = "Certificate authority used when verifying server certificates."
                           "properties" = {
                             "configMap" = {
                               "description" = "ConfigMap containing data to use for the targets."
@@ -660,7 +660,7 @@ resource "kubernetes_manifest" "customresourcedefinition_probes_monitoring_coreo
                           "type" = "object"
                         }
                         "cert" = {
-                          "description" = "Struct containing the client cert file for the targets."
+                          "description" = "Client certificate to present when doing client-authentication."
                           "properties" = {
                             "configMap" = {
                               "description" = "ConfigMap containing data to use for the targets."

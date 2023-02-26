@@ -4,7 +4,7 @@ resource "kubernetes_manifest" "customresourcedefinition_thanosrulers_monitoring
     "kind" = "CustomResourceDefinition"
     "metadata" = {
       "annotations" = {
-        "controller-gen.kubebuilder.io/version" = "v0.9.2"
+        "controller-gen.kubebuilder.io/version" = "v0.11.1"
       }
       "name" = "thanosrulers.monitoring.coreos.com"
     }
@@ -27,7 +27,7 @@ resource "kubernetes_manifest" "customresourcedefinition_thanosrulers_monitoring
         {
           "additionalPrinterColumns" = [
             {
-              "description" = "The desired replicas number of Thanos Rulers"
+              "description" = "The number of desired replicas"
               "jsonPath" = ".spec.replicas"
               "name" = "Replicas"
               "type" = "integer"
@@ -36,6 +36,13 @@ resource "kubernetes_manifest" "customresourcedefinition_thanosrulers_monitoring
               "jsonPath" = ".metadata.creationTimestamp"
               "name" = "Age"
               "type" = "date"
+            },
+            {
+              "description" = "Whether the resource reconciliation is paused or not"
+              "jsonPath" = ".status.paused"
+              "name" = "Paused"
+              "priority" = 1
+              "type" = "boolean"
             },
           ]
           "name" = "v1"
@@ -57,6 +64,28 @@ resource "kubernetes_manifest" "customresourcedefinition_thanosrulers_monitoring
                 "spec" = {
                   "description" = "Specification of the desired behavior of the ThanosRuler cluster. More info: https://github.com/kubernetes/community/blob/master/contributors/devel/sig-architecture/api-conventions.md#spec-and-status"
                   "properties" = {
+                    "additionalArgs" = {
+                      "description" = "AdditionalArgs allows setting additional arguments for the ThanosRuler container. It is intended for e.g. activating hidden flags which are not supported by the dedicated configuration options yet. The arguments are passed as-is to the ThanosRuler container which may cause issues if they are invalid or not supported by the given ThanosRuler version. In case of an argument conflict (e.g. an argument which is already set by the operator itself) or when providing an invalid argument the reconciliation will fail and an error will be logged."
+                      "items" = {
+                        "description" = "Argument as part of the AdditionalArgs list."
+                        "properties" = {
+                          "name" = {
+                            "description" = "Name of the argument, e.g. \"scrape.discovery-reload-interval\"."
+                            "minLength" = 1
+                            "type" = "string"
+                          }
+                          "value" = {
+                            "description" = "Argument value, e.g. 30s. Can be empty for name-only arguments (e.g. --storage.tsdb.no-lockfile)"
+                            "type" = "string"
+                          }
+                        }
+                        "required" = [
+                          "name",
+                        ]
+                        "type" = "object"
+                      }
+                      "type" = "array"
+                    }
                     "affinity" = {
                       "description" = "If specified, the pod's scheduling constraints."
                       "properties" = {
@@ -1523,6 +1552,31 @@ resource "kubernetes_manifest" "customresourcedefinition_thanosrulers_monitoring
                           "resources" = {
                             "description" = "Compute Resources required by this container. Cannot be updated. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/"
                             "properties" = {
+                              "claims" = {
+                                "description" = <<-EOT
+                                Claims lists the names of resources, defined in spec.resourceClaims, that are used by this container. 
+                                 This is an alpha field and requires enabling the DynamicResourceAllocation feature gate. 
+                                 This field is immutable.
+                                EOT
+                                "items" = {
+                                  "description" = "ResourceClaim references one entry in PodSpec.ResourceClaims."
+                                  "properties" = {
+                                    "name" = {
+                                      "description" = "Name must match the name of one entry in pod.spec.resourceClaims of the Pod where this field is used. It makes that resource available inside a container."
+                                      "type" = "string"
+                                    }
+                                  }
+                                  "required" = [
+                                    "name",
+                                  ]
+                                  "type" = "object"
+                                }
+                                "type" = "array"
+                                "x-kubernetes-list-map-keys" = [
+                                  "name",
+                                ]
+                                "x-kubernetes-list-type" = "map"
+                              }
                               "limits" = {
                                 "additionalProperties" = {
                                   "anyOf" = [
@@ -1981,7 +2035,7 @@ resource "kubernetes_manifest" "customresourcedefinition_thanosrulers_monitoring
                       "description" = "GRPCServerTLSConfig configures the gRPC server from which Thanos Querier reads recorded rule data. Note: Currently only the CAFile, CertFile, and KeyFile fields are supported. Maps to the '--grpc-server-tls-*' CLI args."
                       "properties" = {
                         "ca" = {
-                          "description" = "Struct containing the CA cert to use for the targets."
+                          "description" = "Certificate authority used when verifying server certificates."
                           "properties" = {
                             "configMap" = {
                               "description" = "ConfigMap containing data to use for the targets."
@@ -2035,7 +2089,7 @@ resource "kubernetes_manifest" "customresourcedefinition_thanosrulers_monitoring
                           "type" = "string"
                         }
                         "cert" = {
-                          "description" = "Struct containing the client cert file for the targets."
+                          "description" = "Client certificate to present when doing client-authentication."
                           "properties" = {
                             "configMap" = {
                               "description" = "ConfigMap containing data to use for the targets."
@@ -2156,6 +2210,16 @@ resource "kubernetes_manifest" "customresourcedefinition_thanosrulers_monitoring
                     }
                     "image" = {
                       "description" = "Thanos container image URL."
+                      "type" = "string"
+                    }
+                    "imagePullPolicy" = {
+                      "description" = "Image pull policy for the 'thanos', 'init-config-reloader' and 'config-reloader' containers. See https://kubernetes.io/docs/concepts/containers/images/#image-pull-policy for more details."
+                      "enum" = [
+                        "",
+                        "Always",
+                        "Never",
+                        "IfNotPresent",
+                      ]
                       "type" = "string"
                     }
                     "imagePullSecrets" = {
@@ -2916,6 +2980,31 @@ resource "kubernetes_manifest" "customresourcedefinition_thanosrulers_monitoring
                           "resources" = {
                             "description" = "Compute Resources required by this container. Cannot be updated. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/"
                             "properties" = {
+                              "claims" = {
+                                "description" = <<-EOT
+                                Claims lists the names of resources, defined in spec.resourceClaims, that are used by this container. 
+                                 This is an alpha field and requires enabling the DynamicResourceAllocation feature gate. 
+                                 This field is immutable.
+                                EOT
+                                "items" = {
+                                  "description" = "ResourceClaim references one entry in PodSpec.ResourceClaims."
+                                  "properties" = {
+                                    "name" = {
+                                      "description" = "Name must match the name of one entry in pod.spec.resourceClaims of the Pod where this field is used. It makes that resource available inside a container."
+                                      "type" = "string"
+                                    }
+                                  }
+                                  "required" = [
+                                    "name",
+                                  ]
+                                  "type" = "object"
+                                }
+                                "type" = "array"
+                                "x-kubernetes-list-map-keys" = [
+                                  "name",
+                                ]
+                                "x-kubernetes-list-type" = "map"
+                              }
                               "limits" = {
                                 "additionalProperties" = {
                                   "anyOf" = [
@@ -3347,7 +3436,7 @@ resource "kubernetes_manifest" "customresourcedefinition_thanosrulers_monitoring
                       "type" = "string"
                     }
                     "minReadySeconds" = {
-                      "description" = "Minimum number of seconds for which a newly created pod should be ready without any of its container crashing for it to be considered available. Defaults to 0 (pod will be considered available as soon as it is ready) This is an alpha field and requires enabling StatefulSetMinReadySeconds feature gate."
+                      "description" = "Minimum number of seconds for which a newly created pod should be ready without any of its container crashing for it to be considered available. Defaults to 0 (pod will be considered available as soon as it is ready) This is an alpha field from kubernetes 1.22 until 1.24 which requires enabling the StatefulSetMinReadySeconds feature gate."
                       "format" = "int32"
                       "type" = "integer"
                     }
@@ -3479,6 +3568,31 @@ resource "kubernetes_manifest" "customresourcedefinition_thanosrulers_monitoring
                     "resources" = {
                       "description" = "Resources defines the resource requirements for single Pods. If not provided, no requests/limits will be set"
                       "properties" = {
+                        "claims" = {
+                          "description" = <<-EOT
+                          Claims lists the names of resources, defined in spec.resourceClaims, that are used by this container. 
+                           This is an alpha field and requires enabling the DynamicResourceAllocation feature gate. 
+                           This field is immutable.
+                          EOT
+                          "items" = {
+                            "description" = "ResourceClaim references one entry in PodSpec.ResourceClaims."
+                            "properties" = {
+                              "name" = {
+                                "description" = "Name must match the name of one entry in pod.spec.resourceClaims of the Pod where this field is used. It makes that resource available inside a container."
+                                "type" = "string"
+                              }
+                            }
+                            "required" = [
+                              "name",
+                            ]
+                            "type" = "object"
+                          }
+                          "type" = "array"
+                          "x-kubernetes-list-map-keys" = [
+                            "name",
+                          ]
+                          "x-kubernetes-list-type" = "map"
+                        }
                         "limits" = {
                           "additionalProperties" = {
                             "anyOf" = [
@@ -3683,7 +3797,7 @@ resource "kubernetes_manifest" "customresourcedefinition_thanosrulers_monitoring
                           "type" = "object"
                         }
                         "supplementalGroups" = {
-                          "description" = "A list of groups applied to the first process run in each container, in addition to the container's primary GID.  If unspecified, no groups will be added to any container. Note that this field cannot be set when spec.os.name is windows."
+                          "description" = "A list of groups applied to the first process run in each container, in addition to the container's primary GID, the fsGroup (if specified), and group memberships defined in the container image for the uid of the container process. If unspecified, no additional groups are added to any container. Note that group memberships defined in the container image for the uid of the container process are still effective, even if they are not included in this list. Note that this field cannot be set when spec.os.name is windows."
                           "items" = {
                             "format" = "int64"
                             "type" = "integer"
@@ -3749,7 +3863,7 @@ resource "kubernetes_manifest" "customresourcedefinition_thanosrulers_monitoring
                           "type" = "boolean"
                         }
                         "emptyDir" = {
-                          "description" = "EmptyDirVolumeSource to be used by the Prometheus StatefulSets. If specified, used in place of any volumeClaimTemplate. More info: https://kubernetes.io/docs/concepts/storage/volumes/#emptydir"
+                          "description" = "EmptyDirVolumeSource to be used by the StatefulSet. If specified, used in place of any volumeClaimTemplate. More info: https://kubernetes.io/docs/concepts/storage/volumes/#emptydir"
                           "properties" = {
                             "medium" = {
                               "description" = "medium represents what type of storage medium should back this directory. The default is \"\" which means to use the node's default medium. Must be an empty string (default) or Memory. More info: https://kubernetes.io/docs/concepts/storage/volumes#emptydir"
@@ -3772,7 +3886,7 @@ resource "kubernetes_manifest" "customresourcedefinition_thanosrulers_monitoring
                           "type" = "object"
                         }
                         "ephemeral" = {
-                          "description" = "EphemeralVolumeSource to be used by the Prometheus StatefulSets. This is a beta field in k8s 1.21, for lower versions, starting with k8s 1.19, it requires enabling the GenericEphemeralVolume feature gate. More info: https://kubernetes.io/docs/concepts/storage/ephemeral-volumes/#generic-ephemeral-volumes"
+                          "description" = "EphemeralVolumeSource to be used by the StatefulSet. This is a beta field in k8s 1.21, for lower versions, starting with k8s 1.19, it requires enabling the GenericEphemeralVolume feature gate. More info: https://kubernetes.io/docs/concepts/storage/ephemeral-volumes/#generic-ephemeral-volumes"
                           "properties" = {
                             "volumeClaimTemplate" = {
                               "description" = <<-EOT
@@ -3797,7 +3911,7 @@ resource "kubernetes_manifest" "customresourcedefinition_thanosrulers_monitoring
                                       "type" = "array"
                                     }
                                     "dataSource" = {
-                                      "description" = "dataSource field can be used to specify either: * An existing VolumeSnapshot object (snapshot.storage.k8s.io/VolumeSnapshot) * An existing PVC (PersistentVolumeClaim) If the provisioner or an external controller can support the specified data source, it will create a new volume based on the contents of the specified data source. If the AnyVolumeDataSource feature gate is enabled, this field will always have the same contents as the DataSourceRef field."
+                                      "description" = "dataSource field can be used to specify either: * An existing VolumeSnapshot object (snapshot.storage.k8s.io/VolumeSnapshot) * An existing PVC (PersistentVolumeClaim) If the provisioner or an external controller can support the specified data source, it will create a new volume based on the contents of the specified data source. When the AnyVolumeDataSource feature gate is enabled, dataSource contents will be copied to dataSourceRef, and dataSourceRef contents will be copied to dataSource when dataSourceRef.namespace is not specified. If the namespace is specified, then dataSourceRef will not be copied to dataSource."
                                       "properties" = {
                                         "apiGroup" = {
                                           "description" = "APIGroup is the group for the resource being referenced. If APIGroup is not specified, the specified Kind must be in the core API group. For any other third-party types, APIGroup is required."
@@ -3820,7 +3934,7 @@ resource "kubernetes_manifest" "customresourcedefinition_thanosrulers_monitoring
                                       "x-kubernetes-map-type" = "atomic"
                                     }
                                     "dataSourceRef" = {
-                                      "description" = "dataSourceRef specifies the object from which to populate the volume with data, if a non-empty volume is desired. This may be any local object from a non-empty API group (non core object) or a PersistentVolumeClaim object. When this field is specified, volume binding will only succeed if the type of the specified object matches some installed volume populator or dynamic provisioner. This field will replace the functionality of the DataSource field and as such if both fields are non-empty, they must have the same value. For backwards compatibility, both fields (DataSource and DataSourceRef) will be set to the same value automatically if one of them is empty and the other is non-empty. There are two important differences between DataSource and DataSourceRef: * While DataSource only allows two specific types of objects, DataSourceRef allows any non-core object, as well as PersistentVolumeClaim objects. * While DataSource ignores disallowed values (dropping them), DataSourceRef preserves all values, and generates an error if a disallowed value is specified. (Beta) Using this field requires the AnyVolumeDataSource feature gate to be enabled."
+                                      "description" = "dataSourceRef specifies the object from which to populate the volume with data, if a non-empty volume is desired. This may be any object from a non-empty API group (non core object) or a PersistentVolumeClaim object. When this field is specified, volume binding will only succeed if the type of the specified object matches some installed volume populator or dynamic provisioner. This field will replace the functionality of the dataSource field and as such if both fields are non-empty, they must have the same value. For backwards compatibility, when namespace isn't specified in dataSourceRef, both fields (dataSource and dataSourceRef) will be set to the same value automatically if one of them is empty and the other is non-empty. When namespace is specified in dataSourceRef, dataSource isn't set to the same value and must be empty. There are three important differences between dataSource and dataSourceRef: * While dataSource only allows two specific types of objects, dataSourceRef allows any non-core object, as well as PersistentVolumeClaim objects. * While dataSource ignores disallowed values (dropping them), dataSourceRef preserves all values, and generates an error if a disallowed value is specified. * While dataSource only allows local objects, dataSourceRef allows objects in any namespaces. (Beta) Using this field requires the AnyVolumeDataSource feature gate to be enabled. (Alpha) Using the namespace field of dataSourceRef requires the CrossNamespaceVolumeDataSource feature gate to be enabled."
                                       "properties" = {
                                         "apiGroup" = {
                                           "description" = "APIGroup is the group for the resource being referenced. If APIGroup is not specified, the specified Kind must be in the core API group. For any other third-party types, APIGroup is required."
@@ -3834,17 +3948,45 @@ resource "kubernetes_manifest" "customresourcedefinition_thanosrulers_monitoring
                                           "description" = "Name is the name of resource being referenced"
                                           "type" = "string"
                                         }
+                                        "namespace" = {
+                                          "description" = "Namespace is the namespace of resource being referenced Note that when a namespace is specified, a gateway.networking.k8s.io/ReferenceGrant object is required in the referent namespace to allow that namespace's owner to accept the reference. See the ReferenceGrant documentation for details. (Alpha) This field requires the CrossNamespaceVolumeDataSource feature gate to be enabled."
+                                          "type" = "string"
+                                        }
                                       }
                                       "required" = [
                                         "kind",
                                         "name",
                                       ]
                                       "type" = "object"
-                                      "x-kubernetes-map-type" = "atomic"
                                     }
                                     "resources" = {
                                       "description" = "resources represents the minimum resources the volume should have. If RecoverVolumeExpansionFailure feature is enabled users are allowed to specify resource requirements that are lower than previous value but must still be higher than capacity recorded in the status field of the claim. More info: https://kubernetes.io/docs/concepts/storage/persistent-volumes#resources"
                                       "properties" = {
+                                        "claims" = {
+                                          "description" = <<-EOT
+                                          Claims lists the names of resources, defined in spec.resourceClaims, that are used by this container. 
+                                           This is an alpha field and requires enabling the DynamicResourceAllocation feature gate. 
+                                           This field is immutable.
+                                          EOT
+                                          "items" = {
+                                            "description" = "ResourceClaim references one entry in PodSpec.ResourceClaims."
+                                            "properties" = {
+                                              "name" = {
+                                                "description" = "Name must match the name of one entry in pod.spec.resourceClaims of the Pod where this field is used. It makes that resource available inside a container."
+                                                "type" = "string"
+                                              }
+                                            }
+                                            "required" = [
+                                              "name",
+                                            ]
+                                            "type" = "object"
+                                          }
+                                          "type" = "array"
+                                          "x-kubernetes-list-map-keys" = [
+                                            "name",
+                                          ]
+                                          "x-kubernetes-list-type" = "map"
+                                        }
                                         "limits" = {
                                           "additionalProperties" = {
                                             "anyOf" = [
@@ -3948,7 +4090,7 @@ resource "kubernetes_manifest" "customresourcedefinition_thanosrulers_monitoring
                           "type" = "object"
                         }
                         "volumeClaimTemplate" = {
-                          "description" = "A PVC spec to be used by the Prometheus StatefulSets."
+                          "description" = "A PVC spec to be used by the StatefulSet. The easiest way to use a volume that cannot be automatically provisioned (for whatever reason) is to use a label selector alongside manually created PersistentVolumes."
                           "properties" = {
                             "apiVersion" = {
                               "description" = "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources"
@@ -3993,7 +4135,7 @@ resource "kubernetes_manifest" "customresourcedefinition_thanosrulers_monitoring
                                   "type" = "array"
                                 }
                                 "dataSource" = {
-                                  "description" = "dataSource field can be used to specify either: * An existing VolumeSnapshot object (snapshot.storage.k8s.io/VolumeSnapshot) * An existing PVC (PersistentVolumeClaim) If the provisioner or an external controller can support the specified data source, it will create a new volume based on the contents of the specified data source. If the AnyVolumeDataSource feature gate is enabled, this field will always have the same contents as the DataSourceRef field."
+                                  "description" = "dataSource field can be used to specify either: * An existing VolumeSnapshot object (snapshot.storage.k8s.io/VolumeSnapshot) * An existing PVC (PersistentVolumeClaim) If the provisioner or an external controller can support the specified data source, it will create a new volume based on the contents of the specified data source. When the AnyVolumeDataSource feature gate is enabled, dataSource contents will be copied to dataSourceRef, and dataSourceRef contents will be copied to dataSource when dataSourceRef.namespace is not specified. If the namespace is specified, then dataSourceRef will not be copied to dataSource."
                                   "properties" = {
                                     "apiGroup" = {
                                       "description" = "APIGroup is the group for the resource being referenced. If APIGroup is not specified, the specified Kind must be in the core API group. For any other third-party types, APIGroup is required."
@@ -4016,7 +4158,7 @@ resource "kubernetes_manifest" "customresourcedefinition_thanosrulers_monitoring
                                   "x-kubernetes-map-type" = "atomic"
                                 }
                                 "dataSourceRef" = {
-                                  "description" = "dataSourceRef specifies the object from which to populate the volume with data, if a non-empty volume is desired. This may be any local object from a non-empty API group (non core object) or a PersistentVolumeClaim object. When this field is specified, volume binding will only succeed if the type of the specified object matches some installed volume populator or dynamic provisioner. This field will replace the functionality of the DataSource field and as such if both fields are non-empty, they must have the same value. For backwards compatibility, both fields (DataSource and DataSourceRef) will be set to the same value automatically if one of them is empty and the other is non-empty. There are two important differences between DataSource and DataSourceRef: * While DataSource only allows two specific types of objects, DataSourceRef allows any non-core object, as well as PersistentVolumeClaim objects. * While DataSource ignores disallowed values (dropping them), DataSourceRef preserves all values, and generates an error if a disallowed value is specified. (Beta) Using this field requires the AnyVolumeDataSource feature gate to be enabled."
+                                  "description" = "dataSourceRef specifies the object from which to populate the volume with data, if a non-empty volume is desired. This may be any object from a non-empty API group (non core object) or a PersistentVolumeClaim object. When this field is specified, volume binding will only succeed if the type of the specified object matches some installed volume populator or dynamic provisioner. This field will replace the functionality of the dataSource field and as such if both fields are non-empty, they must have the same value. For backwards compatibility, when namespace isn't specified in dataSourceRef, both fields (dataSource and dataSourceRef) will be set to the same value automatically if one of them is empty and the other is non-empty. When namespace is specified in dataSourceRef, dataSource isn't set to the same value and must be empty. There are three important differences between dataSource and dataSourceRef: * While dataSource only allows two specific types of objects, dataSourceRef allows any non-core object, as well as PersistentVolumeClaim objects. * While dataSource ignores disallowed values (dropping them), dataSourceRef preserves all values, and generates an error if a disallowed value is specified. * While dataSource only allows local objects, dataSourceRef allows objects in any namespaces. (Beta) Using this field requires the AnyVolumeDataSource feature gate to be enabled. (Alpha) Using the namespace field of dataSourceRef requires the CrossNamespaceVolumeDataSource feature gate to be enabled."
                                   "properties" = {
                                     "apiGroup" = {
                                       "description" = "APIGroup is the group for the resource being referenced. If APIGroup is not specified, the specified Kind must be in the core API group. For any other third-party types, APIGroup is required."
@@ -4030,17 +4172,45 @@ resource "kubernetes_manifest" "customresourcedefinition_thanosrulers_monitoring
                                       "description" = "Name is the name of resource being referenced"
                                       "type" = "string"
                                     }
+                                    "namespace" = {
+                                      "description" = "Namespace is the namespace of resource being referenced Note that when a namespace is specified, a gateway.networking.k8s.io/ReferenceGrant object is required in the referent namespace to allow that namespace's owner to accept the reference. See the ReferenceGrant documentation for details. (Alpha) This field requires the CrossNamespaceVolumeDataSource feature gate to be enabled."
+                                      "type" = "string"
+                                    }
                                   }
                                   "required" = [
                                     "kind",
                                     "name",
                                   ]
                                   "type" = "object"
-                                  "x-kubernetes-map-type" = "atomic"
                                 }
                                 "resources" = {
                                   "description" = "resources represents the minimum resources the volume should have. If RecoverVolumeExpansionFailure feature is enabled users are allowed to specify resource requirements that are lower than previous value but must still be higher than capacity recorded in the status field of the claim. More info: https://kubernetes.io/docs/concepts/storage/persistent-volumes#resources"
                                   "properties" = {
+                                    "claims" = {
+                                      "description" = <<-EOT
+                                      Claims lists the names of resources, defined in spec.resourceClaims, that are used by this container. 
+                                       This is an alpha field and requires enabling the DynamicResourceAllocation feature gate. 
+                                       This field is immutable.
+                                      EOT
+                                      "items" = {
+                                        "description" = "ResourceClaim references one entry in PodSpec.ResourceClaims."
+                                        "properties" = {
+                                          "name" = {
+                                            "description" = "Name must match the name of one entry in pod.spec.resourceClaims of the Pod where this field is used. It makes that resource available inside a container."
+                                            "type" = "string"
+                                          }
+                                        }
+                                        "required" = [
+                                          "name",
+                                        ]
+                                        "type" = "object"
+                                      }
+                                      "type" = "array"
+                                      "x-kubernetes-list-map-keys" = [
+                                        "name",
+                                      ]
+                                      "x-kubernetes-list-type" = "map"
+                                    }
                                     "limits" = {
                                       "additionalProperties" = {
                                         "anyOf" = [
@@ -4336,14 +4506,14 @@ resource "kubernetes_manifest" "customresourcedefinition_thanosrulers_monitoring
                           "nodeAffinityPolicy" = {
                             "description" = <<-EOT
                             NodeAffinityPolicy indicates how we will treat Pod's nodeAffinity/nodeSelector when calculating pod topology spread skew. Options are: - Honor: only nodes matching nodeAffinity/nodeSelector are included in the calculations. - Ignore: nodeAffinity/nodeSelector are ignored. All nodes are included in the calculations. 
-                             If this value is nil, the behavior is equivalent to the Honor policy. This is a alpha-level feature enabled by the NodeInclusionPolicyInPodTopologySpread feature flag.
+                             If this value is nil, the behavior is equivalent to the Honor policy. This is a beta-level feature default enabled by the NodeInclusionPolicyInPodTopologySpread feature flag.
                             EOT
                             "type" = "string"
                           }
                           "nodeTaintsPolicy" = {
                             "description" = <<-EOT
                             NodeTaintsPolicy indicates how we will treat node taints when calculating pod topology spread skew. Options are: - Honor: nodes without taints, along with tainted nodes for which the incoming pod has a toleration, are included. - Ignore: node taints are ignored. All nodes are included. 
-                             If this value is nil, the behavior is equivalent to the Ignore policy. This is a alpha-level feature enabled by the NodeInclusionPolicyInPodTopologySpread feature flag.
+                             If this value is nil, the behavior is equivalent to the Ignore policy. This is a beta-level feature default enabled by the NodeInclusionPolicyInPodTopologySpread feature flag.
                             EOT
                             "type" = "string"
                           }
@@ -4389,6 +4559,10 @@ resource "kubernetes_manifest" "customresourcedefinition_thanosrulers_monitoring
                     }
                     "tracingConfigFile" = {
                       "description" = "TracingConfig specifies the path of the tracing configuration file. When used alongside with TracingConfig, TracingConfigFile takes precedence."
+                      "type" = "string"
+                    }
+                    "version" = {
+                      "description" = "Version of Thanos to be deployed."
                       "type" = "string"
                     }
                     "volumes" = {
@@ -4776,7 +4950,7 @@ resource "kubernetes_manifest" "customresourcedefinition_thanosrulers_monitoring
                                         "type" = "array"
                                       }
                                       "dataSource" = {
-                                        "description" = "dataSource field can be used to specify either: * An existing VolumeSnapshot object (snapshot.storage.k8s.io/VolumeSnapshot) * An existing PVC (PersistentVolumeClaim) If the provisioner or an external controller can support the specified data source, it will create a new volume based on the contents of the specified data source. If the AnyVolumeDataSource feature gate is enabled, this field will always have the same contents as the DataSourceRef field."
+                                        "description" = "dataSource field can be used to specify either: * An existing VolumeSnapshot object (snapshot.storage.k8s.io/VolumeSnapshot) * An existing PVC (PersistentVolumeClaim) If the provisioner or an external controller can support the specified data source, it will create a new volume based on the contents of the specified data source. When the AnyVolumeDataSource feature gate is enabled, dataSource contents will be copied to dataSourceRef, and dataSourceRef contents will be copied to dataSource when dataSourceRef.namespace is not specified. If the namespace is specified, then dataSourceRef will not be copied to dataSource."
                                         "properties" = {
                                           "apiGroup" = {
                                             "description" = "APIGroup is the group for the resource being referenced. If APIGroup is not specified, the specified Kind must be in the core API group. For any other third-party types, APIGroup is required."
@@ -4799,7 +4973,7 @@ resource "kubernetes_manifest" "customresourcedefinition_thanosrulers_monitoring
                                         "x-kubernetes-map-type" = "atomic"
                                       }
                                       "dataSourceRef" = {
-                                        "description" = "dataSourceRef specifies the object from which to populate the volume with data, if a non-empty volume is desired. This may be any local object from a non-empty API group (non core object) or a PersistentVolumeClaim object. When this field is specified, volume binding will only succeed if the type of the specified object matches some installed volume populator or dynamic provisioner. This field will replace the functionality of the DataSource field and as such if both fields are non-empty, they must have the same value. For backwards compatibility, both fields (DataSource and DataSourceRef) will be set to the same value automatically if one of them is empty and the other is non-empty. There are two important differences between DataSource and DataSourceRef: * While DataSource only allows two specific types of objects, DataSourceRef allows any non-core object, as well as PersistentVolumeClaim objects. * While DataSource ignores disallowed values (dropping them), DataSourceRef preserves all values, and generates an error if a disallowed value is specified. (Beta) Using this field requires the AnyVolumeDataSource feature gate to be enabled."
+                                        "description" = "dataSourceRef specifies the object from which to populate the volume with data, if a non-empty volume is desired. This may be any object from a non-empty API group (non core object) or a PersistentVolumeClaim object. When this field is specified, volume binding will only succeed if the type of the specified object matches some installed volume populator or dynamic provisioner. This field will replace the functionality of the dataSource field and as such if both fields are non-empty, they must have the same value. For backwards compatibility, when namespace isn't specified in dataSourceRef, both fields (dataSource and dataSourceRef) will be set to the same value automatically if one of them is empty and the other is non-empty. When namespace is specified in dataSourceRef, dataSource isn't set to the same value and must be empty. There are three important differences between dataSource and dataSourceRef: * While dataSource only allows two specific types of objects, dataSourceRef allows any non-core object, as well as PersistentVolumeClaim objects. * While dataSource ignores disallowed values (dropping them), dataSourceRef preserves all values, and generates an error if a disallowed value is specified. * While dataSource only allows local objects, dataSourceRef allows objects in any namespaces. (Beta) Using this field requires the AnyVolumeDataSource feature gate to be enabled. (Alpha) Using the namespace field of dataSourceRef requires the CrossNamespaceVolumeDataSource feature gate to be enabled."
                                         "properties" = {
                                           "apiGroup" = {
                                             "description" = "APIGroup is the group for the resource being referenced. If APIGroup is not specified, the specified Kind must be in the core API group. For any other third-party types, APIGroup is required."
@@ -4813,17 +4987,45 @@ resource "kubernetes_manifest" "customresourcedefinition_thanosrulers_monitoring
                                             "description" = "Name is the name of resource being referenced"
                                             "type" = "string"
                                           }
+                                          "namespace" = {
+                                            "description" = "Namespace is the namespace of resource being referenced Note that when a namespace is specified, a gateway.networking.k8s.io/ReferenceGrant object is required in the referent namespace to allow that namespace's owner to accept the reference. See the ReferenceGrant documentation for details. (Alpha) This field requires the CrossNamespaceVolumeDataSource feature gate to be enabled."
+                                            "type" = "string"
+                                          }
                                         }
                                         "required" = [
                                           "kind",
                                           "name",
                                         ]
                                         "type" = "object"
-                                        "x-kubernetes-map-type" = "atomic"
                                       }
                                       "resources" = {
                                         "description" = "resources represents the minimum resources the volume should have. If RecoverVolumeExpansionFailure feature is enabled users are allowed to specify resource requirements that are lower than previous value but must still be higher than capacity recorded in the status field of the claim. More info: https://kubernetes.io/docs/concepts/storage/persistent-volumes#resources"
                                         "properties" = {
+                                          "claims" = {
+                                            "description" = <<-EOT
+                                            Claims lists the names of resources, defined in spec.resourceClaims, that are used by this container. 
+                                             This is an alpha field and requires enabling the DynamicResourceAllocation feature gate. 
+                                             This field is immutable.
+                                            EOT
+                                            "items" = {
+                                              "description" = "ResourceClaim references one entry in PodSpec.ResourceClaims."
+                                              "properties" = {
+                                                "name" = {
+                                                  "description" = "Name must match the name of one entry in pod.spec.resourceClaims of the Pod where this field is used. It makes that resource available inside a container."
+                                                  "type" = "string"
+                                                }
+                                              }
+                                              "required" = [
+                                                "name",
+                                              ]
+                                              "type" = "object"
+                                            }
+                                            "type" = "array"
+                                            "x-kubernetes-list-map-keys" = [
+                                              "name",
+                                            ]
+                                            "x-kubernetes-list-type" = "map"
+                                          }
                                           "limits" = {
                                             "additionalProperties" = {
                                               "anyOf" = [
