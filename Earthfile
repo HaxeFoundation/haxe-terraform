@@ -1,11 +1,11 @@
-VERSION 0.6
-ARG UBUNTU_RELEASE=focal
+VERSION 0.7
+ARG --global UBUNTU_RELEASE=jammy
 FROM mcr.microsoft.com/vscode/devcontainers/base:0-$UBUNTU_RELEASE
-ARG DEVCONTAINER_IMAGE_NAME_DEFAULT=haxe/terraform_devcontainer_workspace
+ARG --global DEVCONTAINER_IMAGE_NAME_DEFAULT=haxe/terraform_devcontainer_workspace
 
-ARG USERNAME=vscode
-ARG USER_UID=1000
-ARG USER_GID=$USER_UID
+ARG --global USERNAME=vscode
+ARG --global USER_UID=1000
+ARG --global USER_GID=$USER_UID
 
 # https://github.com/docker-library/mysql/blob/master/5.7/Dockerfile.debian
 mysql-public-key:
@@ -118,9 +118,9 @@ github-src:
 # Usage:
 # COPY +terraform-ls/terraform-ls /usr/local/bin/
 terraform-ls:
-    ARG --required TARGETARCH
-    ARG TERRAFORM_LS_VERSION=0.30.1
-    RUN curl -fsSL -o terraform-ls.zip https://github.com/hashicorp/terraform-ls/releases/download/v${TERRAFORM_LS_VERSION}/terraform-ls_${TERRAFORM_LS_VERSION}_linux_${TARGETARCH}.zip \
+    ARG TARGETARCH
+    ARG VERSION=0.30.3
+    RUN curl -fsSL -o terraform-ls.zip "https://releases.hashicorp.com/terraform-ls/${VERSION}/terraform-ls_${VERSION}_linux_${TARGETARCH}.zip" \
         && unzip -qq terraform-ls.zip \
         && mv ./terraform-ls /usr/local/bin/ \
         && rm terraform-ls.zip
@@ -145,7 +145,7 @@ cert-manager.crds:
 earthly:
     FROM +devcontainer-base
     ARG --required TARGETARCH
-    RUN curl -fsSL https://github.com/earthly/earthly/releases/download/v0.6.30/earthly-linux-${TARGETARCH} -o /usr/local/bin/earthly \
+    RUN curl -fsSL https://github.com/earthly/earthly/releases/download/v0.7.0/earthly-linux-${TARGETARCH} -o /usr/local/bin/earthly \
         && chmod +x /usr/local/bin/earthly
     SAVE ARTIFACT /usr/local/bin/earthly
 
