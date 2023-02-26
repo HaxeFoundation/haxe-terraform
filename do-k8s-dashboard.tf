@@ -1,11 +1,11 @@
-# https://github.com/kubernetes/dashboard/tree/master/aio/deploy/helm-chart/kubernetes-dashboard
+# https://github.com/kubernetes/dashboard/tree/master/charts/helm-chart/kubernetes-dashboard
 resource "helm_release" "do-k8s-dashboard" {
   provider = helm.do
 
   name       = "k8s-dashboard"
   repository = "https://kubernetes.github.io/dashboard/"
   chart      = "kubernetes-dashboard"
-  version    = "5.1.1"
+  version    = "6.0.0"
 
   values = [yamlencode({
     "protocolHttp" : true,
