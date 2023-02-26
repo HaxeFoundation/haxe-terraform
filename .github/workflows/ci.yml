@@ -13,7 +13,7 @@ jobs:
       TF_IN_AUTOMATION: 1
       AWS_DEFAULT_REGION: eu-west-1
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - run: terraform init
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.TF_AWS_ACCESS_KEY_ID }}
