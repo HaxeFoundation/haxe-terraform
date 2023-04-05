@@ -1,7 +1,7 @@
 version: '3'
 services:
   workspace:
-    image: haxe/terraform_devcontainer_workspace:20230226180056
+    image: haxe/terraform_devcontainer_workspace:20230405145655
     init: true
     volumes:
       - /var/run/docker.sock:/var/run/docker-host.sock
@@ -15,7 +15,7 @@ services:
     entrypoint: /usr/local/share/docker-init.sh
     command: sleep infinity
   earthly:
-    image: earthly/buildkitd:v0.7.0
+    image: earthly/buildkitd:v0.7.2
     privileged: true
     environment:
       - BUILDKIT_TCP_TRANSPORT_ENABLED=true

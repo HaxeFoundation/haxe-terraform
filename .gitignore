@@ -1,6 +1,7 @@
 .envrc
 
 .tmp-earthly-out*
+/tmp
 
 # Local .terraform directories
 **/.terraform/*
