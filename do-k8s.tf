@@ -2,15 +2,11 @@ locals {
   do_cluster_name = local.stack_name
 }
 
-data "digitalocean_kubernetes_versions" "k8s-1-21" {
-  version_prefix = "1.23."
-}
-
 # List available Droplet sizes by `doctl compute size list`
 resource "digitalocean_kubernetes_cluster" "cluster" {
   name         = local.do_cluster_name
   region       = "lon1"
-  version      = "1.23.14-do.0" # data.digitalocean_kubernetes_versions.k8s-1-21.latest_version
+  version      = "1.24.12-do.0"
   auto_upgrade = true
 
   node_pool {
