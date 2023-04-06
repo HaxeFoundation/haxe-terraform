@@ -44,3 +44,45 @@ data "aws_iam_policy_document" "allow-self-assumerole" {
     actions = ["sts:AssumeRole"]
   }
 }
+
+resource "aws_iam_user" "haxe-org-ci" {
+  name = "haxe-org-ci"
+}
+
+resource "aws_iam_access_key" "haxe-org-ci" {
+  user = aws_iam_user.haxe-org-ci.name
+}
+
+data "aws_iam_policy_document" "haxe-org-ci" {
+  statement {
+    actions = [
+      "s3:*",
+    ]
+    resources = [
+      aws_s3_bucket.haxe-org.arn,
+      aws_s3_bucket.staging-haxe-org.arn,
+      "${aws_s3_bucket.haxe-org.arn}/*",
+      "${aws_s3_bucket.staging-haxe-org.arn}/*",
+    ]
+  }
+  statement {
+    actions = [
+      "cloudfront:*",
+    ]
+    resources = [
+      aws_cloudfront_distribution.haxe-org.arn,
+      aws_cloudfront_distribution.staging-haxe-org.arn,
+    ]
+  }
+}
+
+resource "aws_iam_policy" "haxe-org-ci" {
+  name   = "haxe-org-ci"
+  policy = data.aws_iam_policy_document.haxe-org-ci.json
+}
+
+resource "aws_iam_user_policy_attachment" "haxe-org-ci" {
+  user       = aws_iam_user.haxe-org-ci.name
+  policy_arn = aws_iam_policy.haxe-org-ci.arn
+}
+
