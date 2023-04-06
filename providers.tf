@@ -18,7 +18,7 @@ terraform {
       version = "~> 2.5"
     }
     gandi = {
-      source = "go-gandi/gandi"
+      source  = "go-gandi/gandi"
       version = "~> 2.2"
     }
     cloudflare = {
@@ -34,7 +34,7 @@ terraform {
       version = "~> 3.3"
     }
     grafana = {
-      source = "grafana/grafana"
+      source  = "grafana/grafana"
       version = "~> 1.23"
     }
   }
@@ -74,6 +74,11 @@ data "aws_availability_zones" "available" {}
 
 provider "github" {
   owner = "HaxeFoundation"
+  app_auth {
+    id              = 314905
+    installation_id = 36157157
+    pem_file        = data.aws_ssm_parameter.haxe-terraform-github-app-pem.value
+  }
 }
 
 provider "gandi" {
