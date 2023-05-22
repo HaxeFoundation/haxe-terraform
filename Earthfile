@@ -103,7 +103,7 @@ awscli:
 # COPY +doctl/doctl /usr/local/bin/
 doctl:
     ARG TARGETARCH
-    ARG DOCTL_VERSION=1.66.0
+    ARG DOCTL_VERSION=1.96.0 # https://github.com/digitalocean/doctl/releases
     RUN curl -fsSL "https://github.com/digitalocean/doctl/releases/download/v${DOCTL_VERSION}/doctl-${DOCTL_VERSION}-linux-${TARGETARCH}.tar.gz" | tar xvz -C /usr/local/bin/
     SAVE ARTIFACT /usr/local/bin/doctl
 
@@ -119,7 +119,7 @@ github-src:
 # COPY +terraform-ls/terraform-ls /usr/local/bin/
 terraform-ls:
     ARG TARGETARCH
-    ARG VERSION=0.30.3
+    ARG VERSION=0.31.2 # https://github.com/hashicorp/terraform-ls/releases
     RUN curl -fsSL -o terraform-ls.zip "https://releases.hashicorp.com/terraform-ls/${VERSION}/terraform-ls_${VERSION}_linux_${TARGETARCH}.zip" \
         && unzip -qq terraform-ls.zip \
         && mv ./terraform-ls /usr/local/bin/ \
@@ -144,8 +144,9 @@ cert-manager.crds:
 # RUN earthly bootstrap --no-buildkit --with-autocomplete
 earthly:
     FROM +devcontainer-base
-    ARG --required TARGETARCH
-    RUN curl -fsSL https://github.com/earthly/earthly/releases/download/v0.7.2/earthly-linux-${TARGETARCH} -o /usr/local/bin/earthly \
+    ARG TARGETARCH
+    ARG VERSION=0.7.5 # https://github.com/earthly/earthly/releases
+    RUN curl -fsSL "https://github.com/earthly/earthly/releases/download/v${VERSION}/earthly-linux-${TARGETARCH}" -o /usr/local/bin/earthly \
         && chmod +x /usr/local/bin/earthly
     SAVE ARTIFACT /usr/local/bin/earthly
 
@@ -232,7 +233,7 @@ devcontainer-update-ref:
 do-kubeconfig:
     FROM +doctl
     ARG --required CLUSTER_ID
-    RUN --mount=type=secret,id=+secrets/.envrc,target=.envrc \
+    RUN --mount=type=secret,id=+secrets/envrc,target=.envrc \
         . ./.envrc \
         && KUBECONFIG="kubeconfig" doctl kubernetes cluster kubeconfig save "$CLUSTER_ID"
     SAVE ARTIFACT --keep-ts kubeconfig
