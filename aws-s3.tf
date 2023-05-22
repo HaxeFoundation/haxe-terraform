@@ -1,6 +1,6 @@
 module "s3_bucket_terraform" {
   source  = "terraform-aws-modules/s3-bucket/aws"
-  version = "3.7.0"
+  version = "3.10.1"
 
   bucket = "haxe-terraform"
   acl    = "private"
