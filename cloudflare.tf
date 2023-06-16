@@ -86,8 +86,7 @@ resource "cloudflare_record" "api-haxe-org" {
   zone_id = local.cloudflare.zones.haxe-org.zone_id
   name    = "api"
   type    = "CNAME"
-  value   = "haxefoundation.github.io"
-  ttl     = 86400
+  value   = module.cloudfront_api-haxe-org.cloudfront_distribution_domain_name
 }
 
 resource "cloudflare_record" "benchs-haxe-org" {

@@ -278,6 +278,8 @@ module "cloudfront_api-haxe-org" {
   source  = "terraform-aws-modules/cloudfront/aws"
   version = "3.2.1"
 
+  aliases = ["api.haxe.org"]
+
   price_class = "PriceClass_All"
 
   create_origin_access_control = true
@@ -310,6 +312,11 @@ module "cloudfront_api-haxe-org" {
     cached_methods  = ["GET", "HEAD"]
     compress        = true
     query_string    = false
+  }
+
+  viewer_certificate = {
+    acm_certificate_arn = aws_acm_certificate.haxe-org-us-east-1-dns.arn
+    ssl_support_method  = "sni-only"
   }
 }
 
