@@ -274,70 +274,42 @@ resource "aws_cloudfront_distribution" "code-haxe-org" {
   }
 }
 
-resource "aws_cloudfront_distribution" "api-haxe-org" {
-  aliases         = ["api.haxe.org"]
-  enabled         = true
-  is_ipv6_enabled = true
-  price_class     = "PriceClass_All"
+module "cloudfront_api-haxe-org" {
+  source  = "terraform-aws-modules/cloudfront/aws"
+  version = "3.2.1"
 
-  origin {
-    domain_name = "haxefoundation.github.io"
-    origin_id   = "Custom-haxefoundation.github.io/api.haxe.org"
-    origin_path = "/api.haxe.org"
+  price_class = "PriceClass_All"
 
-    custom_origin_config {
-      http_port              = 80
-      https_port             = 443
-      origin_protocol_policy = "https-only"
-      origin_ssl_protocols = [
-        "TLSv1",
-        "TLSv1.1",
-        "TLSv1.2"
-      ]
+  create_origin_access_control = true
+  origin_access_control = {
+    s3_oac = {
+      description      = "CloudFront access to S3"
+      origin_type      = "s3"
+      signing_behavior = "always"
+      signing_protocol = "sigv4"
     }
   }
 
-  default_cache_behavior {
-    target_origin_id       = "Custom-haxefoundation.github.io/api.haxe.org"
-    viewer_protocol_policy = "redirect-to-https"
-    allowed_methods = [
-      "HEAD",
-      "DELETE",
-      "POST",
-      "GET",
-      "OPTIONS",
-      "PUT",
-      "PATCH"
-    ]
-    cached_methods = [
-      "HEAD",
-      "GET",
-    ]
-    forwarded_values {
-      headers                 = []
-      query_string            = false
-      query_string_cache_keys = []
-      cookies {
-        forward           = "none"
-        whitelisted_names = []
+  origin = {
+    s3 = {
+      domain_name = module.s3_bucket_api-haxe-org.s3_bucket_website_endpoint
+      custom_origin_config = {
+        http_port              = 80
+        https_port             = 443
+        origin_protocol_policy = "http-only"
+        origin_ssl_protocols   = ["TLSv1", "TLSv1.1", "TLSv1.2"]
       }
     }
-    compress    = true
-    min_ttl     = 0
-    default_ttl = 8640
-    max_ttl     = 3153600
   }
 
-  restrictions {
-    geo_restriction {
-      restriction_type = "none"
-    }
-  }
+  default_cache_behavior = {
+    target_origin_id       = "s3"
+    viewer_protocol_policy = "allow-all"
 
-  viewer_certificate {
-    acm_certificate_arn      = aws_acm_certificate.haxe-org-us-east-1-dns.arn
-    ssl_support_method       = "sni-only"
-    minimum_protocol_version = "TLSv1.1_2016"
+    allowed_methods = ["GET", "HEAD", "OPTIONS"]
+    cached_methods  = ["GET", "HEAD"]
+    compress        = true
+    query_string    = false
   }
 }
 

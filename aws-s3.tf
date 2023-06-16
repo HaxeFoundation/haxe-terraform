@@ -26,8 +26,37 @@ module "s3_bucket_terraform" {
   ]
 }
 
-resource "aws_s3_bucket" "api-haxe-org" {
+module "s3_bucket_api-haxe-org" {
+  source  = "terraform-aws-modules/s3-bucket/aws"
+  version = "3.10.1"
+
   bucket = "api.haxe.org"
+
+  attach_policy = true
+  policy        = data.aws_iam_policy_document.public_access_s3_api-haxe-org.json
+
+  acl                      = "public-read"
+  block_public_acls        = false
+  block_public_policy      = false
+  ignore_public_acls       = false
+  restrict_public_buckets  = false
+  control_object_ownership = true
+  object_ownership         = "BucketOwnerPreferred"
+
+  website = {
+    index_document = "index.html"
+  }
+}
+
+data "aws_iam_policy_document" "public_access_s3_api-haxe-org" {
+  statement {
+    principals {
+      type        = "*"
+      identifiers = ["*"]
+    }
+    actions   = ["s3:GetObject"]
+    resources = ["${module.s3_bucket_api-haxe-org.s3_bucket_arn}/*"]
+  }
 }
 
 resource "aws_s3_bucket" "aws-sdk-neko" {

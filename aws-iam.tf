@@ -45,6 +45,9 @@ data "aws_iam_policy_document" "allow-self-assumerole" {
   }
 }
 
+
+# haxe.org CI
+
 resource "aws_iam_user" "haxe-org-ci" {
   name = "haxe-org-ci"
 }
@@ -84,5 +87,45 @@ resource "aws_iam_policy" "haxe-org-ci" {
 resource "aws_iam_user_policy_attachment" "haxe-org-ci" {
   user       = aws_iam_user.haxe-org-ci.name
   policy_arn = aws_iam_policy.haxe-org-ci.arn
+}
+
+# api.haxe.org CI
+
+resource "aws_iam_user" "api-haxe-org-ci" {
+  name = "api-haxe-org-ci"
+}
+
+resource "aws_iam_access_key" "api-haxe-org-ci" {
+  user = aws_iam_user.api-haxe-org-ci.name
+}
+
+data "aws_iam_policy_document" "api-haxe-org-ci" {
+  statement {
+    actions = [
+      "s3:*",
+    ]
+    resources = [
+      module.s3_bucket_api-haxe-org.s3_bucket_arn,
+      "${module.s3_bucket_api-haxe-org.s3_bucket_arn}/*",
+    ]
+  }
+  statement {
+    actions = [
+      "cloudfront:*",
+    ]
+    resources = [
+      module.cloudfront_api-haxe-org.cloudfront_distribution_arn,
+    ]
+  }
+}
+
+resource "aws_iam_policy" "api-haxe-org-ci" {
+  name   = "api-haxe-org-ci"
+  policy = data.aws_iam_policy_document.api-haxe-org-ci.json
+}
+
+resource "aws_iam_user_policy_attachment" "api-haxe-org-ci" {
+  user       = aws_iam_user.api-haxe-org-ci.name
+  policy_arn = aws_iam_policy.api-haxe-org-ci.arn
 }
 
