@@ -1,0 +1,3 @@
+terraform 1.5.7
+terraform-ls 0.33.1
+kubectl 1.27.14

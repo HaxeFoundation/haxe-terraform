@@ -817,13 +817,3 @@ resource "aws_cloudfront_distribution" "blog-haxe-org" {
 # resource "aws_cloudfront_distribution" "www-haxedevelop-org" {
 #   aliases = ["www.haxedevelop.org"]
 # }
-
-# TODO: terraform import aws_cloudfront_distribution.haxe4-haxe-org E1N7PLSOX12HRX
-# resource "aws_cloudfront_distribution" "haxe4-haxe-org" {
-#   aliases = ["haxe4.haxe.org"]
-# }
-
-# TODO: terraform import aws_cloudfront_distribution.learn-haxe-org E2J4UGGO75GS2N
-# resource "aws_cloudfront_distribution" "learn-haxe-org" {
-#   aliases = ["learn.haxe.org"]
-# }

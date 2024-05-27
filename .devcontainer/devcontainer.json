@@ -6,12 +6,15 @@
 	"remoteEnv": {
 		"LOCAL_WORKSPACE_FOLDER": "${localWorkspaceFolder}"
 	},
-	"settings": {},
-	"extensions": [
-		"ms-azuretools.vscode-docker",
-		"nadako.vshaxe",
-		"hashicorp.terraform",
-		"earthly.earthfile-syntax-highlighting",
-	],
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"ms-azuretools.vscode-docker",
+				"nadako.vshaxe",
+				"hashicorp.terraform",
+				"earthly.earthfile-syntax-highlighting",
+			],
+		}
+	},
 	"remoteUser": "vscode"
 }

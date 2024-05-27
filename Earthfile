@@ -1,4 +1,4 @@
-VERSION 0.7
+VERSION 0.8
 ARG --global UBUNTU_RELEASE=jammy
 FROM mcr.microsoft.com/vscode/devcontainers/base:0-$UBUNTU_RELEASE
 ARG --global DEVCONTAINER_IMAGE_NAME_DEFAULT=haxe/terraform_devcontainer_workspace
@@ -9,7 +9,7 @@ ARG --global USER_GID=$USER_UID
 
 # https://github.com/docker-library/mysql/blob/master/5.7/Dockerfile.debian
 mysql-public-key:
-    ARG KEY=859BE8D7C586F538430B19C2467B942D3A79BD29
+    ARG KEY=B7B3B788A8D3785C
     RUN gpg --batch --keyserver keyserver.ubuntu.com --recv-keys "$KEY"
     RUN gpg --batch --armor --export "$KEY" > mysql-public-key
     SAVE ARTIFACT mysql-public-key AS LOCAL .devcontainer/mysql-public-key
@@ -54,15 +54,8 @@ devcontainer-base:
             jq \
         && add-apt-repository ppa:git-core/ppa \
         && apt-get install -y git \
-        && curl -sL https://deb.nodesource.com/setup_14.x | bash - \
-        && apt-get install -y nodejs=14.* \
         && add-apt-repository ppa:haxe/haxe4.2 \
         && apt-get install -y neko haxe \
-        # install kubectl
-        && curl -fsSL https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add - \
-        && echo "deb https://apt.kubernetes.io/ kubernetes-xenial main" | tee -a /etc/apt/sources.list.d/kubernetes.list \
-        && apt-get update \
-        && apt-get -y install --no-install-recommends kubectl=1.24.* \
         # install helm
         && curl -fsSL https://baltocdn.com/helm/signing.asc | apt-key add - \
         && echo "deb https://baltocdn.com/helm/stable/debian/ all main" | tee /etc/apt/sources.list.d/helm-stable-debian.list \
@@ -103,9 +96,13 @@ awscli:
 # COPY +doctl/doctl /usr/local/bin/
 doctl:
     ARG TARGETARCH
-    ARG DOCTL_VERSION=1.96.0 # https://github.com/digitalocean/doctl/releases
+    ARG DOCTL_VERSION=1.106.0 # https://github.com/digitalocean/doctl/releases
     RUN curl -fsSL "https://github.com/digitalocean/doctl/releases/download/v${DOCTL_VERSION}/doctl-${DOCTL_VERSION}-linux-${TARGETARCH}.tar.gz" | tar xvz -C /usr/local/bin/
     SAVE ARTIFACT /usr/local/bin/doctl
+
+asdf:
+    GIT CLONE --branch v0.14.0 https://github.com/asdf-vm/asdf.git /asdf
+    SAVE ARTIFACT /asdf
 
 github-src:
     ARG --required REPO
@@ -114,17 +111,6 @@ github-src:
     WORKDIR $DIR
     RUN curl -fsSL "https://github.com/${REPO}/archive/${COMMIT}.tar.gz" | tar xz --strip-components=1 -C "$DIR"
     SAVE ARTIFACT "$DIR"
-
-# Usage:
-# COPY +terraform-ls/terraform-ls /usr/local/bin/
-terraform-ls:
-    ARG TARGETARCH
-    ARG VERSION=0.31.2 # https://github.com/hashicorp/terraform-ls/releases
-    RUN curl -fsSL -o terraform-ls.zip "https://releases.hashicorp.com/terraform-ls/${VERSION}/terraform-ls_${VERSION}_linux_${TARGETARCH}.zip" \
-        && unzip -qq terraform-ls.zip \
-        && mv ./terraform-ls /usr/local/bin/ \
-        && rm terraform-ls.zip
-    SAVE ARTIFACT /usr/local/bin/terraform-ls
 
 # Usage:
 # COPY +tfk8s/tfk8s /usr/local/bin/
@@ -145,7 +131,7 @@ cert-manager.crds:
 earthly:
     FROM +devcontainer-base
     ARG TARGETARCH
-    ARG VERSION=0.7.5 # https://github.com/earthly/earthly/releases
+    ARG VERSION=0.8.12 # https://github.com/earthly/earthly/releases
     RUN curl -fsSL "https://github.com/earthly/earthly/releases/download/v${VERSION}/earthly-linux-${TARGETARCH}" -o /usr/local/bin/earthly \
         && chmod +x /usr/local/bin/earthly
     SAVE ARTIFACT /usr/local/bin/earthly
@@ -160,14 +146,7 @@ devcontainer:
     # doctl
     COPY +doctl/doctl /usr/local/bin/
 
-    # tfenv
-    COPY (+github-src/src --REPO=tfutils/tfenv --COMMIT=459d15b63f55c2f507bfa6a18e9dec5937e45daf) /tfenv
-    RUN ln -s /tfenv/bin/* /usr/local/bin/
-    COPY --chown=$USER_UID:$USER_GID .terraform-version "/home/$USERNAME/"
-    RUN tfenv install "$(cat /home/$USERNAME/.terraform-version)"
-    RUN tfenv use "$(cat /home/$USERNAME/.terraform-version)"
-    COPY +terraform-ls/terraform-ls /usr/local/bin/
-
+    # tfk8s
     COPY +tfk8s/tfk8s /usr/local/bin/
 
     # Install earthly
@@ -178,13 +157,27 @@ devcontainer:
 
     USER $USERNAME
 
+    # Install asdf
+    ENV ASDF_DIR="/asdf"
+    ENV ASDF_DATA_DIR="/asdf"
+    COPY +asdf/asdf "$ASDF_DIR"
+    ENV PATH="$ASDF_DIR/bin:$ASDF_DATA_DIR/shims:$PATH"
+    RUN asdf plugin-add kubectl https://github.com/asdf-community/asdf-kubectl.git
+    RUN asdf plugin-add terraform https://github.com/asdf-community/asdf-hashicorp.git
+    RUN asdf plugin-add terraform-ls https://github.com/asdf-community/asdf-hashicorp.git
+    COPY .tool-versions .
+    RUN asdf install
+    COPY .tool-versions /home/$USERNAME/.tool-versions
+
     # Config direnv
     COPY --chown=$USER_UID:$USER_GID .devcontainer/direnv.toml /home/$USERNAME/.config/direnv/config.toml
 
     RUN haxelib setup /haxelib
 
     # Config bash
-    RUN echo 'eval "$(direnv hook bash)"' >> ~/.bashrc \
+    RUN echo '. "$ASDF_DIR/asdf.sh"' >> ~/.bashrc \
+        && echo '. "$ASDF_DIR/completions/asdf.bash"' >> ~/.bashrc \
+        && echo 'eval "$(direnv hook bash)"' >> ~/.bashrc \
         && echo 'complete -C terraform terraform' >> ~/.bashrc \
         && echo "complete -C '/usr/local/bin/aws_completer' aws" >> ~/.bashrc \
         && echo 'source <(helm completion bash)' >> ~/.bashrc \
