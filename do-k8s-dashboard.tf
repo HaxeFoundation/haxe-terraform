@@ -1,11 +1,14 @@
-# https://github.com/kubernetes/dashboard/tree/master/charts/helm-chart/kubernetes-dashboard
+# https://github.com/kubernetes/dashboard/tree/dfd20b42444fce5e8f739385e04c8c5b7adfcebf/charts/helm-chart/kubernetes-dashboard
 resource "helm_release" "do-k8s-dashboard" {
   provider = helm.do
 
   name       = "k8s-dashboard"
   repository = "https://kubernetes.github.io/dashboard/"
   chart      = "kubernetes-dashboard"
-  version    = "6.0.0"
+
+  # We can't upgrade to 7.0.0+ because there are breaking changes in the way authentication is handled.
+  # https://github.com/kubernetes/dashboard/releases/tag/kubernetes-dashboard-7.0.0
+  version = "6.0.8"
 
   values = [yamlencode({
     "protocolHttp" : true,
