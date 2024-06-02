@@ -9,7 +9,7 @@ resource "helm_release" "do-mysql-operator" {
   provider = helm.do
 
   name      = "mysql-operator"
-  namespace = kubernetes_namespace.do-mysql-operator.metadata[0].name
+  namespace = kubernetes_namespace_v1.do-mysql-operator.metadata[0].name
   chart     = "./mysql-operator/helm/mysql-operator"
   values = [
     yamlencode({}),

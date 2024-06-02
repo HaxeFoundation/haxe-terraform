@@ -23,7 +23,7 @@ resource "kubernetes_secret_v1" "do-grafana-admin" {
   provider = kubernetes.do
   metadata {
     name      = "grafana-admin"
-    namespace = kubernetes_namespace.do-monitoring.metadata[0].name
+    namespace = kubernetes_namespace_v1.do-monitoring.metadata[0].name
   }
 
   data = {
@@ -37,7 +37,7 @@ data "kubernetes_secret_v1" "do-grafana-github-oauth-client-secret" {
   provider = kubernetes.do
   metadata {
     name      = "grafana-github-oauth-client-secret"
-    namespace = kubernetes_namespace.do-monitoring.metadata[0].name
+    namespace = kubernetes_namespace_v1.do-monitoring.metadata[0].name
   }
 }
 
@@ -55,7 +55,7 @@ resource "helm_release" "do-prometheus" {
   name       = "prometheus-stack"
   repository = "https://prometheus-community.github.io/helm-charts"
   chart      = "kube-prometheus-stack"
-  namespace  = kubernetes_namespace.do-monitoring.metadata[0].name
+  namespace  = kubernetes_namespace_v1.do-monitoring.metadata[0].name
   version    = "45.3.0"
   values = [
     yamlencode({

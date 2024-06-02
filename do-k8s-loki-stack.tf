@@ -36,7 +36,7 @@ resource "random_pet" "loki-pw" {
 data "kubernetes_secret_v1" "loki-do-spaces" {
   provider = kubernetes.do
   metadata {
-    namespace = kubernetes_namespace.do-monitoring.metadata[0].name
+    namespace = kubernetes_namespace_v1.do-monitoring.metadata[0].name
     name      = "loki-do-spaces"
   }
 }
@@ -44,7 +44,7 @@ data "kubernetes_secret_v1" "loki-do-spaces" {
 resource "kubernetes_secret_v1" "do-loki-basic-auth" {
   provider = kubernetes.do
   metadata {
-    namespace = kubernetes_namespace.do-monitoring.metadata[0].name
+    namespace = kubernetes_namespace_v1.do-monitoring.metadata[0].name
     name      = "loki-basic-auth-${random_pet.loki-pw.id}" # forces replacement
   }
 
@@ -57,7 +57,7 @@ resource "kubernetes_secret_v1" "do-loki-basic-auth" {
 resource "helm_release" "do-loki-stack" {
   provider = helm.do
 
-  namespace  = kubernetes_namespace.do-monitoring.metadata[0].name
+  namespace  = kubernetes_namespace_v1.do-monitoring.metadata[0].name
   name       = "loki-stack"
   repository = "https://grafana.github.io/helm-charts"
   chart      = "loki-stack"

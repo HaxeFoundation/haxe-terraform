@@ -1,5 +1,5 @@
 locals {
-  # do-ingress-ip = data.kubernetes_service.do-ingress-nginx.status[0].load_balancer[0].ingress[0].ip
+  # do-ingress-ip = data.kubernetes_service_v1.do-ingress-nginx.status[0].load_balancer[0].ingress[0].ip
   # https://github.com/digitalocean/terraform-provider-digitalocean/issues/772
   do-ingress-ip = data.digitalocean_loadbalancer.do-ingress-nginx.ip
 }
@@ -58,7 +58,7 @@ resource "helm_release" "do-ingress-nginx" {
   ]
 }
 
-data "kubernetes_service" "do-ingress-nginx" {
+data "kubernetes_service_v1" "do-ingress-nginx" {
   provider = kubernetes.do
 
   depends_on = [helm_release.do-ingress-nginx]
@@ -68,7 +68,7 @@ data "kubernetes_service" "do-ingress-nginx" {
 }
 
 data "digitalocean_loadbalancer" "do-ingress-nginx" {
-  id = data.kubernetes_service.do-ingress-nginx.metadata[0].annotations["kubernetes.digitalocean.com/load-balancer-id"]
+  id = data.kubernetes_service_v1.do-ingress-nginx.metadata[0].annotations["kubernetes.digitalocean.com/load-balancer-id"]
 }
 
 resource "aws_route53_record" "do-k8s-haxe-org" {

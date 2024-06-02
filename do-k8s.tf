@@ -49,14 +49,14 @@ provider "helm" {
   }
 }
 
-resource "kubernetes_namespace" "do-monitoring" {
+resource "kubernetes_namespace_v1" "do-monitoring" {
   provider = kubernetes.do
   metadata {
     name = "monitoring"
   }
 }
 
-resource "kubernetes_namespace" "do-mysql-operator" {
+resource "kubernetes_namespace_v1" "do-mysql-operator" {
   provider = kubernetes.do
   metadata {
     name = "mysql-operator"
