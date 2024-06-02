@@ -3,39 +3,39 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 4.17"
+      version = "~> 5.52"
     }
     digitalocean = {
       source  = "digitalocean/digitalocean"
-      version = "~> 2.20"
+      version = "~> 2.39"
     }
     kubernetes = {
       source  = "hashicorp/kubernetes"
-      version = "~> 2.11"
+      version = "~> 2.30"
     }
     helm = {
       source  = "hashicorp/helm"
-      version = "~> 2.5"
+      version = "~> 2.13"
     }
     gandi = {
       source  = "go-gandi/gandi"
-      version = "~> 2.2"
+      version = "~> 2.3"
     }
     cloudflare = {
       source  = "cloudflare/cloudflare"
-      version = "~> 4.0"
+      version = "~> 4.34"
     }
     github = {
       source  = "integrations/github"
-      version = "~> 5.17"
+      version = "~> 6.2"
     }
     random = {
       source  = "hashicorp/random"
-      version = "~> 3.3"
+      version = "~> 3.6"
     }
     grafana = {
       source  = "grafana/grafana"
-      version = "~> 1.23"
+      version = "~> 2.19"
     }
   }
   backend "s3" {

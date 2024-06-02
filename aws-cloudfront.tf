@@ -276,7 +276,7 @@ resource "aws_cloudfront_distribution" "code-haxe-org" {
 
 module "cloudfront_api-haxe-org" {
   source  = "terraform-aws-modules/cloudfront/aws"
-  version = "3.2.1"
+  version = "3.4.0"
 
   aliases = ["api.haxe.org"]
 
