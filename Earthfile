@@ -1,40 +1,37 @@
 VERSION 0.8
-ARG --global UBUNTU_RELEASE=jammy
-FROM mcr.microsoft.com/vscode/devcontainers/base:0-$UBUNTU_RELEASE
+
+# https://github.com/devcontainers/images/tree/main/src/base-ubuntu
+FROM mcr.microsoft.com/devcontainers/base:ubuntu-24.04
+
 ARG --global DEVCONTAINER_IMAGE_NAME_DEFAULT=haxe/terraform_devcontainer_workspace
 
 ARG --global USERNAME=vscode
-ARG --global USER_UID=1000
+ARG --global USER_UID=1001
 ARG --global USER_GID=$USER_UID
 
-# https://github.com/docker-library/mysql/blob/master/5.7/Dockerfile.debian
-mysql-public-key:
-    ARG KEY=B7B3B788A8D3785C
-    RUN gpg --batch --keyserver keyserver.ubuntu.com --recv-keys "$KEY"
-    RUN gpg --batch --armor --export "$KEY" > mysql-public-key
-    SAVE ARTIFACT mysql-public-key AS LOCAL .devcontainer/mysql-public-key
+WORKDIR /tmp
+
+docker-compose:
+    ARG TARGETARCH
+    ARG VERSION=2.27.1 # https://github.com/docker/compose/releases/
+    RUN curl -fsSL https://github.com/docker/compose/releases/download/v${VERSION}/docker-compose-linux-$(uname -m) -o /usr/local/bin/docker-compose \
+        && chmod +x /usr/local/bin/docker-compose
+    SAVE ARTIFACT /usr/local/bin/docker-compose
+
+devcontainer-library-scripts:
+    RUN curl -fsSL https://raw.githubusercontent.com/devcontainers/features/main/src/docker-outside-of-docker/install.sh -o docker-outside-of-docker.sh
+    SAVE ARTIFACT *.sh AS LOCAL .devcontainer/library-scripts/
 
 devcontainer-base:
-    ARG TARGETARCH
+    # Maunally install docker-compose to avoid the following error:
+    # pip seemed to fail to build package: PyYAML<6,>=3.10
+    COPY +docker-compose/docker-compose /usr/local/bin/
 
     # Avoid warnings by switching to noninteractive
     ENV DEBIAN_FRONTEND=noninteractive
 
-    ARG INSTALL_ZSH="false"
-    ARG UPGRADE_PACKAGES="true"
-    ARG ENABLE_NONROOT_DOCKER="true"
-    ARG USE_MOBY="true"
     COPY .devcontainer/library-scripts/*.sh /tmp/library-scripts/
-    RUN apt-get update \
-        && /bin/bash /tmp/library-scripts/common-debian.sh "${INSTALL_ZSH}" "${USERNAME}" "${USER_UID}" "${USER_GID}" "${UPGRADE_PACKAGES}" "true" "true" \
-        # Use Docker script from script library to set things up
-        && /bin/bash /tmp/library-scripts/docker-debian.sh "${ENABLE_NONROOT_DOCKER}" "/var/run/docker-host.sock" "/var/run/docker.sock" "${USERNAME}" \
-        # Clean up
-        && apt-get autoremove -y && apt-get clean -y && rm -rf /var/lib/apt/lists/* /tmp/library-scripts/
-
-    # +mysql-public-key
-    COPY .devcontainer/mysql-public-key /tmp/mysql-public-key
-    RUN apt-key add /tmp/mysql-public-key
+    RUN /bin/bash /tmp/library-scripts/docker-outside-of-docker.sh
 
     # Configure apt and install packages
     RUN apt-get update \
@@ -52,20 +49,12 @@ devcontainer-base:
             tzdata \
             python3-pip \
             jq \
-        && add-apt-repository ppa:git-core/ppa \
-        && apt-get install -y git \
-        && add-apt-repository ppa:haxe/haxe4.2 \
         && apt-get install -y neko haxe \
         # install helm
         && curl -fsSL https://baltocdn.com/helm/signing.asc | apt-key add - \
         && echo "deb https://baltocdn.com/helm/stable/debian/ all main" | tee /etc/apt/sources.list.d/helm-stable-debian.list \
         && apt-get update \
         && apt-get -y install --no-install-recommends helm \
-        # Install mysql-client
-        # https://github.com/docker-library/mysql/blob/master/5.7/Dockerfile.debian
-        && echo 'deb http://repo.mysql.com/apt/ubuntu/ bionic mysql-5.7' > /etc/apt/sources.list.d/mysql.list \
-        && apt-get update \
-        && apt-get -y install mysql-client=5.7.* \
         #
         # Clean up
         && apt-get autoremove -y \
@@ -192,16 +181,18 @@ devcontainer:
 
     ARG DEVCONTAINER_IMAGE_NAME="$DEVCONTAINER_IMAGE_NAME_DEFAULT"
     ARG DEVCONTAINER_IMAGE_TAG=latest
-    SAVE IMAGE --push "$DEVCONTAINER_IMAGE_NAME:$DEVCONTAINER_IMAGE_TAG" "$DEVCONTAINER_IMAGE_NAME:latest"
+    SAVE IMAGE --push "$DEVCONTAINER_IMAGE_NAME:$DEVCONTAINER_IMAGE_TAG"
 
 devcontainer-rebuild:
     RUN --no-cache date +%Y%m%d%H%M%S | tee buildtime
     ARG DEVCONTAINER_IMAGE_NAME="$DEVCONTAINER_IMAGE_NAME_DEFAULT"
     BUILD \
         --platform=linux/amd64 \
+        --platform=linux/arm64 \
         +devcontainer \
         --DEVCONTAINER_IMAGE_NAME="$DEVCONTAINER_IMAGE_NAME" \
-        --DEVCONTAINER_IMAGE_TAG="$(cat buildtime)"
+        --DEVCONTAINER_IMAGE_TAG="$(cat buildtime)" \
+        --DEVCONTAINER_IMAGE_TAG=latest
     BUILD +devcontainer-update-refs \
         --DEVCONTAINER_IMAGE_NAME="$DEVCONTAINER_IMAGE_NAME" \
         --DEVCONTAINER_IMAGE_TAG="$(cat buildtime)"
@@ -242,3 +233,15 @@ mysql-operator.crds:
     COPY mysql-operator/helm/mysql-operator/crds/*.yaml .
     RUN find . -name '*.yaml' -exec tfk8s --strip --file {} --output {}.tf \;
     SAVE ARTIFACT --keep-ts *.tf AS LOCAL mysql-operator.crds/
+
+terraform.lock:
+    FROM +devcontainer
+    COPY --dir cert-manager.crds kube-prometheus-stack.crds grafana mysql-operator mysql-operator.crds .
+    COPY *.tf .terraform.lock.hcl .
+
+    # We need to run `terraform init` locally to generate the .terraform directory.
+    # It's not done in Earthly because it requires the provider credentials.
+    COPY --dir .terraform .
+
+    RUN terraform providers lock -platform=linux_amd64 -platform=linux_arm64 -platform=darwin_amd64 -platform=darwin_arm64
+    SAVE ARTIFACT --keep-ts .terraform.lock.hcl AS LOCAL .terraform.lock.hcl
