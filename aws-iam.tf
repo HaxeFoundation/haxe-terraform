@@ -7,11 +7,26 @@ resource "aws_iam_user" "ibilon" {
 resource "aws_iam_user" "waneck" {
   name = "waneck"
 }
+resource "aws_iam_user" "kLabz" {
+  name = "kLabz"
+}
 resource "aws_iam_user" "serverless-admin" {
   name = "serverless-admin"
 }
 resource "aws_iam_user" "TravisCI-Bot" {
   name = "TravisCI-Bot"
+}
+
+resource "aws_iam_group" "admin" {
+  name = "admin"
+}
+resource "aws_iam_group_membership" "admin" {
+  name  = "admin-membership"
+  group = aws_iam_group.admin.name
+  users = [
+    aws_iam_user.Andy.name,
+    aws_iam_user.kLabz.name,
+  ]
 }
 
 resource "aws_iam_group" "k8s-admin" {
@@ -24,6 +39,7 @@ resource "aws_iam_group_membership" "k8s-admin" {
     aws_iam_user.Andy.name,
     aws_iam_user.ibilon.name,
     aws_iam_user.waneck.name,
+    aws_iam_user.kLabz.name,
     aws_iam_user.TravisCI-Bot.name,
     aws_iam_user.haxelib-operator.name,
   ]

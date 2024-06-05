@@ -220,7 +220,7 @@ do-kubeconfig:
     RUN --mount=type=secret,id=+secrets/envrc,target=.envrc \
         . ./.envrc \
         && KUBECONFIG="kubeconfig" doctl kubernetes cluster kubeconfig save "$CLUSTER_ID"
-    SAVE ARTIFACT --keep-ts kubeconfig
+    SAVE ARTIFACT --keep-ts kubeconfig AS LOCAL kubeconfig_do
 
 kube-prometheus-stack.crds:
     FROM +devcontainer
