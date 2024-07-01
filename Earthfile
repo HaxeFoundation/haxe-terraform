@@ -9,6 +9,9 @@ ARG --global USERNAME=vscode
 ARG --global USER_UID=1001
 ARG --global USER_GID=$USER_UID
 
+# https://github.com/devcontainers/images/issues/1056
+RUN userdel -r ubuntu || true
+
 WORKDIR /tmp
 
 docker-compose:
