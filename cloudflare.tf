@@ -125,7 +125,7 @@ resource "cloudflare_record" "code-haxe-org" {
 resource "cloudflare_record" "community-haxe-org" {
   for_each = {
     A    = "152.228.170.54"
-    AAAA = "2001:41d0:0304:0200:0000:b59a:0000:0000"
+    AAAA = "2001:41d0:304:200:0:b59a::"
   }
   zone_id = local.cloudflare.zones.haxe-org.zone_id
   name    = "community"
