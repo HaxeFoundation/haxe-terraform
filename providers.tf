@@ -82,7 +82,10 @@ provider "github" {
 }
 
 provider "gandi" {
-  key = data.aws_ssm_parameter.gandi_api_key.value
+  # Personal Access Token (haxe-terraform) permissions:
+  #  - See and renew domain names
+  #  - Manage domain name technical configurations
+  personal_access_token = data.aws_ssm_parameter.gandi_personal_access_token.value
 }
 
 provider "cloudflare" {
