@@ -56,3 +56,23 @@ resource "kubernetes_namespace_v1" "do-mysql-operator" {
     name = "mysql-operator"
   }
 }
+
+resource "kubernetes_secret_v1" "do-k8s-imagepullsecrets" {
+  provider = kubernetes.do
+  metadata {
+    name = "dockerhub-imagepullsecrets"
+  }
+  data = {
+    ".dockerconfigjson" = jsonencode({
+      auths = {
+        "https://index.docker.io/v1/" = {
+          username = "haxeci"
+          password = data.aws_ssm_parameter.do-k8s-imagepullsecrets.value
+          email    = "haxe-ci@onthewings.net"
+          auth     = base64encode("haxeci:${data.aws_ssm_parameter.do-k8s-imagepullsecrets.value}")
+        }
+      }
+    })
+  }
+  type = "kubernetes.io/dockerconfigjson"
+}
