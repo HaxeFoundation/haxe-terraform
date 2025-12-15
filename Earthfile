@@ -47,6 +47,8 @@ devcontainer-base:
             build-essential \
             curl \
             wget \
+            apt-transport-https \
+            gpg \
             software-properties-common \
             direnv \
             tzdata \
@@ -54,8 +56,8 @@ devcontainer-base:
             jq \
         && apt-get install -y neko haxe \
         # install helm
-        && curl -fsSL https://baltocdn.com/helm/signing.asc | apt-key add - \
-        && echo "deb https://baltocdn.com/helm/stable/debian/ all main" | tee /etc/apt/sources.list.d/helm-stable-debian.list \
+        && curl -fsSL https://packages.buildkite.com/helm-linux/helm-debian/gpgkey | gpg --dearmor | sudo tee /usr/share/keyrings/helm.gpg > /dev/null \
+        && echo "deb [signed-by=/usr/share/keyrings/helm.gpg] https://packages.buildkite.com/helm-linux/helm-debian/any/ any main" | sudo tee /etc/apt/sources.list.d/helm-stable-debian.list \
         && apt-get update \
         && apt-get -y install --no-install-recommends helm \
         #
@@ -123,7 +125,7 @@ cert-manager.crds:
 earthly:
     FROM +devcontainer-base
     ARG TARGETARCH
-    ARG VERSION=0.8.12 # https://github.com/earthly/earthly/releases
+    ARG VERSION=0.8.16 # https://github.com/earthly/earthly/releases
     RUN curl -fsSL "https://github.com/earthly/earthly/releases/download/v${VERSION}/earthly-linux-${TARGETARCH}" -o /usr/local/bin/earthly \
         && chmod +x /usr/local/bin/earthly
     SAVE ARTIFACT /usr/local/bin/earthly
