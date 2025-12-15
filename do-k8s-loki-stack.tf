@@ -150,5 +150,5 @@ resource "cloudflare_record" "do-loki-haxe-org" {
   name    = "do-loki"
   type    = "CNAME"
   ttl     = "86400"
-  value   = "do-k8s.haxe.org"
+  content = "do-k8s.haxe.org"
 }

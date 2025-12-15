@@ -173,5 +173,5 @@ resource "cloudflare_record" "do-oauth2-proxy" {
   name    = "do-oauth2-proxy"
   type    = "CNAME"
   ttl     = "86400"
-  value   = "do-k8s.haxe.org"
+  content = "do-k8s.haxe.org"
 }

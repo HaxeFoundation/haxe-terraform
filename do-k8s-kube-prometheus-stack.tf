@@ -189,7 +189,7 @@ resource "cloudflare_record" "do-prom-haxe-org" {
   name    = "do-prom"
   type    = "CNAME"
   ttl     = "86400"
-  value   = "do-k8s.haxe.org"
+  content = "do-k8s.haxe.org"
 }
 
 resource "cloudflare_record" "do-grafana-haxe-org" {
@@ -197,5 +197,5 @@ resource "cloudflare_record" "do-grafana-haxe-org" {
   name    = "do-grafana"
   type    = "CNAME"
   ttl     = "86400"
-  value   = "do-k8s.haxe.org"
+  content = "do-k8s.haxe.org"
 }
