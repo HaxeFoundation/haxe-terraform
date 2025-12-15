@@ -168,7 +168,7 @@ resource "aws_route53_record" "do-oauth2-proxy" {
   records = ["do-k8s.haxe.org"]
 }
 
-resource "cloudflare_record" "do-oauth2-proxy" {
+resource "cloudflare_dns_record" "do-oauth2-proxy" {
   zone_id = local.cloudflare.zones.haxe-org.zone_id
   name    = "do-oauth2-proxy"
   type    = "CNAME"

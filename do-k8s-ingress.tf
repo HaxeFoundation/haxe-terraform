@@ -79,7 +79,7 @@ resource "aws_route53_record" "do-k8s-haxe-org" {
   records = [local.do-ingress-ip]
 }
 
-resource "cloudflare_record" "do-k8s-haxe-org" {
+resource "cloudflare_dns_record" "do-k8s-haxe-org" {
   zone_id = local.cloudflare.zones.haxe-org.zone_id
   name    = "do-k8s"
   type    = "A"

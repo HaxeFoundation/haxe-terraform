@@ -184,7 +184,7 @@ resource "aws_route53_record" "do-grafana-haxe-org" {
 }
 
 
-resource "cloudflare_record" "do-prom-haxe-org" {
+resource "cloudflare_dns_record" "do-prom-haxe-org" {
   zone_id = local.cloudflare.zones.haxe-org.zone_id
   name    = "do-prom"
   type    = "CNAME"
@@ -192,7 +192,7 @@ resource "cloudflare_record" "do-prom-haxe-org" {
   content = "do-k8s.haxe.org"
 }
 
-resource "cloudflare_record" "do-grafana-haxe-org" {
+resource "cloudflare_dns_record" "do-grafana-haxe-org" {
   zone_id = local.cloudflare.zones.haxe-org.zone_id
   name    = "do-grafana"
   type    = "CNAME"

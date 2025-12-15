@@ -9,7 +9,7 @@ locals {
   }
 }
 
-resource "cloudflare_record" "acm-haxe-org-us-east-1-dns" {
+resource "cloudflare_dns_record" "acm-haxe-org-us-east-1-dns" {
   for_each = {
     for dvo in aws_acm_certificate.haxe-org-us-east-1-dns.domain_validation_options :
     dvo.resource_record_name => {
@@ -18,21 +18,22 @@ resource "cloudflare_record" "acm-haxe-org-us-east-1-dns" {
       type   = dvo.resource_record_type
     }...
   }
-  name    = each.value[0].name
-  content = each.value[0].record
+  name    = trimsuffix(each.value[0].name, ".")
+  content = trimsuffix(each.value[0].record, ".")
   ttl     = 60
   type    = each.value[0].type
   zone_id = local.cloudflare.zones.haxe-org.zone_id
 }
 
-resource "cloudflare_record" "haxe-org" {
+resource "cloudflare_dns_record" "haxe-org" {
   zone_id = local.cloudflare.zones.haxe-org.zone_id
   name    = "haxe.org"
   type    = "CNAME"
   content = aws_cloudfront_distribution.haxe-org.domain_name
+  ttl     = 1
 }
 
-resource "cloudflare_record" "haxe-org-MX" {
+resource "cloudflare_dns_record" "haxe-org-MX" {
   for_each = {
     "alt1.aspmx.l.google.com" = 5
     "alt2.aspmx.l.google.com" = 5
@@ -48,7 +49,7 @@ resource "cloudflare_record" "haxe-org-MX" {
   ttl      = 86400
 }
 
-resource "cloudflare_record" "haxe-org-TXT" {
+resource "cloudflare_dns_record" "haxe-org-TXT" {
   zone_id = local.cloudflare.zones.haxe-org.zone_id
   name    = "haxe.org"
   type    = "TXT"
@@ -56,7 +57,7 @@ resource "cloudflare_record" "haxe-org-TXT" {
   ttl     = 86400
 }
 
-resource "cloudflare_record" "mailjet-haxe-org-TXT" {
+resource "cloudflare_dns_record" "mailjet-haxe-org-TXT" {
   zone_id = local.cloudflare.zones.haxe-org.zone_id
   name    = "mailjet._domainkey"
   type    = "TXT"
@@ -65,7 +66,7 @@ resource "cloudflare_record" "mailjet-haxe-org-TXT" {
 }
 
 # GitHub varification for https://github.com/HaxeFoundation/
-resource "cloudflare_record" "github-challenge-haxe-org-TXT" {
+resource "cloudflare_dns_record" "github-challenge-haxe-org-TXT" {
   zone_id = local.cloudflare.zones.haxe-org.zone_id
   name    = "_github-challenge-haxefoundation"
   type    = "TXT"
@@ -74,7 +75,7 @@ resource "cloudflare_record" "github-challenge-haxe-org-TXT" {
 }
 
 # GitHub varification for https://github.com/haxelib/
-resource "cloudflare_record" "github-challenge-lib-haxe-org-TXT" {
+resource "cloudflare_dns_record" "github-challenge-lib-haxe-org-TXT" {
   zone_id = local.cloudflare.zones.haxe-org.zone_id
   name    = "_github-challenge-haxelib.lib"
   type    = "TXT"
@@ -82,14 +83,15 @@ resource "cloudflare_record" "github-challenge-lib-haxe-org-TXT" {
   ttl     = 300
 }
 
-resource "cloudflare_record" "api-haxe-org" {
+resource "cloudflare_dns_record" "api-haxe-org" {
   zone_id = local.cloudflare.zones.haxe-org.zone_id
   name    = "api"
   type    = "CNAME"
   content = module.cloudfront_api-haxe-org.cloudfront_distribution_domain_name
+  ttl     = 86400
 }
 
-resource "cloudflare_record" "benchs-haxe-org" {
+resource "cloudflare_dns_record" "benchs-haxe-org" {
   for_each = {
     A    = "5.196.93.21"
     AAAA = "2001:41d0:a:7c15::"
@@ -101,28 +103,31 @@ resource "cloudflare_record" "benchs-haxe-org" {
   ttl     = 300
 }
 
-resource "cloudflare_record" "blog-haxe-org" {
+resource "cloudflare_dns_record" "blog-haxe-org" {
   zone_id = local.cloudflare.zones.haxe-org.zone_id
   name    = "blog"
   type    = "CNAME"
   content = aws_cloudfront_distribution.blog-haxe-org.domain_name
+  ttl     = 1
 }
 
-resource "cloudflare_record" "build-haxe-org" {
+resource "cloudflare_dns_record" "build-haxe-org" {
   zone_id = local.cloudflare.zones.haxe-org.zone_id
   name    = "build"
   type    = "CNAME"
   content = aws_cloudfront_distribution.build-haxe-org.domain_name
+  ttl     = 1
 }
 
-resource "cloudflare_record" "code-haxe-org" {
+resource "cloudflare_dns_record" "code-haxe-org" {
   zone_id = local.cloudflare.zones.haxe-org.zone_id
   name    = "code"
   type    = "CNAME"
   content = aws_cloudfront_distribution.code-haxe-org.domain_name
+  ttl     = 1
 }
 
-resource "cloudflare_record" "community-haxe-org" {
+resource "cloudflare_dns_record" "community-haxe-org" {
   for_each = {
     A    = "152.228.170.54"
     AAAA = "2001:41d0:304:200:0:b59a::"
@@ -134,11 +139,11 @@ resource "cloudflare_record" "community-haxe-org" {
   ttl     = 86400
 }
 
-resource "cloudflare_record" "community-haxe-org-CAA" {
+resource "cloudflare_dns_record" "community-haxe-org-CAA" {
   zone_id = local.cloudflare.zones.haxe-org.zone_id
   name    = "community"
   type    = "CAA"
-  data {
+  data = {
     flags = 0
     tag   = "issue"
     value = "letsencrypt.org"
@@ -146,7 +151,7 @@ resource "cloudflare_record" "community-haxe-org-CAA" {
   ttl = 300
 }
 
-resource "cloudflare_record" "hashlink-haxe-org" {
+resource "cloudflare_dns_record" "hashlink-haxe-org" {
   zone_id = local.cloudflare.zones.haxe-org.zone_id
   name    = "hashlink"
   type    = "CNAME"
@@ -154,7 +159,7 @@ resource "cloudflare_record" "hashlink-haxe-org" {
   ttl     = 86400
 }
 
-resource "cloudflare_record" "old-haxe-org" {
+resource "cloudflare_dns_record" "old-haxe-org" {
   for_each = {
     A = "5.39.76.185"
   }
@@ -165,14 +170,15 @@ resource "cloudflare_record" "old-haxe-org" {
   ttl     = 86400
 }
 
-resource "cloudflare_record" "staging-haxe-org" {
+resource "cloudflare_dns_record" "staging-haxe-org" {
   zone_id = local.cloudflare.zones.haxe-org.zone_id
   name    = "staging"
   type    = "CNAME"
   content = aws_cloudfront_distribution.staging-haxe-org.domain_name
+  ttl     = 1
 }
 
-resource "cloudflare_record" "summit-haxe-org" {
+resource "cloudflare_dns_record" "summit-haxe-org" {
   zone_id = local.cloudflare.zones.haxe-org.zone_id
   name    = "summit"
   type    = "CNAME"
@@ -180,7 +186,7 @@ resource "cloudflare_record" "summit-haxe-org" {
   ttl     = 86400
 }
 
-resource "cloudflare_record" "tasks-haxe-org" {
+resource "cloudflare_dns_record" "tasks-haxe-org" {
   for_each = {
     A = "82.66.16.69"
   }
@@ -191,7 +197,7 @@ resource "cloudflare_record" "tasks-haxe-org" {
   ttl     = 300
 }
 
-resource "cloudflare_record" "try-haxe-org" {
+resource "cloudflare_dns_record" "try-haxe-org" {
   for_each = {
     A    = "5.196.93.21"
     AAAA = "2001:41d0:a:7c15::"
@@ -203,14 +209,15 @@ resource "cloudflare_record" "try-haxe-org" {
   ttl     = 86400
 }
 
-resource "cloudflare_record" "www-haxe-org" {
+resource "cloudflare_dns_record" "www-haxe-org" {
   zone_id = local.cloudflare.zones.haxe-org.zone_id
   name    = "www"
   type    = "CNAME"
   content = aws_cloudfront_distribution.www-haxe-org.domain_name
+  ttl     = 1
 }
 
-resource "cloudflare_record" "wwx-haxe-org" {
+resource "cloudflare_dns_record" "wwx-haxe-org" {
   for_each = {
     A = "213.186.33.17"
   }

@@ -145,7 +145,7 @@ resource "aws_route53_record" "do-loki-haxe-org" {
   records = ["do-k8s.haxe.org"]
 }
 
-resource "cloudflare_record" "do-loki-haxe-org" {
+resource "cloudflare_dns_record" "do-loki-haxe-org" {
   zone_id = local.cloudflare.zones.haxe-org.zone_id
   name    = "do-loki"
   type    = "CNAME"

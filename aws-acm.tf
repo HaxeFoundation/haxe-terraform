@@ -19,7 +19,7 @@ resource "aws_acm_certificate" "haxe-org-us-east-1-dns" {
 resource "aws_acm_certificate_validation" "haxe-org-us-east-1-dns" {
   provider                = aws.us-east-1
   certificate_arn         = aws_acm_certificate.haxe-org-us-east-1-dns.arn
-  validation_record_fqdns = [for _, record in cloudflare_record.acm-haxe-org-us-east-1-dns : record.hostname]
+  validation_record_fqdns = [for _, record in cloudflare_dns_record.acm-haxe-org-us-east-1-dns : record.name]
 }
 
 resource "aws_acm_certificate" "haxedevelop-org-us-east-1" {
