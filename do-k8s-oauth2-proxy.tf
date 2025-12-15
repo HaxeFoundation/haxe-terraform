@@ -49,7 +49,7 @@ resource "kubernetes_deployment_v1" "do-oauth2-proxy" {
 
       spec {
         container {
-          image = "quay.io/oauth2-proxy/oauth2-proxy:v7.2.1"
+          image = "quay.io/oauth2-proxy/oauth2-proxy:v7.13.0"
           name  = "oauth2-proxy"
 
           port {
