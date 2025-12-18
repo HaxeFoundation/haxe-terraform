@@ -561,6 +561,23 @@ resource "aws_cloudfront_distribution" "build-haxe-org" {
   price_class     = "PriceClass_All"
 
   origin {
+    domain_name = local.build_haxe_org.stage.prod.host
+    origin_id   = local.build_haxe_org.stage.prod.host
+    origin_path = ""
+
+    custom_origin_config {
+      http_port              = 80
+      https_port             = 443
+      origin_protocol_policy = "https-only"
+      origin_ssl_protocols = [
+        "TLSv1",
+        "TLSv1.1",
+        "TLSv1.2"
+      ]
+    }
+  }
+
+  origin {
     domain_name = "t3oujumflj.execute-api.eu-west-1.amazonaws.com"
     origin_id   = "Custom-t3oujumflj.execute-api.eu-west-1.amazonaws.com/dev"
     origin_path = "/dev"
@@ -594,116 +611,8 @@ resource "aws_cloudfront_distribution" "build-haxe-org" {
     }
   }
 
-  ordered_cache_behavior {
-    path_pattern     = "*_latest.*"
-    target_origin_id = "S3-Website-hxbuilds.s3-website-us-east-1.amazonaws.com"
-    allowed_methods = [
-      "HEAD",
-      "GET",
-    ]
-    cached_methods = [
-      "HEAD",
-      "GET",
-    ]
-    forwarded_values {
-      headers                 = []
-      query_string            = false
-      query_string_cache_keys = []
-      cookies {
-        forward           = "none"
-        whitelisted_names = []
-      }
-    }
-    compress               = true
-    viewer_protocol_policy = "allow-all"
-    min_ttl                = 0
-    default_ttl            = 600
-    max_ttl                = 600
-  }
-
-  ordered_cache_behavior {
-    path_pattern     = "*.zip"
-    target_origin_id = "S3-Website-hxbuilds.s3-website-us-east-1.amazonaws.com"
-    allowed_methods = [
-      "HEAD",
-      "GET",
-    ]
-    cached_methods = [
-      "HEAD",
-      "GET",
-    ]
-    forwarded_values {
-      headers                 = []
-      query_string            = false
-      query_string_cache_keys = []
-      cookies {
-        forward           = "none"
-        whitelisted_names = []
-      }
-    }
-    compress               = true
-    viewer_protocol_policy = "allow-all"
-    min_ttl                = 0
-    default_ttl            = 864000
-    max_ttl                = 31536000
-  }
-
-  ordered_cache_behavior {
-    path_pattern     = "*.tar.gz"
-    target_origin_id = "S3-Website-hxbuilds.s3-website-us-east-1.amazonaws.com"
-    allowed_methods = [
-      "HEAD",
-      "GET",
-    ]
-    cached_methods = [
-      "HEAD",
-      "GET",
-    ]
-    forwarded_values {
-      headers                 = []
-      query_string            = false
-      query_string_cache_keys = []
-      cookies {
-        forward           = "none"
-        whitelisted_names = []
-      }
-    }
-    compress               = true
-    viewer_protocol_policy = "allow-all"
-    min_ttl                = 0
-    default_ttl            = 864000
-    max_ttl                = 31536000
-  }
-
-  ordered_cache_behavior {
-    path_pattern     = "*.nupkg"
-    target_origin_id = "S3-Website-hxbuilds.s3-website-us-east-1.amazonaws.com"
-    allowed_methods = [
-      "HEAD",
-      "GET",
-    ]
-    cached_methods = [
-      "HEAD",
-      "GET",
-    ]
-    forwarded_values {
-      headers                 = []
-      query_string            = false
-      query_string_cache_keys = []
-      cookies {
-        forward           = "none"
-        whitelisted_names = []
-      }
-    }
-    compress               = true
-    viewer_protocol_policy = "allow-all"
-    min_ttl                = 0
-    default_ttl            = 864000
-    max_ttl                = 31536000
-  }
-
   default_cache_behavior {
-    target_origin_id       = "Custom-t3oujumflj.execute-api.eu-west-1.amazonaws.com/dev"
+    target_origin_id       = local.build_haxe_org.stage.prod.host
     viewer_protocol_policy = "redirect-to-https"
     allowed_methods = [
       "HEAD",
