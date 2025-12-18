@@ -24,6 +24,13 @@ data "aws_ssm_parameter" "HXBUILDS_AWS_SECRET_ACCESS_KEY" {
   name = "HXBUILDS_AWS_SECRET_ACCESS_KEY"
 }
 
+data "aws_ssm_parameter" "hxbuilds_sippy_r2_access_key_id" {
+  name = "hxbuilds_sippy_r2_access_key_id"
+}
+data "aws_ssm_parameter" "hxbuilds_sippy_r2_secret_access_key" {
+  name = "hxbuilds_sippy_r2_secret_access_key"
+}
+
 resource "kubernetes_secret_v1" "do-hxbuilds" {
   provider = kubernetes.do
   metadata {
@@ -228,4 +235,35 @@ resource "cloudflare_dns_record" "do-build-haxe-org" {
   type    = "CNAME"
   ttl     = 1
   content = "do-k8s.haxe.org"
+}
+
+resource "cloudflare_r2_bucket" "hxbuilds" {
+  account_id = local.cloudflare.account_id
+  name       = "hxbuilds-hjtpx7fj"
+  location   = "weur"
+}
+
+resource "cloudflare_r2_bucket_sippy" "example_r2_bucket_sippy" {
+  account_id  = local.cloudflare.account_id
+  bucket_name = cloudflare_r2_bucket.hxbuilds.name
+  destination = {
+    cloud_provider    = "r2"
+    access_key_id     = data.aws_ssm_parameter.hxbuilds_sippy_r2_access_key_id.value
+    secret_access_key = data.aws_ssm_parameter.hxbuilds_sippy_r2_secret_access_key.value
+  }
+  source = {
+    bucket            = "hxbuilds"
+    cloud_provider    = "aws"
+    access_key_id     = data.aws_ssm_parameter.HXBUILDS_AWS_ACCESS_KEY_ID.value
+    secret_access_key = data.aws_ssm_parameter.HXBUILDS_AWS_SECRET_ACCESS_KEY.value
+    region            = "us-east-1"
+  }
+}
+
+resource "cloudflare_r2_custom_domain" "example_r2_custom_domain" {
+  account_id  = local.cloudflare.account_id
+  bucket_name = cloudflare_r2_bucket.hxbuilds.name
+  domain      = "${cloudflare_r2_bucket.hxbuilds.name}.haxe.org"
+  enabled     = true
+  zone_id     = local.cloudflare.zones.haxe-org.zone_id
 }
