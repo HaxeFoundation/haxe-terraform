@@ -243,7 +243,7 @@ resource "cloudflare_r2_bucket" "hxbuilds" {
   location   = "weur"
 }
 
-resource "cloudflare_r2_bucket_sippy" "example_r2_bucket_sippy" {
+resource "cloudflare_r2_bucket_sippy" "hxbuilds" {
   account_id  = local.cloudflare.account_id
   bucket_name = cloudflare_r2_bucket.hxbuilds.name
   destination = {
@@ -260,10 +260,48 @@ resource "cloudflare_r2_bucket_sippy" "example_r2_bucket_sippy" {
   }
 }
 
-resource "cloudflare_r2_custom_domain" "example_r2_custom_domain" {
+resource "cloudflare_r2_custom_domain" "hxbuilds" {
   account_id  = local.cloudflare.account_id
   bucket_name = cloudflare_r2_bucket.hxbuilds.name
   domain      = "${cloudflare_r2_bucket.hxbuilds.name}.haxe.org"
   enabled     = true
   zone_id     = local.cloudflare.zones.haxe-org.zone_id
+}
+
+resource "cloudflare_r2_bucket_lifecycle" "hxbuilds-expire-latest" {
+  account_id  = local.cloudflare.account_id
+  bucket_name = cloudflare_r2_bucket.hxbuilds.name
+  rules = [
+    for name, prefix in {
+      "haxe/linux-arm64"         = "builds/haxe/linux-arm64/haxe_latest.tar.gz"
+      "haxe/linux64"             = "builds/haxe/linux64/haxe_latest.tar.gz"
+      "haxe/mac-installer"       = "builds/haxe/mac-installer/haxe_latest.tar.gz"
+      "haxe/mac"                 = "builds/haxe/mac/haxe_latest.tar.gz"
+      "haxe/windows64-choco"     = "builds/haxe/windows64-choco/haxe_latest.nupkg"
+      "haxe/windows64-installer" = "builds/haxe/windows64-installer/haxe_latest.zip"
+      "haxe/windows64"           = "builds/haxe/windows64/haxe_latest.zip"
+      "neko/linux-arm64"         = "builds/neko/linux-arm64/neko_latest.tar.gz"
+      "neko/linux32"             = "builds/neko/linux32/neko_latest.tar.gz"
+      "neko/linux64"             = "builds/neko/linux64/neko_latest.tar.gz"
+      "neko/mac-arm64"           = "builds/neko/mac-arm64/neko_latest.tar.gz"
+      "neko/mac-universal"       = "builds/neko/mac-universal/neko_latest.tar.gz"
+      "neko/mac"                 = "builds/neko/mac/neko_latest.tar.gz"
+      "neko/windows"             = "builds/neko/windows/neko_latest.zip"
+      "neko/windows64-choco"     = "builds/neko/windows64-choco/neko_latest.nupkg"
+      "neko/windows64"           = "builds/neko/windows64/neko_latest.zip"
+    } :
+    {
+      id = "Expire ${name}"
+      conditions = {
+        prefix = prefix
+      }
+      enabled = true
+      delete_objects_transition = {
+        condition = {
+          max_age = 60 * 60 * 24 * 1 // 1 day
+          type    = "Age"
+        }
+      }
+    }
+  ]
 }
