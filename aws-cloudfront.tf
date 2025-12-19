@@ -312,6 +312,10 @@ module "cloudfront_api-haxe-org" {
     cached_methods  = ["GET", "HEAD"]
     compress        = true
     query_string    = false
+
+    min_ttl     = 60 * 60 // 1 hour
+    default_ttl = 60 * 60 * 24 // 1 day
+    max_ttl     = 60 * 60 * 24 * 7 // 7 day
   }
 
   viewer_certificate = {
@@ -632,9 +636,9 @@ resource "aws_cloudfront_distribution" "build-haxe-org" {
       }
     }
     compress    = true
-    min_ttl     = 0
-    default_ttl = 600
-    max_ttl     = 600
+    min_ttl     = 60 * 60 // 1 hour
+    default_ttl = 60 * 60 * 24 // 1 day
+    max_ttl     = 60 * 60 * 24 * 7 // 7 days
   }
 
   restrictions {
