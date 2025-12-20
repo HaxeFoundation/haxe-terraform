@@ -31,6 +31,7 @@ resource "cloudflare_dns_record" "haxe-org" {
   type    = "CNAME"
   content = aws_cloudfront_distribution.haxe-org.domain_name
   ttl     = 1
+  proxied = true
 }
 
 resource "cloudflare_dns_record" "haxe-org-MX" {
@@ -89,6 +90,7 @@ resource "cloudflare_dns_record" "api-haxe-org" {
   type    = "CNAME"
   content = module.cloudfront_api-haxe-org.cloudfront_distribution_domain_name
   ttl     = 86400
+  proxied = true
 }
 
 resource "cloudflare_dns_record" "benchs-haxe-org" {
@@ -109,6 +111,7 @@ resource "cloudflare_dns_record" "blog-haxe-org" {
   type    = "CNAME"
   content = aws_cloudfront_distribution.blog-haxe-org.domain_name
   ttl     = 1
+  proxied = true
 }
 
 resource "cloudflare_dns_record" "build-haxe-org" {
@@ -117,6 +120,7 @@ resource "cloudflare_dns_record" "build-haxe-org" {
   type    = "CNAME"
   content = aws_cloudfront_distribution.build-haxe-org.domain_name
   ttl     = 1
+  proxied = true
 }
 
 resource "cloudflare_dns_record" "code-haxe-org" {
@@ -125,6 +129,7 @@ resource "cloudflare_dns_record" "code-haxe-org" {
   type    = "CNAME"
   content = aws_cloudfront_distribution.code-haxe-org.domain_name
   ttl     = 1
+  proxied = true
 }
 
 resource "cloudflare_dns_record" "community-haxe-org" {
@@ -215,6 +220,7 @@ resource "cloudflare_dns_record" "www-haxe-org" {
   type    = "CNAME"
   content = aws_cloudfront_distribution.www-haxe-org.domain_name
   ttl     = 1
+  proxied = true
 }
 
 resource "cloudflare_dns_record" "wwx-haxe-org" {
