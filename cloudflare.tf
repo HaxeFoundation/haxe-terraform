@@ -25,6 +25,28 @@ resource "cloudflare_ruleset" "cache_rules" {
 
   rules = [
     {
+      ref         = "haxe-org-cache-rule"
+      description = "Set cache settings for haxe.org"
+      expression  = "(http.host eq \"haxe.org\")"
+      enabled     = true
+      action      = "set_cache_settings"
+      action_parameters = {
+        cache = true
+        edge_ttl = {
+          mode = "respect_origin"
+          status_code_ttl = [
+            {
+              status_code_range = {
+                from = 200
+                to   = 399
+              }
+              value = 60 * 60 * 24 * 1 # 1 day
+            }
+          ]
+        }
+      }
+    },
+    {
       ref         = "api-haxe-org-cache-rule"
       description = "Set cache settings for api.haxe.org"
       expression  = "(http.host eq \"api.haxe.org\")"
@@ -71,6 +93,7 @@ resource "cloudflare_dns_record" "haxe-org" {
   type    = "CNAME"
   content = aws_cloudfront_distribution.haxe-org.domain_name
   ttl     = 1
+  proxied = true
 }
 
 resource "cloudflare_dns_record" "haxe-org-MX" {
