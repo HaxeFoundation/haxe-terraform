@@ -15,6 +15,40 @@ resource "cloudflare_zone_setting" "ssl" {
   value      = "strict" # Options: "off", "flexible", "full", "strict"
 }
 
+# Cache rule configuring cache settings and defining custom cache keys
+resource "cloudflare_ruleset" "cache_rules" {
+  zone_id     = local.cloudflare.zones.haxe-org.zone_id
+  name        = "Set cache settings"
+  description = "Set cache settings for incoming requests"
+  kind        = "zone"
+  phase       = "http_request_cache_settings"
+
+  rules = [
+    {
+      ref         = "api-haxe-org-cache-rule"
+      description = "Set cache settings for api.haxe.org"
+      expression  = "(http.host eq \"api.haxe.org\")"
+      enabled     = true
+      action      = "set_cache_settings"
+      action_parameters = {
+        cache = true
+        edge_ttl = {
+          mode = "respect_origin"
+          status_code_ttl = [
+            {
+              status_code_range = {
+                from = 200
+                to   = 399
+              }
+              value = 60 * 60 * 24 * 1 # 1 day
+            }
+          ]
+        }
+      }
+    }
+  ]
+}
+
 resource "cloudflare_dns_record" "acm-haxe-org-us-east-1-dns" {
   for_each = {
     for dvo in aws_acm_certificate.haxe-org-us-east-1-dns.domain_validation_options :
@@ -94,7 +128,8 @@ resource "cloudflare_dns_record" "api-haxe-org" {
   name    = "api"
   type    = "CNAME"
   content = module.cloudfront_api-haxe-org.cloudfront_distribution_domain_name
-  ttl     = 86400
+  ttl     = 1
+  proxied = true
 }
 
 resource "cloudflare_dns_record" "benchs-haxe-org" {
