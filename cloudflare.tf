@@ -9,6 +9,12 @@ locals {
   }
 }
 
+resource "cloudflare_zone_setting" "ssl" {
+  zone_id    = local.cloudflare.zones.haxe-org.zone_id
+  setting_id = "ssl"
+  value      = "strict" # Options: "off", "flexible", "full", "strict"
+}
+
 resource "cloudflare_dns_record" "acm-haxe-org-us-east-1-dns" {
   for_each = {
     for dvo in aws_acm_certificate.haxe-org-us-east-1-dns.domain_validation_options :
