@@ -101,6 +101,58 @@ resource "cloudflare_ruleset" "cache_rules" {
           ]
         }
       }
+    },
+    {
+      ref         = "build-haxe-org-cache-rule"
+      description = "Set cache settings for build.haxe.org"
+      expression  = "(http.host eq \"build.haxe.org\")"
+      enabled     = true
+      action      = "set_cache_settings"
+      action_parameters = {
+        cache = true
+        edge_ttl = {
+          mode = "respect_origin"
+          status_code_ttl = [
+            {
+              status_code_range = {
+                from = 200
+                to   = 399
+              }
+              value = 60 * 60 * 24 * 1 # 1 day
+            },
+            {
+              status_code = 404
+              value = 60 * 60 * 1 # 1 hour
+            }
+          ]
+        }
+      }
+    },
+    {
+      ref         = "blog-haxe-org-cache-rule"
+      description = "Set cache settings for blog.haxe.org"
+      expression  = "(http.host eq \"blog.haxe.org\")"
+      enabled     = true
+      action      = "set_cache_settings"
+      action_parameters = {
+        cache = true
+        edge_ttl = {
+          mode = "respect_origin"
+          status_code_ttl = [
+            {
+              status_code_range = {
+                from = 200
+                to   = 399
+              }
+              value = 60 * 60 * 24 * 1 # 1 day
+            },
+            {
+              status_code = 404
+              value = 60 * 60 * 1 # 1 hour
+            }
+          ]
+        }
+      }
     }
   ]
 }
@@ -207,6 +259,7 @@ resource "cloudflare_dns_record" "blog-haxe-org" {
   type    = "CNAME"
   content = aws_cloudfront_distribution.blog-haxe-org.domain_name
   ttl     = 1
+  proxied = true
 }
 
 resource "cloudflare_dns_record" "build-haxe-org" {
@@ -215,6 +268,7 @@ resource "cloudflare_dns_record" "build-haxe-org" {
   type    = "CNAME"
   content = aws_cloudfront_distribution.build-haxe-org.domain_name
   ttl     = 1
+  proxied = true
 }
 
 resource "cloudflare_dns_record" "code-haxe-org" {
