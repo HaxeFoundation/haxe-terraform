@@ -6,7 +6,7 @@ locals {
 resource "digitalocean_kubernetes_cluster" "cluster" {
   name         = local.do_cluster_name
   region       = "lon1"
-  version      = "1.31.9-do.5"
+  version      = "1.32.10-do.2"
   auto_upgrade = true
 
   node_pool {
