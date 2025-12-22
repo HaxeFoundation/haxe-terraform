@@ -4,4 +4,4 @@ terraform 1.5.7
 terraform-ls 0.33.1
 
 # kubectl should always match the k8s cluster minor version
-kubectl 1.31.14
+kubectl 1.32.11
