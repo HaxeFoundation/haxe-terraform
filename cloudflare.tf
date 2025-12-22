@@ -75,6 +75,32 @@ resource "cloudflare_ruleset" "cache_rules" {
           ]
         }
       }
+    },
+    {
+      ref         = "code-haxe-org-cache-rule"
+      description = "Set cache settings for code.haxe.org"
+      expression  = "(http.host eq \"code.haxe.org\")"
+      enabled     = true
+      action      = "set_cache_settings"
+      action_parameters = {
+        cache = true
+        edge_ttl = {
+          mode = "respect_origin"
+          status_code_ttl = [
+            {
+              status_code_range = {
+                from = 200
+                to   = 399
+              }
+              value = 60 * 60 * 24 * 1 # 1 day
+            },
+            {
+              status_code = 404
+              value = 60 * 60 * 1 # 1 hour
+            }
+          ]
+        }
+      }
     }
   ]
 }
@@ -197,6 +223,7 @@ resource "cloudflare_dns_record" "code-haxe-org" {
   type    = "CNAME"
   content = aws_cloudfront_distribution.code-haxe-org.domain_name
   ttl     = 1
+  proxied = true
 }
 
 resource "cloudflare_dns_record" "community-haxe-org" {
