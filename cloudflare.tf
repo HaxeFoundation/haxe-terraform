@@ -41,6 +41,10 @@ resource "cloudflare_ruleset" "cache_rules" {
                 to   = 399
               }
               value = 60 * 60 * 24 * 1 # 1 day
+            },
+            {
+              status_code = 404
+              value = 60 * 60 * 1 # 1 hour
             }
           ]
         }
@@ -63,6 +67,10 @@ resource "cloudflare_ruleset" "cache_rules" {
                 to   = 399
               }
               value = 60 * 60 * 24 * 1 # 1 day
+            },
+            {
+              status_code = 404
+              value = 60 * 60 * 1 # 1 hour
             }
           ]
         }
