@@ -565,8 +565,8 @@ resource "aws_cloudfront_distribution" "build-haxe-org" {
   price_class     = "PriceClass_All"
 
   origin {
-    domain_name = local.build_haxe_org.stage.prod.host
-    origin_id   = local.build_haxe_org.stage.prod.host
+    domain_name = "production-build.haxe.org" # local.build_haxe_org.stage.prod.host
+    origin_id   = "production-build.haxe.org" # local.build_haxe_org.stage.prod.host
     origin_path = ""
 
     custom_origin_config {
@@ -616,7 +616,7 @@ resource "aws_cloudfront_distribution" "build-haxe-org" {
   }
 
   default_cache_behavior {
-    target_origin_id       = local.build_haxe_org.stage.prod.host
+    target_origin_id       = "production-build.haxe.org" # local.build_haxe_org.stage.prod.host
     viewer_protocol_policy = "redirect-to-https"
     allowed_methods = [
       "HEAD",
@@ -636,7 +636,7 @@ resource "aws_cloudfront_distribution" "build-haxe-org" {
       }
     }
     compress    = true
-    min_ttl     = 60 * 60 // 1 hour
+    min_ttl     = 60 * 1 // 1 minute
     default_ttl = 60 * 60 * 24 // 1 day
     max_ttl     = 60 * 60 * 24 * 7 // 7 days
   }

@@ -5,13 +5,15 @@ locals {
         replicas  = 1
         subdomain = "development-build"
         host      = "development-build.haxe.org"
-        image     = "ghcr.io/haxefoundation/build.haxe.org:32c8b883178f1c9632c56228b7ab5c9474f75e2d"
+        image     = "ghcr.io/haxefoundation/build.haxe.org:b127d70aa648fc6b7c4f6025e8a7985ad11e8576"
+        proxied   = false
       }
       prod = {
         replicas  = 2
-        subdomain = "production-build"
-        host      = "production-build.haxe.org"
-        image     = "ghcr.io/haxefoundation/build.haxe.org:32c8b883178f1c9632c56228b7ab5c9474f75e2d"
+        subdomain = "build"
+        host      = "build.haxe.org"
+        image     = "ghcr.io/haxefoundation/build.haxe.org:b127d70aa648fc6b7c4f6025e8a7985ad11e8576"
+        proxied   = true
       }
     }
   }
@@ -235,6 +237,7 @@ resource "cloudflare_dns_record" "do-build-haxe-org" {
   type    = "CNAME"
   ttl     = 1
   content = "do-k8s.haxe.org"
+  proxied = each.value.proxied
 }
 
 resource "cloudflare_r2_bucket" "hxbuilds" {

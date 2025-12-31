@@ -15,6 +15,12 @@ resource "cloudflare_zone_setting" "ssl" {
   value      = "strict" # Options: "off", "flexible", "full", "strict"
 }
 
+resource "cloudflare_zone_setting" "browser_cache_ttl" {
+  zone_id    = local.cloudflare.zones.haxe-org.zone_id
+  setting_id = "browser_cache_ttl"
+  value      = 0  # The number of seconds to cache resources for. Setting this to 0 enables "Respect Existing Headers".
+}
+
 # Cache rule configuring cache settings and defining custom cache keys
 resource "cloudflare_ruleset" "cache_rules" {
   zone_id     = local.cloudflare.zones.haxe-org.zone_id
@@ -262,14 +268,14 @@ resource "cloudflare_dns_record" "blog-haxe-org" {
   proxied = true
 }
 
-resource "cloudflare_dns_record" "build-haxe-org" {
-  zone_id = local.cloudflare.zones.haxe-org.zone_id
-  name    = "build"
-  type    = "CNAME"
-  content = aws_cloudfront_distribution.build-haxe-org.domain_name
-  ttl     = 1
-  proxied = true
-}
+# resource "cloudflare_dns_record" "build-haxe-org" {
+#   zone_id = local.cloudflare.zones.haxe-org.zone_id
+#   name    = "build"
+#   type    = "CNAME"
+#   content = aws_cloudfront_distribution.build-haxe-org.domain_name
+#   ttl     = 1
+#   proxied = true
+# }
 
 resource "cloudflare_dns_record" "code-haxe-org" {
   zone_id = local.cloudflare.zones.haxe-org.zone_id
