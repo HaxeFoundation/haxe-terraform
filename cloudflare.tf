@@ -46,7 +46,7 @@ resource "cloudflare_ruleset" "cache_rules" {
                 from = 200
                 to   = 399
               }
-              value = 60 * 60 * 24 * 1 # 1 day
+              value = 60 * 60 * 1 # 1 hour
             },
             {
               status_code = 404
@@ -72,7 +72,7 @@ resource "cloudflare_ruleset" "cache_rules" {
                 from = 200
                 to   = 399
               }
-              value = 60 * 60 * 24 * 1 # 1 day
+              value = 60 * 60 * 1 # 1 hour
             },
             {
               status_code = 404
@@ -98,7 +98,7 @@ resource "cloudflare_ruleset" "cache_rules" {
                 from = 200
                 to   = 399
               }
-              value = 60 * 60 * 24 * 1 # 1 day
+              value = 60 * 60 * 1 # 1 hour
             },
             {
               status_code = 404
@@ -124,11 +124,11 @@ resource "cloudflare_ruleset" "cache_rules" {
                 from = 200
                 to   = 399
               }
-              value = 60 * 60 * 24 * 1 # 1 day
+              value = 60 * 5 # 5 minutes
             },
             {
               status_code = 404
-              value = 60 * 60 * 1 # 1 hour
+              value = 60 * 5 # 5 minutes
             }
           ]
         }
