@@ -6,7 +6,9 @@ locals {
 resource "digitalocean_kubernetes_cluster" "cluster" {
   name         = local.do_cluster_name
   region       = "lon1"
-  version      = "1.32.10-do.2"
+
+  # To find the current cluster version, run `doctl k8s cluster list`
+  version      = "1.32.10-do.3"
   auto_upgrade = true
 
   node_pool {

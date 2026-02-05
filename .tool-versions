@@ -1,7 +1,8 @@
 # We probably should migrate to OpenTofu.
-# Because OpenTofu was forked from Terraform 1.5.7, we shouldn keep Terraform at 1.5.7 to ease the migration.
+# Because OpenTofu was forked from Terraform 1.5.7, we should keep Terraform at 1.5.7 to ease the migration.
 terraform 1.5.7
 terraform-ls 0.33.1
 
 # kubectl should always match the k8s cluster minor version
+# To find the cluster version, run `doctl k8s cluster list`
 kubectl 1.32.11
