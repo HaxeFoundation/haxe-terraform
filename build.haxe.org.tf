@@ -33,6 +33,14 @@ data "aws_ssm_parameter" "hxbuilds_sippy_r2_secret_access_key" {
   name = "hxbuilds_sippy_r2_secret_access_key"
 }
 
+data "aws_ssm_parameter" "hxbuilds_github_actions_r2_access_key_id" {
+  name = "hxbuilds_github_actions_r2_access_key_id"
+}
+data "aws_ssm_parameter" "hxbuilds_github_actions_r2_secret_access_key" {
+  name = "hxbuilds_github_actions_r2_secret_access_key"
+}
+
+
 resource "kubernetes_secret_v1" "do-hxbuilds" {
   provider = kubernetes.do
   metadata {
@@ -307,4 +315,22 @@ resource "cloudflare_r2_bucket_lifecycle" "hxbuilds-expire-latest" {
       }
     }
   ]
+}
+
+resource "github_actions_variable" "hxbuilds_github_actions_r2_access_key_id" {
+  repository    = "haxe"
+  variable_name = "R2_ACCESS_KEY_ID"
+  value         = data.aws_ssm_parameter.hxbuilds_github_actions_r2_access_key_id.value
+}
+
+resource "github_actions_secret" "hxbuilds_github_actions_r2_secret_access_key" {
+  repository      = "haxe"
+  secret_name     = "R2_SECRET_ACCESS_KEY"
+  plaintext_value = data.aws_ssm_parameter.hxbuilds_github_actions_r2_secret_access_key.value
+}
+
+resource "github_actions_variable" "hxbuilds_github_actions_r2_endpoint" {
+  repository = "haxe"
+  variable_name = "R2_ENDPOINT"
+  value = "https://${local.cloudflare.account_id}.r2.cloudflarestorage.com"
 }
