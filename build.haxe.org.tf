@@ -5,7 +5,7 @@ locals {
         replicas  = 1
         subdomain = "development-build"
         host      = "development-build.haxe.org"
-        image     = "ghcr.io/haxefoundation/build.haxe.org:f929cd2e8f63ea401903e368bad941e5b1547274"
+        image     = "ghcr.io/haxefoundation/build.haxe.org:d3924c9fee628a39ff088e09237356f77667bf1f"
         proxied   = false
       }
       prod = {
@@ -19,11 +19,11 @@ locals {
   }
 }
 
-data "aws_ssm_parameter" "HXBUILDS_AWS_ACCESS_KEY_ID" {
-  name = "HXBUILDS_AWS_ACCESS_KEY_ID"
+data "aws_ssm_parameter" "HXBUILDS_ACCESS_KEY_ID" {
+  name = "HXBUILDS_ACCESS_KEY_ID"
 }
-data "aws_ssm_parameter" "HXBUILDS_AWS_SECRET_ACCESS_KEY" {
-  name = "HXBUILDS_AWS_SECRET_ACCESS_KEY"
+data "aws_ssm_parameter" "HXBUILDS_SECRET_ACCESS_KEY" {
+  name = "HXBUILDS_SECRET_ACCESS_KEY"
 }
 
 data "aws_ssm_parameter" "hxbuilds_sippy_r2_access_key_id" {
@@ -47,8 +47,8 @@ resource "kubernetes_secret_v1" "do-hxbuilds" {
     name = "hxbuilds"
   }
   data = {
-    HXBUILDS_AWS_ACCESS_KEY_ID     = data.aws_ssm_parameter.HXBUILDS_AWS_ACCESS_KEY_ID.value
-    HXBUILDS_AWS_SECRET_ACCESS_KEY = data.aws_ssm_parameter.HXBUILDS_AWS_SECRET_ACCESS_KEY.value
+    HXBUILDS_ACCESS_KEY_ID     = data.aws_ssm_parameter.HXBUILDS_ACCESS_KEY_ID.value
+    HXBUILDS_SECRET_ACCESS_KEY = data.aws_ssm_parameter.HXBUILDS_SECRET_ACCESS_KEY.value
   }
 }
 
@@ -113,11 +113,32 @@ resource "kubernetes_deployment_v1" "do-build-haxe-org" {
           }
 
           env {
+            name = "HXBUILDS_ACCESS_KEY_ID"
+            value_from {
+              secret_key_ref {
+                name = kubernetes_secret_v1.do-hxbuilds.metadata[0].name
+                key  = "HXBUILDS_ACCESS_KEY_ID"
+              }
+            }
+          }
+          env {
+            name = "HXBUILDS_SECRET_ACCESS_KEY"
+            value_from {
+              secret_key_ref {
+                name = kubernetes_secret_v1.do-hxbuilds.metadata[0].name
+                key  = "HXBUILDS_SECRET_ACCESS_KEY"
+              }
+            }
+          }
+
+          # Previous code use "AWS_" prefix.
+          # Should remove it once both dev and prod are updated.
+          env {
             name = "HXBUILDS_AWS_ACCESS_KEY_ID"
             value_from {
               secret_key_ref {
                 name = kubernetes_secret_v1.do-hxbuilds.metadata[0].name
-                key  = "HXBUILDS_AWS_ACCESS_KEY_ID"
+                key  = "HXBUILDS_ACCESS_KEY_ID"
               }
             }
           }
@@ -126,7 +147,7 @@ resource "kubernetes_deployment_v1" "do-build-haxe-org" {
             value_from {
               secret_key_ref {
                 name = kubernetes_secret_v1.do-hxbuilds.metadata[0].name
-                key  = "HXBUILDS_AWS_SECRET_ACCESS_KEY"
+                key  = "HXBUILDS_SECRET_ACCESS_KEY"
               }
             }
           }
@@ -265,8 +286,8 @@ resource "cloudflare_r2_bucket_sippy" "hxbuilds" {
   source = {
     bucket            = "hxbuilds"
     cloud_provider    = "aws"
-    access_key_id     = data.aws_ssm_parameter.HXBUILDS_AWS_ACCESS_KEY_ID.value
-    secret_access_key = data.aws_ssm_parameter.HXBUILDS_AWS_SECRET_ACCESS_KEY.value
+    access_key_id     = data.aws_ssm_parameter.HXBUILDS_ACCESS_KEY_ID.value
+    secret_access_key = data.aws_ssm_parameter.HXBUILDS_SECRET_ACCESS_KEY.value
     region            = "us-east-1"
   }
 }
@@ -292,7 +313,7 @@ resource "github_actions_secret" "hxbuilds_github_actions_r2_secret_access_key" 
 }
 
 resource "github_actions_variable" "hxbuilds_github_actions_r2_endpoint" {
-  repository = "haxe"
+  repository    = "haxe"
   variable_name = "R2_ENDPOINT"
-  value = "https://${local.cloudflare.account_id}.r2.cloudflarestorage.com"
+  value         = "https://${local.cloudflare.account_id}.r2.cloudflarestorage.com"
 }
