@@ -5,18 +5,26 @@ locals {
         replicas  = 1
         subdomain = "development-build"
         host      = "development-build.haxe.org"
-        image     = "ghcr.io/haxefoundation/build.haxe.org:b6b79b4f7c0f37249fa1285f1caf2dd9bdcb6d9b"
+        image     = "ghcr.io/haxefoundation/build.haxe.org:0d63f08abcffad3bb7fa92e7252cc8ab4f340032"
         proxied   = false
       }
       prod = {
         replicas  = 2
         subdomain = "build"
         host      = "build.haxe.org"
-        image     = "ghcr.io/haxefoundation/build.haxe.org:b6b79b4f7c0f37249fa1285f1caf2dd9bdcb6d9b"
+        image     = "ghcr.io/haxefoundation/build.haxe.org:0d63f08abcffad3bb7fa92e7252cc8ab4f340032"
         proxied   = true
       }
     }
   }
+}
+
+# The ones with "AWS_" are for the previous S3 bucket from Cauê Waneck
+data "aws_ssm_parameter" "HXBUILDS_AWS_ACCESS_KEY_ID" {
+  name = "HXBUILDS_AWS_ACCESS_KEY_ID"
+}
+data "aws_ssm_parameter" "HXBUILDS_AWS_SECRET_ACCESS_KEY" {
+  name = "HXBUILDS_AWS_SECRET_ACCESS_KEY"
 }
 
 data "aws_ssm_parameter" "HXBUILDS_ACCESS_KEY_ID" {
@@ -129,6 +137,21 @@ resource "kubernetes_deployment_v1" "do-build-haxe-org" {
                 key  = "HXBUILDS_SECRET_ACCESS_KEY"
               }
             }
+          }
+
+          env {
+            name  = "HXBUILDS_ENDPOINT"
+            value = "https://${local.cloudflare.account_id}.r2.cloudflarestorage.com"
+          }
+
+          env {
+            name  = "HXBUILDS_FORCE_PATH_STYLE"
+            value = "true"
+          }
+
+          env {
+            name  = "HXBUILDS_BUCKET"
+            value = cloudflare_r2_bucket.hxbuilds.name
           }
 
           # Previous code use "AWS_" prefix.
@@ -286,8 +309,8 @@ resource "cloudflare_r2_bucket_sippy" "hxbuilds" {
   source = {
     bucket            = "hxbuilds"
     cloud_provider    = "aws"
-    access_key_id     = data.aws_ssm_parameter.HXBUILDS_ACCESS_KEY_ID.value
-    secret_access_key = data.aws_ssm_parameter.HXBUILDS_SECRET_ACCESS_KEY.value
+    access_key_id     = data.aws_ssm_parameter.HXBUILDS_AWS_ACCESS_KEY_ID.value
+    secret_access_key = data.aws_ssm_parameter.HXBUILDS_AWS_SECRET_ACCESS_KEY.value
     region            = "us-east-1"
   }
 }
