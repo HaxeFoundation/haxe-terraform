@@ -355,3 +355,34 @@ resource "github_actions_secret" "haxe_github_actions_cloudflare_api_token" {
   secret_name     = "CLOUDFLARE_API_TOKEN"
   plaintext_value = data.aws_ssm_parameter.haxe_github_actions_cloudflare_api_token.value
 }
+
+
+resource "github_actions_variable" "neko_github_actions_r2_access_key_id" {
+  repository    = "neko"
+  variable_name = "R2_ACCESS_KEY_ID"
+  value         = data.aws_ssm_parameter.hxbuilds_github_actions_r2_access_key_id.value
+}
+
+resource "github_actions_secret" "neko_github_actions_r2_secret_access_key" {
+  repository      = "neko"
+  secret_name     = "R2_SECRET_ACCESS_KEY"
+  plaintext_value = data.aws_ssm_parameter.hxbuilds_github_actions_r2_secret_access_key.value
+}
+
+resource "github_actions_variable" "neko_github_actions_r2_endpoint" {
+  repository    = "neko"
+  variable_name = "R2_ENDPOINT"
+  value         = "https://${local.cloudflare.account_id}.r2.cloudflarestorage.com"
+}
+
+resource "github_actions_variable" "neko_cloudflare_zone_id" {
+  repository    = "neko"
+  variable_name = "CLOUDFLARE_ZONE_ID"
+  value         = local.cloudflare.zones.haxe-org.zone_id
+}
+
+resource "github_actions_secret" "neko_github_actions_cloudflare_api_token" {
+  repository      = "neko"
+  secret_name     = "CLOUDFLARE_API_TOKEN"
+  plaintext_value = data.aws_ssm_parameter.haxe_github_actions_cloudflare_api_token.value
+}
