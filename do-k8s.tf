@@ -2,15 +2,16 @@ locals {
   do_cluster_name = local.stack_name
 }
 
-# List available Droplet sizes by `doctl compute size list`
 resource "digitalocean_kubernetes_cluster" "cluster" {
   name         = local.do_cluster_name
   region       = "lon1"
 
   # To find the current cluster version, run `doctl k8s cluster list`
-  version      = "1.32.13-do.0"
+  version      = "1.32.13-do.2"
   auto_upgrade = true
 
+
+  # List available Droplet sizes by `doctl compute size list`
   node_pool {
     name       = "worker-pool"
     size       = "s-2vcpu-4gb"
