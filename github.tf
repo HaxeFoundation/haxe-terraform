@@ -7,7 +7,7 @@ data "github_team" "system-admin" {
 resource "github_actions_variable" "haxe-org-AWS_DEFAULT_REGION" {
   repository    = "haxe.org"
   variable_name = "AWS_DEFAULT_REGION"
-  value         = data.aws_region.current.name
+  value         = data.aws_region.current.region
 }
 
 resource "github_actions_variable" "haxe-org-AWS_ACCESS_KEY_ID" {
@@ -45,7 +45,7 @@ resource "github_actions_secret" "haxe-org-AWS_SECRET_ACCESS_KEY" {
 resource "github_actions_variable" "api-haxe-org-AWS_DEFAULT_REGION" {
   repository    = "api.haxe.org"
   variable_name = "AWS_DEFAULT_REGION"
-  value         = data.aws_region.current.name
+  value         = data.aws_region.current.region
 }
 
 resource "github_actions_variable" "api-haxe-org-AWS_ACCESS_KEY_ID" {
