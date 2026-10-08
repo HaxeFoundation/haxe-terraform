@@ -189,7 +189,7 @@ devcontainer:
     # Config bash
     RUN echo 'eval "$(mise activate bash)"' >> ~/.bashrc \
         && echo 'eval "$(direnv hook bash)"' >> ~/.bashrc \
-        && echo 'complete -C terraform terraform' >> ~/.bashrc \
+        && echo 'complete -C tofu tofu' >> ~/.bashrc \
         && echo "complete -C '/usr/local/bin/aws_completer' aws" >> ~/.bashrc \
         && echo 'source <(helm completion bash)' >> ~/.bashrc \
         && echo 'source <(kubectl completion bash)' >> ~/.bashrc \
@@ -261,9 +261,9 @@ terraform.lock:
     COPY --dir cert-manager.crds kube-prometheus-stack.crds grafana mysql-operator mysql-operator.crds .
     COPY *.tf .terraform.lock.hcl .
 
-    # We need to run `terraform init` locally to generate the .terraform directory.
+    # We need to run `tofu init` locally to generate the .terraform directory.
     # It's not done in Earthly because it requires the provider credentials.
     COPY --dir .terraform .
 
-    RUN terraform providers lock -platform=linux_amd64 -platform=linux_arm64 -platform=darwin_amd64 -platform=darwin_arm64
+    RUN tofu providers lock -platform=linux_amd64 -platform=linux_arm64 -platform=darwin_amd64 -platform=darwin_arm64
     SAVE ARTIFACT --keep-ts .terraform.lock.hcl AS LOCAL .terraform.lock.hcl
