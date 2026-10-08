@@ -94,9 +94,28 @@ doctl:
     RUN curl -fsSL "https://github.com/digitalocean/doctl/releases/download/v${DOCTL_VERSION}/doctl-${DOCTL_VERSION}-linux-${TARGETARCH}.tar.gz" | tar xvz -C /usr/local/bin/
     SAVE ARTIFACT /usr/local/bin/doctl
 
-asdf:
-    GIT CLONE --branch v0.14.0 https://github.com/asdf-vm/asdf.git /asdf
-    SAVE ARTIFACT /asdf
+# Usage:
+# COPY +mise/mise /usr/local/bin/
+mise:
+    ARG TARGETARCH
+    ARG VERSION=2026.10.4 # https://github.com/jdx/mise/releases
+    RUN apt-get update \
+        && apt-get install -y --no-install-recommends minisign \
+        && rm -rf /var/lib/apt/lists/*
+    # https://mise.jdx.dev/installing-mise.html#github-releases
+    RUN case "$TARGETARCH" in \
+            amd64) mise_platform=linux-x64 ;; \
+            arm64) mise_platform=linux-arm64 ;; \
+            *) echo "Unsupported TARGETARCH: $TARGETARCH" >&2; exit 1 ;; \
+        esac \
+        && base="https://github.com/jdx/mise/releases/download/v${VERSION}" \
+        && curl -fsSL -o mise "$base/mise-v${VERSION}-${mise_platform}" \
+        && curl -fsSL -O "$base/SHASUMS256.txt" -O "$base/SHASUMS256.txt.minisig" \
+        && minisign -Vm SHASUMS256.txt -P RWTC3g8W3z4RZK3V3qv7fa1QY4JEWyBtqIHW+85QlJpZc5yG+uNYNBSZ \
+        && grep " ./mise-v${VERSION}-${mise_platform}$" SHASUMS256.txt | sed 's| ./mise-.*| mise|' | sha256sum -c \
+        && install -m 755 mise /usr/local/bin/mise \
+        && /usr/local/bin/mise --version
+    SAVE ARTIFACT /usr/local/bin/mise
 
 github-src:
     ARG --required REPO
@@ -137,9 +156,6 @@ devcontainer:
     COPY +awscli/aws /aws
     RUN /aws/install
 
-    # doctl
-    COPY +doctl/doctl /usr/local/bin/
-
     # tfk8s
     COPY +tfk8s/tfk8s /usr/local/bin/
 
@@ -149,19 +165,21 @@ devcontainer:
 
     RUN mkdir -m 777 /haxelib
 
+    # Install mise
+    # Tools are installed to a fixed location instead of $HOME,
+    # because GitHub Actions overrides HOME (and runs as root) in container jobs.
+    # The system config makes the tools available outside of the project directory too.
+    COPY +mise/mise /usr/local/bin/
+    ENV MISE_DATA_DIR="/mise"
+    ENV PATH="$MISE_DATA_DIR/shims:$PATH"
+    # /workspace for the devcontainer, /__w for GitHub Actions checkouts
+    ENV MISE_TRUSTED_CONFIG_PATHS="/workspace:/__w"
+    RUN install -d -o "$USERNAME" -g "$USERNAME" "$MISE_DATA_DIR"
+    COPY mise.toml /etc/mise/config.toml
+
     USER $USERNAME
 
-    # Install asdf
-    ENV ASDF_DIR="/asdf"
-    ENV ASDF_DATA_DIR="/asdf"
-    COPY +asdf/asdf "$ASDF_DIR"
-    ENV PATH="$ASDF_DIR/bin:$ASDF_DATA_DIR/shims:$PATH"
-    RUN asdf plugin-add kubectl https://github.com/asdf-community/asdf-kubectl.git
-    RUN asdf plugin-add terraform https://github.com/asdf-community/asdf-hashicorp.git
-    RUN asdf plugin-add terraform-ls https://github.com/asdf-community/asdf-hashicorp.git
-    COPY .tool-versions .
-    RUN asdf install
-    COPY .tool-versions /home/$USERNAME/.tool-versions
+    RUN mise install
 
     # Config direnv
     COPY --chown=$USER_UID:$USER_GID .devcontainer/direnv.toml /home/$USERNAME/.config/direnv/config.toml
@@ -169,8 +187,7 @@ devcontainer:
     RUN haxelib setup /haxelib
 
     # Config bash
-    RUN echo '. "$ASDF_DIR/asdf.sh"' >> ~/.bashrc \
-        && echo '. "$ASDF_DIR/completions/asdf.bash"' >> ~/.bashrc \
+    RUN echo 'eval "$(mise activate bash)"' >> ~/.bashrc \
         && echo 'eval "$(direnv hook bash)"' >> ~/.bashrc \
         && echo 'complete -C terraform terraform' >> ~/.bashrc \
         && echo "complete -C '/usr/local/bin/aws_completer' aws" >> ~/.bashrc \
