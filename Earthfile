@@ -175,11 +175,13 @@ devcontainer:
     # /workspace for the devcontainer, /__w for GitHub Actions checkouts
     ENV MISE_TRUSTED_CONFIG_PATHS="/workspace:/__w"
     RUN install -d -o "$USERNAME" -g "$USERNAME" "$MISE_DATA_DIR"
-    COPY mise.toml /etc/mise/config.toml
+    # --chmod: the source files may be private (e.g. mise writes mise.lock as 0600)
+    COPY --chmod=644 mise.toml /etc/mise/config.toml
+    COPY --chmod=644 mise.lock /etc/mise/mise.lock
 
     USER $USERNAME
 
-    RUN mise install
+    RUN mise install --locked
 
     # Config direnv
     COPY --chown=$USER_UID:$USER_GID .devcontainer/direnv.toml /home/$USERNAME/.config/direnv/config.toml
