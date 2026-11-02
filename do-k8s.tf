@@ -35,7 +35,7 @@ resource "digitalocean_kubernetes_cluster" "cluster" {
 provider "kubernetes" {
   alias = "do"
 
-  # run `earthly +do-kubeconfig` to generate this file
+  # run `mise run get-kubeconfig` to generate this file
   config_path = "./kubeconfig_do"
 }
 

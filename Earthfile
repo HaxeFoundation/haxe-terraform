@@ -87,14 +87,6 @@ awscli:
     SAVE ARTIFACT /aws
 
 # Usage:
-# COPY +doctl/doctl /usr/local/bin/
-doctl:
-    ARG TARGETARCH
-    ARG DOCTL_VERSION=1.106.0 # https://github.com/digitalocean/doctl/releases
-    RUN curl -fsSL "https://github.com/digitalocean/doctl/releases/download/v${DOCTL_VERSION}/doctl-${DOCTL_VERSION}-linux-${TARGETARCH}.tar.gz" | tar xvz -C /usr/local/bin/
-    SAVE ARTIFACT /usr/local/bin/doctl
-
-# Usage:
 # COPY +mise/mise /usr/local/bin/
 mise:
     ARG TARGETARCH
@@ -237,14 +229,6 @@ devcontainer-update-ref:
     COPY "$FILE" file.src
     RUN sed -e "s#$DEVCONTAINER_IMAGE_NAME:[a-z0-9]*#$DEVCONTAINER_IMAGE_NAME:$DEVCONTAINER_IMAGE_TAG#g" file.src > file.out
     SAVE ARTIFACT --keep-ts file.out $FILE AS LOCAL $FILE
-
-do-kubeconfig:
-    FROM +doctl
-    ARG --required CLUSTER_ID
-    RUN --mount=type=secret,id=+secrets/envrc,target=.envrc \
-        . ./.envrc \
-        && KUBECONFIG="kubeconfig" doctl kubernetes cluster kubeconfig save "$CLUSTER_ID"
-    SAVE ARTIFACT --keep-ts kubeconfig AS LOCAL kubeconfig_do
 
 kube-prometheus-stack.crds:
     FROM +devcontainer

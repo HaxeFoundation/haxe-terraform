@@ -1,20 +1,19 @@
-Example [direnv](https://github.com/direnv/direnv) `.envrc`:
+Tools and environment variables are managed by [mise](https://mise.jdx.dev/).
 
-```sh
+Put the credentials in `mise.local.toml` (git-ignored):
+
+```toml
+[env]
 # AWS credentials
-export AWS_ACCESS_KEY_ID=FIXME
-export AWS_SECRET_ACCESS_KEY=FIXME
-export AWS_DEFAULT_REGION=eu-west-1
+AWS_ACCESS_KEY_ID = "FIXME"
+AWS_SECRET_ACCESS_KEY = "FIXME"
+AWS_DEFAULT_REGION = "eu-west-1"
 
 # Digital Ocean access tokens
-export DIGITALOCEAN_ACCESS_TOKEN=FIXME
-export SPACES_ACCESS_KEY_ID=FIXME
-export SPACES_SECRET_ACCESS_KEY=FIXME
-
-# Optional. Let us use `kubectl`.
-# https://kubernetes.io/docs/tasks/access-application-cluster/configure-access-multiple-clusters/#set-the-kubeconfig-environment-variable
-export KUBECONFIG="$HOME/.kube/config:$(pwd)/kubeconfig_do"
+DIGITALOCEAN_ACCESS_TOKEN = "FIXME"
+SPACES_ACCESS_KEY_ID = "FIXME"
+SPACES_SECRET_ACCESS_KEY = "FIXME"
 
 # Optional. Let us use VS Code for `kubectl edit`.
-export KUBE_EDITOR="code -w"
+KUBE_EDITOR = "code -w"
 ```
