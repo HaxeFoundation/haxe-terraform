@@ -6,8 +6,8 @@ resource "digitalocean_kubernetes_cluster" "cluster" {
   name         = local.do_cluster_name
   region       = "lon1"
 
-  # To find the current cluster version, run `doctl k8s cluster list`
-  version      = "1.34.12-do.1"
+  # run `mise run update-k8s-version` to update this value to match the live cluster
+  version      = "1.34.12-do.2"
   auto_upgrade = true
 
 
