@@ -1,7 +1,4 @@
 locals {
-  do-prometheus = {
-    hostnames = ["do-prom.haxe.org"]
-  }
   do-grafana = {
     hostnames = ["do-grafana.haxe.org"]
     user      = "admin"
@@ -72,19 +69,6 @@ resource "helm_release" "do-prometheus" {
 
       "prometheus" : {
         "enabled" : true,
-        "ingress" : {
-          "enabled" : true,
-          "hosts" : local.do-prometheus.hostnames,
-          "pathType" : "Prefix",
-          "annotations" : merge(
-            local.do-oauth2-proxy.ingress_annotations,
-            local.do-cert-manager.ingress_annotations,
-          ),
-          "tls" : [{
-            "hosts" : local.do-prometheus.hostnames,
-            "secretName" : "prometheus-tls"
-          }]
-        }
         "prometheusSpec" : {
           # https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-prometheus-stack#prometheusioscrape
           "podMonitorSelectorNilUsesHelmValues" : false,
@@ -167,14 +151,6 @@ resource "helm_release" "do-prometheus" {
   ]
 }
 
-resource "aws_route53_record" "do-prom-haxe-org" {
-  zone_id = aws_route53_zone.haxe-org.zone_id
-  name    = "do-prom"
-  type    = "CNAME"
-  ttl     = "86400"
-  records = ["do-k8s.haxe.org"]
-}
-
 resource "aws_route53_record" "do-grafana-haxe-org" {
   zone_id = aws_route53_zone.haxe-org.zone_id
   name    = "do-grafana"
@@ -183,14 +159,6 @@ resource "aws_route53_record" "do-grafana-haxe-org" {
   records = ["do-k8s.haxe.org"]
 }
 
-
-resource "cloudflare_dns_record" "do-prom-haxe-org" {
-  zone_id = local.cloudflare.zones.haxe-org.zone_id
-  name    = "do-prom"
-  type    = "CNAME"
-  ttl     = "86400"
-  content = "do-k8s.haxe.org"
-}
 
 resource "cloudflare_dns_record" "do-grafana-haxe-org" {
   zone_id = local.cloudflare.zones.haxe-org.zone_id
