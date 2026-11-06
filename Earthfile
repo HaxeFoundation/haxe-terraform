@@ -106,8 +106,8 @@ github-src:
 # Usage:
 # COPY +tfk8s/tfk8s /usr/local/bin/
 tfk8s:
-    FROM golang:1.17
-    RUN go install github.com/jrhouston/tfk8s@v0.1.7
+    FROM golang:1.27
+    RUN go install github.com/jrhouston/tfk8s@v0.1.10 # https://github.com/jrhouston/tfk8s/releases
     SAVE ARTIFACT /go/bin/tfk8s
 
 cert-manager.crds:
@@ -202,7 +202,7 @@ devcontainer-update-ref:
 
 kube-prometheus-stack.crds:
     FROM +devcontainer
-    COPY (+github-src/src/charts/kube-prometheus-stack/crds/*.yaml --REPO=prometheus-community/helm-charts --COMMIT=0b928f341240c76d8513534035a825686ed28a4b) .
+    COPY (+github-src/src/charts/kube-prometheus-stack/charts/crds/crds/*.yaml --REPO=prometheus-community/helm-charts --COMMIT=cd72f315731f98039e71d1fe1586df950a915fe9) . # kube-prometheus-stack-92.21.2
     RUN find . -name '*.yaml' -exec tfk8s --strip --file {} --output {}.tf \;
     SAVE ARTIFACT --keep-ts *.tf AS LOCAL kube-prometheus-stack.crds/
 
