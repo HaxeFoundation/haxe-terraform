@@ -152,6 +152,14 @@ resource "helm_release" "do-prometheus" {
           }
         },
         "defaultDashboardsTimezone" : "browser",
+        "additionalDataSources" : [{
+          "name" : "Loki",
+          # Same uid as the datasource previously provisioned by loki-stack, to keep existing links working.
+          "uid" : "P8E80F9AEF21F6940",
+          "type" : "loki",
+          "access" : "proxy",
+          "url" : local.do-loki.url,
+        }],
       }
     }),
   ]
