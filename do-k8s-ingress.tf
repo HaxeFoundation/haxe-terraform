@@ -18,6 +18,11 @@ resource "helm_release" "do-ingress-nginx" {
       "controller" : {
         "replicaCount" : 2,
         "watchIngressWithoutClass" : true,
+        # Mitigation for IngressNightmare (CVE-2025-1974 etc.) while on an old controller version.
+        # https://kubernetes.io/blog/2025/03/24/ingress-nginx-cve-2025-1974/
+        "admissionWebhooks" : {
+          "enabled" : false,
+        },
         "ingressClassResource" : {
           "enabled" : true,
           "default" : true,
