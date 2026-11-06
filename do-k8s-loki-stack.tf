@@ -66,6 +66,9 @@ resource "helm_release" "do-loki-stack" {
     yamlencode({
       "loki" : {
         "enabled" : true,
+        # Prometheus (from kube-prometheus-stack) is the default Grafana datasource.
+        # Newer Grafana refuses to start if more than one datasource is marked as default.
+        "isDefault" : false,
         "ingress" : {
           "enabled" : true,
           "hosts" : [
