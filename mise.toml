@@ -6,8 +6,11 @@ opentofu = "1.13.1"
 # run `mise run update-k8s-version` to update this value to match the live cluster
 kubectl = "1.34"
 
-doctl = "1"
+helm = "4"
 k9s = "latest"
+doctl = "1"
+aws-cli = "2"
+earthly = "0.8.16"
 
 [env]
 # Let us use `kubectl` with the DO k8s cluster.

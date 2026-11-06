@@ -55,11 +55,6 @@ devcontainer-base:
             python3-pip \
             jq \
         && apt-get install -y neko haxe \
-        # install helm
-        && curl -fsSL https://packages.buildkite.com/helm-linux/helm-debian/gpgkey | gpg --dearmor | sudo tee /usr/share/keyrings/helm.gpg > /dev/null \
-        && echo "deb [signed-by=/usr/share/keyrings/helm.gpg] https://packages.buildkite.com/helm-linux/helm-debian/any/ any main" | sudo tee /etc/apt/sources.list.d/helm-stable-debian.list \
-        && apt-get update \
-        && apt-get -y install --no-install-recommends helm \
         #
         # Clean up
         && apt-get autoremove -y \
@@ -76,15 +71,6 @@ devcontainer-base:
     ENTRYPOINT [ "/usr/local/share/docker-init.sh" ]
     CMD [ "sleep", "infinity" ]
     WORKDIR /workspace
-
-# Usage:
-# RUN /aws/install
-awscli:
-    FROM +devcontainer-base
-    RUN curl -fsSL "https://awscli.amazonaws.com/awscli-exe-linux-$(uname -m).zip" -o "/tmp/awscliv2.zip" \
-        && unzip -qq /tmp/awscliv2.zip -d / \
-        && rm /tmp/awscliv2.zip
-    SAVE ARTIFACT /aws
 
 # Usage:
 # COPY +mise/mise /usr/local/bin/
@@ -130,30 +116,11 @@ cert-manager.crds:
         | tfk8s --output cert-manager.crds.tf
     SAVE ARTIFACT --keep-ts cert-manager.crds.tf AS LOCAL cert-manager.crds/cert-manager.crds.tf
 
-# Usage:
-# COPY +earthly/earthly /usr/local/bin/
-# RUN earthly bootstrap --no-buildkit --with-autocomplete
-earthly:
-    FROM +devcontainer-base
-    ARG TARGETARCH
-    ARG VERSION=0.8.16 # https://github.com/earthly/earthly/releases
-    RUN curl -fsSL "https://github.com/earthly/earthly/releases/download/v${VERSION}/earthly-linux-${TARGETARCH}" -o /usr/local/bin/earthly \
-        && chmod +x /usr/local/bin/earthly
-    SAVE ARTIFACT /usr/local/bin/earthly
-
 devcontainer:
     FROM +devcontainer-base
 
-    # AWS cli
-    COPY +awscli/aws /aws
-    RUN /aws/install
-
     # tfk8s
     COPY +tfk8s/tfk8s /usr/local/bin/
-
-    # Install earthly
-    COPY +earthly/earthly /usr/local/bin/
-    RUN earthly bootstrap --no-buildkit --with-autocomplete
 
     RUN mkdir -m 777 /haxelib
 
@@ -184,7 +151,7 @@ devcontainer:
     RUN echo 'eval "$(mise activate bash)"' >> ~/.bashrc \
         && echo 'eval "$(direnv hook bash)"' >> ~/.bashrc \
         && echo 'complete -C tofu tofu' >> ~/.bashrc \
-        && echo "complete -C '/usr/local/bin/aws_completer' aws" >> ~/.bashrc \
+        && echo 'complete -C aws_completer aws' >> ~/.bashrc \
         && echo 'source <(helm completion bash)' >> ~/.bashrc \
         && echo 'source <(kubectl completion bash)' >> ~/.bashrc \
         && echo 'source <(doctl completion bash)' >> ~/.bashrc
@@ -194,6 +161,9 @@ devcontainer:
     RUN mkdir -p ~/.kube && install -m 600 /dev/null ~/.kube/config
 
     USER root
+
+    # earthly is installed by mise; bootstrap needs root to install the bash completion
+    RUN earthly bootstrap --no-buildkit --with-autocomplete
 
     ARG DEVCONTAINER_IMAGE_NAME="$DEVCONTAINER_IMAGE_NAME_DEFAULT"
     ARG DEVCONTAINER_IMAGE_TAG=latest
