@@ -37,7 +37,7 @@ resource "github_actions_variable" "haxe-org-CLOUDFRONT_DISTRIBUTION_ID_MASTER" 
 resource "github_actions_secret" "haxe-org-AWS_SECRET_ACCESS_KEY" {
   repository      = "haxe.org"
   secret_name     = "AWS_SECRET_ACCESS_KEY"
-  plaintext_value = aws_iam_access_key.haxe-org-ci.secret
+  value = aws_iam_access_key.haxe-org-ci.secret
 }
 
 # api.haxe.org
@@ -69,5 +69,5 @@ resource "github_actions_variable" "api-haxe-org-CLOUDFRONT_DISTRIBUTION_ID" {
 resource "github_actions_secret" "api-haxe-org-AWS_SECRET_ACCESS_KEY" {
   repository      = "api.haxe.org"
   secret_name     = "AWS_SECRET_ACCESS_KEY"
-  plaintext_value = aws_iam_access_key.api-haxe-org-ci.secret
+  value = aws_iam_access_key.api-haxe-org-ci.secret
 }

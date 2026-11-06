@@ -125,11 +125,11 @@ resource "aws_iam_access_key" "haxelib-operator" {
 resource "github_actions_secret" "haxelib-AWS_ACCESS_KEY_ID" {
   repository      = "haxelib"
   secret_name     = "AWS_ACCESS_KEY_ID"
-  plaintext_value = aws_iam_access_key.haxelib-operator.id
+  value = aws_iam_access_key.haxelib-operator.id
 }
 
 resource "github_actions_secret" "haxelib-AWS_SECRET_ACCESS_KEY" {
   repository      = "haxelib"
   secret_name     = "AWS_SECRET_ACCESS_KEY"
-  plaintext_value = aws_iam_access_key.haxelib-operator.secret
+  value = aws_iam_access_key.haxelib-operator.secret
 }

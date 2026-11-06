@@ -41,7 +41,7 @@ provider "kubernetes" {
 
 provider "helm" {
   alias = "do"
-  kubernetes {
+  kubernetes = {
     config_path = "./kubeconfig_do"
   }
 }
