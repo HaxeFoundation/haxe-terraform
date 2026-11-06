@@ -53,7 +53,7 @@ resource "helm_release" "do-prometheus" {
   repository = "https://prometheus-community.github.io/helm-charts"
   chart      = "kube-prometheus-stack"
   namespace  = kubernetes_namespace_v1.do-monitoring.metadata[0].name
-  version    = "45.3.0"
+  version    = "92.21.2"
   values = [
     yamlencode({
       # https://github.com/aws/containers-roadmap/issues/657
@@ -111,12 +111,25 @@ resource "helm_release" "do-prometheus" {
           "enabled" : true,
           "size" : "10Gi",
         },
+        # The PVC is ReadWriteOnce, so a rolling update can deadlock (Multi-Attach error)
+        # if the new pod is scheduled onto another node.
+        "deploymentStrategy" : {
+          "type" : "Recreate",
+        },
         "adminPassword" : random_password.grafana-admin-pw.result,
         "admin" : {
           "existingSecret" : kubernetes_secret_v1.do-grafana-admin.metadata[0].name,
         },
         "env" : {
           "HOSTNAME" : local.do-grafana.hostnames[0],
+        },
+        "envValueFrom" : {
+          "GRAFANA_GITHUB_OAUTH_CLIENT_SECRET" : {
+            "secretKeyRef" : {
+              "name" : data.kubernetes_secret_v1.do-grafana-github-oauth-client-secret.metadata[0].name,
+              "key" : "GRAFANA_GITHUB_OAUTH_CLIENT_SECRET",
+            },
+          },
         },
         "grafana.ini" : {
           "server" : {
@@ -128,7 +141,8 @@ resource "helm_release" "do-prometheus" {
             "enabled" : true,
             "allow_sign_up" : true,
             "client_id" : "3bcf3d74e9be175a63ab",
-            "client_secret" : data.kubernetes_secret_v1.do-grafana-github-oauth-client-secret.data.GRAFANA_GITHUB_OAUTH_CLIENT_SECRET,
+            # The grafana chart rejects secrets in plain text; read it from the env var set by envValueFrom.
+            "client_secret" : "$__env{GRAFANA_GITHUB_OAUTH_CLIENT_SECRET}",
             "scopes" : "user:email,read:org",
             "auth_url" : "https://github.com/login/oauth/authorize",
             "token_url" : "https://github.com/login/oauth/access_token",
