@@ -39,6 +39,11 @@ data "aws_iam_policy_document" "haxelib-terraform" {
   }
   statement {
     effect    = "Allow"
+    actions   = ["s3:GetObject", "s3:PutObject", "s3:DeleteObject"]
+    resources = ["${module.s3_bucket_terraform.s3_bucket_arn}/haxelib.tfstate.tflock"]
+  }
+  statement {
+    effect    = "Allow"
     actions   = ["dynamodb:GetItem", "dynamodb:PutItem", "dynamodb:DeleteItem"]
     resources = [aws_dynamodb_table.haxe-terraform.arn]
   }
