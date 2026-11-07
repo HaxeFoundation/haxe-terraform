@@ -1,5 +1,5 @@
 terraform {
-  required_version = ">= 1.0"
+  required_version = ">= 1.10"
   required_providers {
     aws = {
       source  = "hashicorp/aws"
@@ -39,9 +39,9 @@ terraform {
     }
   }
   backend "s3" {
-    bucket         = "haxe-terraform"
-    key            = "haxe.tfstate"
-    dynamodb_table = "haxe-terraform"
+    bucket       = "haxe-terraform"
+    key          = "haxe.tfstate"
+    use_lockfile = true
     # AWS_DEFAULT_REGION
     # AWS_ACCESS_KEY_ID
     # AWS_SECRET_ACCESS_KEY
