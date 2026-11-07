@@ -4,6 +4,18 @@ locals {
     user      = "admin"
     password  = random_password.grafana-admin-pw.result
   }
+
+  do-kube-prometheus-stack = {
+    version = "92.21.2"
+    grafana-additional-datasources = [{
+      "name" : "Loki",
+      # Same uid as the datasource previously provisioned by loki-stack, to keep existing links working.
+      "uid" : "P8E80F9AEF21F6940",
+      "type" : "loki",
+      "access" : "proxy",
+      "url" : local.do-loki.url,
+    }]
+  }
 }
 
 output "grafana" {
@@ -53,7 +65,7 @@ resource "helm_release" "do-prometheus" {
   repository = "https://prometheus-community.github.io/helm-charts"
   chart      = "kube-prometheus-stack"
   namespace  = kubernetes_namespace_v1.do-monitoring.metadata[0].name
-  version    = "92.21.2"
+  version    = local.do-kube-prometheus-stack.version
   values = [
     yamlencode({
       # https://github.com/aws/containers-roadmap/issues/657
@@ -116,6 +128,44 @@ resource "helm_release" "do-prometheus" {
         "deploymentStrategy" : {
           "type" : "Recreate",
         },
+        # Memory request based on the measured usage of Grafana 13 (Nov 2026)
+        # with the unused plugins disabled (see "disable_plugins" below).
+        # Without requests, the pod is BestEffort: invisible to the scheduler and first to be evicted.
+        "resources" : {
+          "requests" : {
+            "memory" : "384Mi",
+          },
+        },
+        # Load the datasources and dashboards (ConfigMaps with the grafana_datasource / grafana_dashboard label)
+        # once at startup with init containers, instead of keeping 2 sidecars (~80Mi each) watching them.
+        # Changes are picked up when the pod restarts; see the "checksum/provisioning" pod annotation.
+        # LIST: load once and exit (WATCH would never finish, blocking the pod in Init).
+        # skipReload: Grafana isn't running yet during init, and reads the files when it starts.
+        "sidecar" : {
+          "dashboards" : {
+            "initDashboards" : true,
+            "watchMethod" : "LIST",
+            "skipReload" : true,
+          },
+          "datasources" : {
+            "initDatasources" : true,
+            "watchMethod" : "LIST",
+            "skipReload" : true,
+          },
+          "resources" : {
+            "requests" : {
+              "memory" : "96Mi",
+            },
+          },
+        },
+        # Restart Grafana when the provisioned datasources or dashboards may have changed:
+        # the datasources are defined below, and the dashboards are bundled with the chart.
+        "podAnnotations" : {
+          "checksum/provisioning" : sha256(jsonencode([
+            local.do-kube-prometheus-stack.version,
+            local.do-kube-prometheus-stack.grafana-additional-datasources,
+          ])),
+        },
         "adminPassword" : random_password.grafana-admin-pw.result,
         "admin" : {
           "existingSecret" : kubernetes_secret_v1.do-grafana-admin.metadata[0].name,
@@ -149,17 +199,33 @@ resource "helm_release" "do-prometheus" {
             "api_url" : "https://api.github.com/user",
             "allowed_organizations" : "HaxeFoundation",
             "team_ids" : data.github_team.system-admin.id,
-          }
+          },
+          "plugins" : {
+            # Grafana preinstalls many datasource plugins, each running a backend process.
+            # Only Prometheus, Loki, and Alertmanager are used here, so don't load the others.
+            # Measured with Grafana 13.3.0: 15 -> 3 processes, 293Mi -> 219Mi.
+            # Frontend-only apps (e.g. Logs/Metrics Drilldown) cost nothing and are kept.
+            "disable_plugins" : join(",", [
+              "cloudwatch",
+              "elasticsearch",
+              "grafana-postgresql-datasource",
+              "grafana-pyroscope-datasource",
+              "influxdb",
+              "jaeger",
+              "mssql",
+              "mysql",
+              "opentsdb",
+              "stackdriver",
+              "tempo",
+              "zipkin",
+              "grafana-advisor-app",
+              "grafana-pyroscope-app",
+              "grafana-exploretraces-app",
+            ]),
+          },
         },
         "defaultDashboardsTimezone" : "browser",
-        "additionalDataSources" : [{
-          "name" : "Loki",
-          # Same uid as the datasource previously provisioned by loki-stack, to keep existing links working.
-          "uid" : "P8E80F9AEF21F6940",
-          "type" : "loki",
-          "access" : "proxy",
-          "url" : local.do-loki.url,
-        }],
+        "additionalDataSources" : local.do-kube-prometheus-stack.grafana-additional-datasources,
       }
     }),
   ]
