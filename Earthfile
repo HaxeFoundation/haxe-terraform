@@ -112,7 +112,7 @@ tfk8s:
 
 cert-manager.crds:
     FROM +devcontainer
-    RUN curl -fsSL https://github.com/jetstack/cert-manager/releases/download/v1.6.1/cert-manager.crds.yaml \
+    RUN curl -fsSL https://github.com/cert-manager/cert-manager/releases/download/v1.21.3/cert-manager.crds.yaml \
         | tfk8s --output cert-manager.crds.tf
     SAVE ARTIFACT --keep-ts cert-manager.crds.tf AS LOCAL cert-manager.crds/cert-manager.crds.tf
 

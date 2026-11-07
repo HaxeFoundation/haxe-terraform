@@ -11,6 +11,7 @@ k9s = "latest"
 doctl = "1"
 aws-cli = "2"
 earthly = "0.8.16"
+cmctl = "2"
 
 [env]
 # Let us use `kubectl` with the DO k8s cluster.

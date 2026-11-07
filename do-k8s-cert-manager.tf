@@ -14,10 +14,12 @@ resource "helm_release" "do-cert-manager" {
   name       = "cert-manager"
   repository = "https://charts.jetstack.io"
   chart      = "cert-manager"
-  version    = "1.6.1"
+  version    = "1.21.3"
 
   values = [yamlencode({
-    installCRDs = false # CRDs are installed by module.do-cert-manager-crds
+    crds = {
+      enabled = false # CRDs are installed by module.do-cert-manager-crds
+    }
   })]
 
   depends_on = [
@@ -54,7 +56,7 @@ resource "kubernetes_manifest" "do-letsencrypt-issuer-staging" {
           {
             "http01" = {
               "ingress" = {
-                "class" = "nginx"
+                "ingressClassName" = "nginx"
               }
             }
           },
@@ -88,7 +90,7 @@ resource "kubernetes_manifest" "do-letsencrypt-issuer-production" {
           {
             "http01" = {
               "ingress" = {
-                "class" = "nginx"
+                "ingressClassName" = "nginx"
               }
             }
           },
