@@ -119,6 +119,15 @@ resource "helm_release" "do-prometheus" {
             "secretName" : "grafana-tls"
           }]
         },
+        # Replaces the ingress above (see do-k8s-gateway.tf).
+        # HTTP is redirected to HTTPS by kubernetes_manifest.do-gateway-https-redirect.
+        "route" : {
+          "main" : {
+            "enabled" : true,
+            "hostnames" : local.do-grafana.hostnames,
+            "parentRefs" : [merge(local.do-gateway.parent_ref, { "sectionName" : "https-grafana" })],
+          }
+        },
         "persistence" : {
           "enabled" : true,
           "size" : "10Gi",

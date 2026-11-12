@@ -116,6 +116,30 @@ cert-manager.crds:
         | tfk8s --output cert-manager.crds.tf
     SAVE ARTIFACT --keep-ts cert-manager.crds.tf AS LOCAL cert-manager.crds/cert-manager.crds.tf
 
+# Gateway API CRDs, at the version required by nginx-gateway-fabric
+# (https://github.com/nginx/nginx-gateway-fabric/blob/main/config/crd/gateway-api/standard/kustomization.yaml).
+# DOKS pre-installs an older version of these CRDs and owns them with the "c3" field manager.
+# We take them over:
+# - `force_conflicts` lets Terraform take ownership of the fields owned by "c3".
+# - `doks.digitalocean.com/install-policy: external` tells DOKS to leave them alone.
+#   https://docs.digitalocean.com/products/kubernetes/how-to/use-gateway-api/
+gateway-api.crds:
+    FROM +devcontainer
+    RUN curl -fsSL https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.6.3/standard-install.yaml \
+        | tfk8s --strip --output gateway-api.crds.tf
+    RUN sed -i \
+        -e 's/^resource "kubernetes_manifest" .* {$/&\n  field_manager {\n    force_conflicts = true\n  }\n/' \
+        -e 's/^\( *\)"gateway.networking.k8s.io\/bundle-version" *= *.*$/&\n\1"doks.digitalocean.com\/install-policy" = "external"/' \
+        gateway-api.crds.tf
+    SAVE ARTIFACT --keep-ts gateway-api.crds.tf AS LOCAL gateway-api.crds/gateway-api.crds.tf
+
+# Keep the version in sync with helm_release.do-nginx-gateway-fabric
+nginx-gateway-fabric.crds:
+    FROM +devcontainer
+    RUN curl -fsSL https://raw.githubusercontent.com/nginx/nginx-gateway-fabric/v2.8.1/deploy/crds.yaml \
+        | tfk8s --strip --output nginx-gateway-fabric.crds.tf
+    SAVE ARTIFACT --keep-ts nginx-gateway-fabric.crds.tf AS LOCAL nginx-gateway-fabric.crds/nginx-gateway-fabric.crds.tf
+
 devcontainer:
     FROM +devcontainer-base
 
@@ -214,7 +238,7 @@ mysql-operator.crds:
 
 terraform.lock:
     FROM +devcontainer
-    COPY --dir cert-manager.crds kube-prometheus-stack.crds grafana mysql-operator mysql-operator.crds .
+    COPY --dir cert-manager.crds gateway-api.crds nginx-gateway-fabric.crds kube-prometheus-stack.crds grafana mysql-operator mysql-operator.crds .
     COPY *.tf .terraform.lock.hcl .
 
     # We need to run `tofu init` locally to generate the .terraform directory.

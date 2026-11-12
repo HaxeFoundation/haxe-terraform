@@ -284,6 +284,48 @@ resource "kubernetes_ingress_v1" "do-build-haxe-org" {
   }
 }
 
+# Replaces kubernetes_ingress_v1.do-build-haxe-org (see do-k8s-gateway.tf).
+# HTTP is redirected to HTTPS by kubernetes_manifest.do-gateway-https-redirect.
+resource "kubernetes_manifest" "do-build-haxe-org-route" {
+  for_each = local.build_haxe_org.stage
+
+  provider = kubernetes.do
+  manifest = {
+    apiVersion = "gateway.networking.k8s.io/v1"
+    kind       = "HTTPRoute"
+    metadata = {
+      name      = "build-haxe-org-${each.key}"
+      namespace = "default"
+    }
+    spec = {
+      parentRefs = [merge(local.do-gateway.parent_ref, { sectionName = "https-build-${each.key}" })]
+      hostnames  = [each.value.host]
+      rules = [{
+        matches = [{
+          path = {
+            type  = "PathPrefix"
+            value = "/"
+          }
+        }]
+        filters = [{
+          type = "ExtensionRef"
+          extensionRef = {
+            group = "gateway.nginx.org"
+            kind  = "SnippetsFilter"
+            name  = kubernetes_manifest.do-gateway-proxy-cache.manifest.metadata.name
+          }
+        }]
+        backendRefs = [{
+          name = kubernetes_service_v1.do-build-haxe-org[each.key].metadata[0].name
+          port = 80
+        }]
+      }]
+    }
+  }
+
+  depends_on = [kubernetes_manifest.do-gateway]
+}
+
 resource "cloudflare_dns_record" "do-build-haxe-org" {
   for_each = local.build_haxe_org.stage
 
@@ -333,9 +375,9 @@ resource "github_actions_variable" "hxbuilds_github_actions_r2_access_key_id" {
 }
 
 resource "github_actions_secret" "hxbuilds_github_actions_r2_secret_access_key" {
-  repository      = "haxe"
-  secret_name     = "R2_SECRET_ACCESS_KEY"
-  value = data.aws_ssm_parameter.hxbuilds_github_actions_r2_secret_access_key.value
+  repository  = "haxe"
+  secret_name = "R2_SECRET_ACCESS_KEY"
+  value       = data.aws_ssm_parameter.hxbuilds_github_actions_r2_secret_access_key.value
 }
 
 resource "github_actions_variable" "hxbuilds_github_actions_r2_endpoint" {
@@ -351,9 +393,9 @@ resource "github_actions_variable" "haxe_cloudflare_zone_id" {
 }
 
 resource "github_actions_secret" "haxe_github_actions_cloudflare_api_token" {
-  repository      = "haxe"
-  secret_name     = "CLOUDFLARE_API_TOKEN"
-  value = data.aws_ssm_parameter.haxe_github_actions_cloudflare_api_token.value
+  repository  = "haxe"
+  secret_name = "CLOUDFLARE_API_TOKEN"
+  value       = data.aws_ssm_parameter.haxe_github_actions_cloudflare_api_token.value
 }
 
 
@@ -364,9 +406,9 @@ resource "github_actions_variable" "neko_github_actions_r2_access_key_id" {
 }
 
 resource "github_actions_secret" "neko_github_actions_r2_secret_access_key" {
-  repository      = "neko"
-  secret_name     = "R2_SECRET_ACCESS_KEY"
-  value = data.aws_ssm_parameter.hxbuilds_github_actions_r2_secret_access_key.value
+  repository  = "neko"
+  secret_name = "R2_SECRET_ACCESS_KEY"
+  value       = data.aws_ssm_parameter.hxbuilds_github_actions_r2_secret_access_key.value
 }
 
 resource "github_actions_variable" "neko_github_actions_r2_endpoint" {
@@ -382,7 +424,7 @@ resource "github_actions_variable" "neko_cloudflare_zone_id" {
 }
 
 resource "github_actions_secret" "neko_github_actions_cloudflare_api_token" {
-  repository      = "neko"
-  secret_name     = "CLOUDFLARE_API_TOKEN"
-  value = data.aws_ssm_parameter.haxe_github_actions_cloudflare_api_token.value
+  repository  = "neko"
+  secret_name = "CLOUDFLARE_API_TOKEN"
+  value       = data.aws_ssm_parameter.haxe_github_actions_cloudflare_api_token.value
 }

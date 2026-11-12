@@ -80,7 +80,7 @@ resource "aws_route53_record" "do-k8s-haxe-org" {
   zone_id = aws_route53_zone.haxe-org.zone_id
   name    = "do-k8s"
   type    = "A"
-  ttl     = "86400"
+  ttl     = "300" # lowered from 86400 for the move to the Gateway (do-k8s-gateway.tf)
   records = [local.do-ingress-ip]
 }
 
@@ -88,6 +88,6 @@ resource "cloudflare_dns_record" "do-k8s-haxe-org" {
   zone_id = local.cloudflare.zones.haxe-org.zone_id
   name    = "do-k8s"
   type    = "A"
-  ttl     = "86400"
+  ttl     = "300" # lowered from 86400 for the move to the Gateway (do-k8s-gateway.tf)
   content = local.do-ingress-ip
 }
