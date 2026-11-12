@@ -2,6 +2,7 @@
 #
 # Bootstrapping: `kubernetes_manifest` needs its CRD to exist at plan time, so on a fresh cluster apply in two steps:
 #   tofu apply -target=module.do-gateway-api-crds -target=module.do-nginx-gateway-fabric-crds -target=helm_release.do-nginx-gateway-fabric
+#   tofu apply -exclude=data.kubernetes_service_v1.do-gateway  # the Gateway's Service doesn't exist yet
 #   tofu apply
 
 locals {
@@ -22,7 +23,8 @@ locals {
     )
 
     # Namespaces allowed to attach routes to the Gateway.
-    route_namespaces = ["default", "monitoring"]
+    # "nginx-gateway" is for the HTTP-01 challenge routes of the Gateway certificates (letsencrypt-production-gateway).
+    route_namespaces = ["default", "monitoring", "nginx-gateway"]
 
     parent_ref = {
       group     = "gateway.networking.k8s.io"
@@ -387,4 +389,36 @@ resource "kubernetes_manifest" "do-gateway-https-redirect" {
   }
 
   depends_on = [kubernetes_manifest.do-gateway]
+}
+
+# The Service and its DO load balancer are created by NGINX Gateway Fabric for the Gateway,
+# named "<gateway>-<gatewayclass>".
+data "kubernetes_service_v1" "do-gateway" {
+  provider = kubernetes.do
+
+  metadata {
+    name      = "${local.do-gateway.name}-${local.do-gateway.class}"
+    namespace = local.do-gateway.namespace
+  }
+}
+
+data "digitalocean_loadbalancer" "do-gateway" {
+  id = data.kubernetes_service_v1.do-gateway.metadata[0].annotations["kubernetes.digitalocean.com/load-balancer-id"]
+}
+
+# The "do-loadbalancer-hostname" of the Gateway.
+resource "cloudflare_dns_record" "do-k8s-gw-haxe-org" {
+  zone_id = local.cloudflare.zones.haxe-org.zone_id
+  name    = "do-k8s-gw"
+  type    = "A"
+  ttl     = 300
+  content = data.digitalocean_loadbalancer.do-gateway.ip
+}
+
+resource "aws_route53_record" "do-k8s-gw-haxe-org" {
+  zone_id = aws_route53_zone.haxe-org.zone_id
+  name    = "do-k8s-gw"
+  type    = "A"
+  ttl     = 300
+  records = [data.digitalocean_loadbalancer.do-gateway.ip]
 }

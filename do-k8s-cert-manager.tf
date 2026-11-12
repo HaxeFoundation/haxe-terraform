@@ -20,6 +20,13 @@ resource "helm_release" "do-cert-manager" {
     crds = {
       enabled = false # CRDs are installed by module.do-cert-manager-crds
     }
+    config = {
+      # For the HTTP-01 solver of letsencrypt-production-gateway.
+      # Requires the Gateway API CRDs (module.do-gateway-api-crds) to exist when cert-manager starts.
+      gatewayAPI = {
+        enabled = true
+      }
+    }
   })]
 
   depends_on = [
@@ -91,6 +98,42 @@ resource "kubernetes_manifest" "do-letsencrypt-issuer-production" {
             "http01" = {
               "ingress" = {
                 "ingressClassName" = "nginx"
+              }
+            }
+          },
+        ]
+      }
+    }
+  }
+
+  depends_on = [
+    helm_release.do-cert-manager
+  ]
+}
+
+# Solves HTTP-01 challenges with an HTTPRoute on the Gateway (do-k8s-gateway.tf) instead of an Ingress.
+# The solver HTTPRoute is created in the namespace of the Certificate.
+resource "kubernetes_manifest" "do-letsencrypt-issuer-production-gateway" {
+  provider = kubernetes.do
+
+  manifest = {
+    "apiVersion" = "cert-manager.io/v1"
+    "kind"       = "ClusterIssuer"
+    "metadata" = {
+      "name" = "letsencrypt-production-gateway"
+    }
+    "spec" = {
+      "acme" = {
+        "email" = local.do-cert-manager.email
+        "privateKeySecretRef" = {
+          "name" = "letsencrypt-production-gateway"
+        }
+        "server" = "https://acme-v02.api.letsencrypt.org/directory"
+        "solvers" = [
+          {
+            "http01" = {
+              "gatewayHTTPRoute" = {
+                "parentRefs" = [merge(local.do-gateway.parent_ref, { "sectionName" = "http" })]
               }
             }
           },
