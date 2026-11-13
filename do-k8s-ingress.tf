@@ -1,7 +1,11 @@
 locals {
   # do-ingress-ip = data.kubernetes_service_v1.do-ingress-nginx.status[0].load_balancer[0].ingress[0].ip
   # https://github.com/digitalocean/terraform-provider-digitalocean/issues/772
-  do-ingress-ip = data.digitalocean_loadbalancer.do-ingress-nginx.ip
+  # do-ingress-ip = data.digitalocean_loadbalancer.do-ingress-nginx.ip
+
+  # do-k8s.haxe.org, which all hosts point to, now goes to the NGINX Gateway Fabric load balancer (do-k8s-gateway.tf).
+  # ingress-nginx stays running until its traffic drains.
+  do-ingress-ip = data.digitalocean_loadbalancer.do-gateway.ip
 }
 
 # https://github.com/kubernetes/ingress-nginx/tree/main/charts/ingress-nginx

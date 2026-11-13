@@ -245,6 +245,7 @@ resource "kubernetes_manifest" "do-gateway" {
 
 # Certificates of the Gateway listeners.
 # They are separate from the certificates of the Ingresses, so the two can run side by side.
+# Their HTTP-01 challenges are served by the Gateway itself (letsencrypt-production-gateway).
 resource "kubernetes_manifest" "do-gateway-certificate" {
   for_each = local.do-gateway.https_hosts
   provider = kubernetes.do
@@ -262,7 +263,7 @@ resource "kubernetes_manifest" "do-gateway-certificate" {
       issuerRef = {
         group = "cert-manager.io"
         kind  = "ClusterIssuer"
-        name  = "letsencrypt-production"
+        name  = kubernetes_manifest.do-letsencrypt-issuer-production-gateway.manifest.metadata.name
       }
     }
   }
