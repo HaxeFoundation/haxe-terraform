@@ -24,9 +24,25 @@ resource "helm_release" "do-cert-manager" {
         enabled = true
       }
     }
+    # Resources are based on the measured usage (Nov 2026): requests ~ steady state, memory limits ~ 3x the peak.
+    # No CPU limits, to avoid throttling.
+    resources = {
+      requests = { cpu = "10m", memory = "64Mi" } # peak 78Mi
+      limits   = { memory = "256Mi" }
+    }
+    cainjector = {
+      resources = {
+        requests = { cpu = "10m", memory = "80Mi" } # peak 88Mi
+        limits   = { memory = "256Mi" }
+      }
+    }
     webhook = {
       # The chart default (30) blocks DOKS upgrades, which require 1 <= timeoutSeconds <= 29.
       timeoutSeconds = 29
+      resources = {
+        requests = { cpu = "10m", memory = "32Mi" } # peak 42Mi
+        limits   = { memory = "128Mi" }
+      }
     }
   })]
 

@@ -79,9 +79,42 @@ resource "helm_release" "do-prometheus" {
         "enabled" : false,
       },
 
+      # Resources below are based on the measured usage (Nov 2026): requests ~ steady state, memory limits ~ 2-4x the peak.
+      # No CPU limits, to avoid throttling.
+      "prometheusOperator" : {
+        "resources" : {
+          "requests" : { "cpu" : "10m", "memory" : "64Mi" }, # peak 72Mi
+          "limits" : { "memory" : "256Mi" },
+        },
+        # The config-reloader sidecars and init containers of Prometheus and Alertmanager.
+        "prometheusConfigReloader" : {
+          "resources" : {
+            "requests" : { "cpu" : "5m", "memory" : "24Mi" }, # peak 31Mi
+            "limits" : { "memory" : "64Mi" },
+          },
+        },
+      },
+      "kube-state-metrics" : {
+        "resources" : {
+          "requests" : { "cpu" : "10m", "memory" : "64Mi" }, # peak 81Mi
+          "limits" : { "memory" : "256Mi" },
+        },
+      },
+      "prometheus-node-exporter" : {
+        "resources" : {
+          "requests" : { "cpu" : "10m", "memory" : "32Mi" }, # peak 34Mi
+          "limits" : { "memory" : "128Mi" },
+        },
+      },
+
       "prometheus" : {
         "enabled" : true,
         "prometheusSpec" : {
+          "resources" : {
+            "requests" : { "cpu" : "50m", "memory" : "512Mi" }, # peak 812Mi
+            "limits" : { "memory" : "1536Mi" },
+          },
+
           # https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-prometheus-stack#prometheusioscrape
           "podMonitorSelectorNilUsesHelmValues" : false,
           "serviceMonitorSelectorNilUsesHelmValues" : false,
@@ -155,6 +188,13 @@ resource "helm_release" "do-prometheus" {
             "requests" : {
               "memory" : "96Mi",
             },
+          },
+        },
+        # chown of the data volume at startup.
+        "initChownData" : {
+          "resources" : {
+            "requests" : { "cpu" : "5m", "memory" : "16Mi" },
+            "limits" : { "memory" : "64Mi" },
           },
         },
         # Restart Grafana when the provisioned datasources or dashboards may have changed:

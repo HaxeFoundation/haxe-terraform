@@ -230,15 +230,9 @@ kube-prometheus-stack.crds:
     RUN find . -name '*.yaml' -exec tfk8s --strip --file {} --output {}.tf \;
     SAVE ARTIFACT --keep-ts *.tf AS LOCAL kube-prometheus-stack.crds/
 
-mysql-operator.crds:
-    FROM +devcontainer
-    COPY mysql-operator/helm/mysql-operator/crds/*.yaml .
-    RUN find . -name '*.yaml' -exec tfk8s --strip --file {} --output {}.tf \;
-    SAVE ARTIFACT --keep-ts *.tf AS LOCAL mysql-operator.crds/
-
 terraform.lock:
     FROM +devcontainer
-    COPY --dir cert-manager.crds gateway-api.crds nginx-gateway-fabric.crds kube-prometheus-stack.crds grafana mysql-operator mysql-operator.crds .
+    COPY --dir cert-manager.crds gateway-api.crds nginx-gateway-fabric.crds kube-prometheus-stack.crds grafana .
     COPY *.tf .terraform.lock.hcl .
 
     # We need to run `tofu init` locally to generate the .terraform directory.

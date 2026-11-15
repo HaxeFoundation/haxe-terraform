@@ -110,11 +110,47 @@ resource "helm_release" "do-nginx-gateway-fabric" {
           enable = true
         }
       }
+      # Resources are based on the measured usage (Nov 2026): requests ~ steady state, memory limits ~ 3x the peak.
+      # No CPU limits, to avoid throttling.
+      resources = {
+        requests = { cpu = "10m", memory = "80Mi" } # peak 85Mi
+        limits   = { memory = "256Mi" }
+      }
     }
 
     # Applied to the NGINX data plane of every Gateway.
     nginx = {
       replicas = 2
+      container = {
+        # The proxy cache is on disk (emptyDir), so its page cache can be reclaimed under the memory limit.
+        resources = {
+          requests = { cpu = "25m", memory = "96Mi" } # peak 178Mi; CPU p99 31m
+          limits   = { memory = "512Mi" }
+        }
+      }
+      # NGF has no setting for the resources of the "init" container (it copies config files), so patch it in.
+      patches = [
+        {
+          type = "StrategicMerge"
+          value = {
+            spec = {
+              template = {
+                spec = {
+                  initContainers = [
+                    {
+                      name = "init"
+                      resources = {
+                        requests = { cpu = "5m", memory = "16Mi" }
+                        limits   = { memory = "128Mi" }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      ]
       podDisruptionBudget = {
         enable       = true
         minAvailable = 1

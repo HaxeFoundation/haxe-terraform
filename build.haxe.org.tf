@@ -115,8 +115,9 @@ resource "kubernetes_deployment_v1" "do-build-haxe-org" {
 
           resources {
             requests = {
-              cpu    = "50m"
-              memory = "200Mi"
+              cpu = "50m"
+              # Measured over 10 days (Nov 2026): p50 82Mi, p99 104Mi.
+              memory = "112Mi"
             }
             limits = {
               memory = "500Mi"

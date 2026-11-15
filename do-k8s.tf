@@ -53,13 +53,6 @@ resource "kubernetes_namespace_v1" "do-monitoring" {
   }
 }
 
-resource "kubernetes_namespace_v1" "do-mysql-operator" {
-  provider = kubernetes.do
-  metadata {
-    name = "mysql-operator"
-  }
-}
-
 resource "kubernetes_secret_v1" "do-k8s-imagepullsecrets" {
   provider = kubernetes.do
   metadata {
