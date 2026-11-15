@@ -85,43 +85,36 @@ specifiers = ["1"]
 
 [tools.doctl."platforms.linux-arm64"]
 checksum = "sha256:3adfe5bb667c2cdee15eb3501d53b57d8f04dfa945ddd4584f6f760834506992"
-checksum_source = "mise-versions"
 url = "https://github.com/digitalocean/doctl/releases/download/v1.177.0/doctl-1.177.0-linux-arm64.tar.gz"
 url_api = "https://api.github.com/repos/digitalocean/doctl/releases/assets/603786033"
 
 [tools.doctl."platforms.linux-arm64-musl"]
 checksum = "sha256:3adfe5bb667c2cdee15eb3501d53b57d8f04dfa945ddd4584f6f760834506992"
-checksum_source = "mise-versions"
 url = "https://github.com/digitalocean/doctl/releases/download/v1.177.0/doctl-1.177.0-linux-arm64.tar.gz"
 url_api = "https://api.github.com/repos/digitalocean/doctl/releases/assets/603786033"
 
 [tools.doctl."platforms.linux-x64"]
 checksum = "sha256:34d3954721bfb8cdb42032e78d98274f157426fa6332511ae356edcce59dade3"
-checksum_source = "mise-versions"
 url = "https://github.com/digitalocean/doctl/releases/download/v1.177.0/doctl-1.177.0-linux-amd64.tar.gz"
 url_api = "https://api.github.com/repos/digitalocean/doctl/releases/assets/603785957"
 
 [tools.doctl."platforms.linux-x64-musl"]
 checksum = "sha256:34d3954721bfb8cdb42032e78d98274f157426fa6332511ae356edcce59dade3"
-checksum_source = "mise-versions"
 url = "https://github.com/digitalocean/doctl/releases/download/v1.177.0/doctl-1.177.0-linux-amd64.tar.gz"
 url_api = "https://api.github.com/repos/digitalocean/doctl/releases/assets/603785957"
 
 [tools.doctl."platforms.macos-arm64"]
 checksum = "sha256:8fd0046662e8421684349458c5c23de5b1beacbfd9d2b0cd8309dc190a12bc34"
-checksum_source = "mise-versions"
 url = "https://github.com/digitalocean/doctl/releases/download/v1.177.0/doctl-1.177.0-darwin-arm64.tar.gz"
 url_api = "https://api.github.com/repos/digitalocean/doctl/releases/assets/603786020"
 
 [tools.doctl."platforms.macos-x64"]
 checksum = "sha256:58b5e6d4aba30bcda8b05a9c8781b090d4c475546d4269380f355a476a3dbd89"
-checksum_source = "mise-versions"
 url = "https://github.com/digitalocean/doctl/releases/download/v1.177.0/doctl-1.177.0-darwin-amd64.tar.gz"
 url_api = "https://api.github.com/repos/digitalocean/doctl/releases/assets/603785954"
 
 [tools.doctl."platforms.windows-x64"]
 checksum = "sha256:88ea69a8a21eaafdec1f330524f56905b0a93fff67edf1de60d0a346be495887"
-checksum_source = "mise-versions"
 url = "https://github.com/digitalocean/doctl/releases/download/v1.177.0/doctl-1.177.0-windows-amd64.zip"
 url_api = "https://api.github.com/repos/digitalocean/doctl/releases/assets/603786026"
 
@@ -132,45 +125,78 @@ specifiers = ["0.8.16"]
 
 [tools.earthly."platforms.linux-arm64"]
 checksum = "sha256:dfdc3957f24754d66cea0c19a46bb542941132c9ccc81df7d71009ed79be54e8"
-checksum_source = "mise-versions"
 url = "https://github.com/earthly/earthly/releases/download/v0.8.16/earthly-linux-arm64"
 url_api = "https://api.github.com/repos/earthly/earthly/releases/assets/273467221"
 
 [tools.earthly."platforms.linux-arm64-musl"]
 checksum = "sha256:dfdc3957f24754d66cea0c19a46bb542941132c9ccc81df7d71009ed79be54e8"
-checksum_source = "mise-versions"
 url = "https://github.com/earthly/earthly/releases/download/v0.8.16/earthly-linux-arm64"
 url_api = "https://api.github.com/repos/earthly/earthly/releases/assets/273467221"
 
 [tools.earthly."platforms.linux-x64"]
 checksum = "sha256:3ef3163c81bdd10e28ab31cd96e35c1856d97478c8ce7f20954b8bea7a598404"
-checksum_source = "mise-versions"
 url = "https://github.com/earthly/earthly/releases/download/v0.8.16/earthly-linux-amd64"
 url_api = "https://api.github.com/repos/earthly/earthly/releases/assets/273467204"
 
 [tools.earthly."platforms.linux-x64-musl"]
 checksum = "sha256:3ef3163c81bdd10e28ab31cd96e35c1856d97478c8ce7f20954b8bea7a598404"
-checksum_source = "mise-versions"
 url = "https://github.com/earthly/earthly/releases/download/v0.8.16/earthly-linux-amd64"
 url_api = "https://api.github.com/repos/earthly/earthly/releases/assets/273467204"
 
 [tools.earthly."platforms.macos-arm64"]
 checksum = "sha256:4ac88e47414778f0a5af0f59637148c9b0eabc7c77cd77890e6cd99e3040a2b4"
-checksum_source = "mise-versions"
 url = "https://github.com/earthly/earthly/releases/download/v0.8.16/earthly-darwin-arm64"
 url_api = "https://api.github.com/repos/earthly/earthly/releases/assets/273467191"
 
 [tools.earthly."platforms.macos-x64"]
 checksum = "sha256:1592cb497256577a76dda4e827010876eeeec05e76e3a203f60a68c71a80fc3a"
-checksum_source = "mise-versions"
 url = "https://github.com/earthly/earthly/releases/download/v0.8.16/earthly-darwin-amd64"
 url_api = "https://api.github.com/repos/earthly/earthly/releases/assets/273467167"
 
 [tools.earthly."platforms.windows-x64"]
 checksum = "sha256:30672f3a3ce73893b30fe47e6e9b0aeed67bd596a156c10762ea7fce3db5d934"
-checksum_source = "mise-versions"
 url = "https://github.com/earthly/earthly/releases/download/v0.8.16/earthly-windows-amd64.exe"
 url_api = "https://api.github.com/repos/earthly/earthly/releases/assets/273467226"
+
+[[tools."github:digitalocean/clusterlint"]]
+version = "0.16.0"
+backend = "github:digitalocean/clusterlint"
+specifiers = ["0.16.0"]
+
+[tools."github:digitalocean/clusterlint"."platforms.linux-arm64"]
+checksum = "sha256:235d2eb3140b4f4a18eabeebff894bd803757264bd60c5361b37f0556a7b5a98"
+url = "https://github.com/digitalocean/clusterlint/releases/download/v0.16.0/clusterlint-v0.16.0-linux-386.tar.gz"
+url_api = "https://api.github.com/repos/digitalocean/clusterlint/releases/assets/566049515"
+
+[tools."github:digitalocean/clusterlint"."platforms.linux-arm64-musl"]
+checksum = "sha256:235d2eb3140b4f4a18eabeebff894bd803757264bd60c5361b37f0556a7b5a98"
+url = "https://github.com/digitalocean/clusterlint/releases/download/v0.16.0/clusterlint-v0.16.0-linux-386.tar.gz"
+url_api = "https://api.github.com/repos/digitalocean/clusterlint/releases/assets/566049515"
+
+[tools."github:digitalocean/clusterlint"."platforms.linux-x64"]
+checksum = "sha256:2f439560135decba5782691341a48c015b88ed3e6993431a093769992bc9bebe"
+url = "https://github.com/digitalocean/clusterlint/releases/download/v0.16.0/clusterlint-v0.16.0-linux-amd64.tar.gz"
+url_api = "https://api.github.com/repos/digitalocean/clusterlint/releases/assets/566049517"
+
+[tools."github:digitalocean/clusterlint"."platforms.linux-x64-musl"]
+checksum = "sha256:2f439560135decba5782691341a48c015b88ed3e6993431a093769992bc9bebe"
+url = "https://github.com/digitalocean/clusterlint/releases/download/v0.16.0/clusterlint-v0.16.0-linux-amd64.tar.gz"
+url_api = "https://api.github.com/repos/digitalocean/clusterlint/releases/assets/566049517"
+
+[tools."github:digitalocean/clusterlint"."platforms.macos-arm64"]
+checksum = "sha256:a4d70e87edc05944f47fb14629e66d29903ee20bc79f7eb67927de114187fe2d"
+url = "https://github.com/digitalocean/clusterlint/releases/download/v0.16.0/clusterlint-v0.16.0-darwin-arm64.tar.gz"
+url_api = "https://api.github.com/repos/digitalocean/clusterlint/releases/assets/566049519"
+
+[tools."github:digitalocean/clusterlint"."platforms.macos-x64"]
+checksum = "sha256:44618ab8b7057626d1462a4db02770906c98a173310479e3132a15cbf53b2e30"
+url = "https://github.com/digitalocean/clusterlint/releases/download/v0.16.0/clusterlint-v0.16.0-darwin-amd64.tar.gz"
+url_api = "https://api.github.com/repos/digitalocean/clusterlint/releases/assets/566049518"
+
+[tools."github:digitalocean/clusterlint"."platforms.windows-x64"]
+checksum = "sha256:a4d70e87edc05944f47fb14629e66d29903ee20bc79f7eb67927de114187fe2d"
+url = "https://github.com/digitalocean/clusterlint/releases/download/v0.16.0/clusterlint-v0.16.0-windows-amd64.tar.gz"
+url_api = "https://api.github.com/repos/digitalocean/clusterlint/releases/assets/566049522"
 
 [[tools."github:opentofu/tofu-ls"]]
 version = "0.5.3"
@@ -179,43 +205,36 @@ specifiers = ["0.5.3"]
 
 [tools."github:opentofu/tofu-ls"."platforms.linux-arm64"]
 checksum = "sha256:d30430f86720100e6fc6d16881fcf16bc9e4cb3c4d221fafc1aa992f01387db0"
-checksum_source = "mise-versions"
 url = "https://github.com/opentofu/tofu-ls/releases/download/v0.5.3/tofu-ls_Linux_arm64.tar.gz"
 url_api = "https://api.github.com/repos/opentofu/tofu-ls/releases/assets/470198140"
 
 [tools."github:opentofu/tofu-ls"."platforms.linux-arm64-musl"]
 checksum = "sha256:d30430f86720100e6fc6d16881fcf16bc9e4cb3c4d221fafc1aa992f01387db0"
-checksum_source = "mise-versions"
 url = "https://github.com/opentofu/tofu-ls/releases/download/v0.5.3/tofu-ls_Linux_arm64.tar.gz"
 url_api = "https://api.github.com/repos/opentofu/tofu-ls/releases/assets/470198140"
 
 [tools."github:opentofu/tofu-ls"."platforms.linux-x64"]
 checksum = "sha256:ccf8d85881f493483c9c20ac010d320bf455fdc9dcc39ba0af515206cb488460"
-checksum_source = "mise-versions"
 url = "https://github.com/opentofu/tofu-ls/releases/download/v0.5.3/tofu-ls_Linux_x86_64.tar.gz"
 url_api = "https://api.github.com/repos/opentofu/tofu-ls/releases/assets/470198138"
 
 [tools."github:opentofu/tofu-ls"."platforms.linux-x64-musl"]
 checksum = "sha256:ccf8d85881f493483c9c20ac010d320bf455fdc9dcc39ba0af515206cb488460"
-checksum_source = "mise-versions"
 url = "https://github.com/opentofu/tofu-ls/releases/download/v0.5.3/tofu-ls_Linux_x86_64.tar.gz"
 url_api = "https://api.github.com/repos/opentofu/tofu-ls/releases/assets/470198138"
 
 [tools."github:opentofu/tofu-ls"."platforms.macos-arm64"]
 checksum = "sha256:391d2771a501ddc9a1f6575f57346f2653ff7df82d322a13c87147f38b8e0833"
-checksum_source = "mise-versions"
 url = "https://github.com/opentofu/tofu-ls/releases/download/v0.5.3/tofu-ls_Darwin_arm64.tar.gz"
 url_api = "https://api.github.com/repos/opentofu/tofu-ls/releases/assets/470198123"
 
 [tools."github:opentofu/tofu-ls"."platforms.macos-x64"]
 checksum = "sha256:9b248dd4a5124c22447873d39d6aba2624d0e091e89d1b2202068058a7398f89"
-checksum_source = "mise-versions"
 url = "https://github.com/opentofu/tofu-ls/releases/download/v0.5.3/tofu-ls_Darwin_x86_64.tar.gz"
 url_api = "https://api.github.com/repos/opentofu/tofu-ls/releases/assets/470198125"
 
 [tools."github:opentofu/tofu-ls"."platforms.windows-x64"]
 checksum = "sha256:e326da584f855010445c7cc1d190e8ac9918546a6f4317d378bfea1e76f9758a"
-checksum_source = "mise-versions"
 url = "https://github.com/opentofu/tofu-ls/releases/download/v0.5.3/tofu-ls_Windows_x86_64.tar.gz"
 url_api = "https://api.github.com/repos/opentofu/tofu-ls/releases/assets/470198137"
 
@@ -306,43 +325,36 @@ specifiers = ["latest"]
 
 [tools.k9s."platforms.linux-arm64"]
 checksum = "sha256:3ee05c82e5f9198928a4e86133608ba6a2c10a2244d6a7789e820f78319d640c"
-checksum_source = "mise-versions"
 url = "https://github.com/derailed/k9s/releases/download/v0.51.0/k9s_Linux_arm64.tar.gz"
 url_api = "https://api.github.com/repos/derailed/k9s/releases/assets/440226045"
 
 [tools.k9s."platforms.linux-arm64-musl"]
 checksum = "sha256:3ee05c82e5f9198928a4e86133608ba6a2c10a2244d6a7789e820f78319d640c"
-checksum_source = "mise-versions"
 url = "https://github.com/derailed/k9s/releases/download/v0.51.0/k9s_Linux_arm64.tar.gz"
 url_api = "https://api.github.com/repos/derailed/k9s/releases/assets/440226045"
 
 [tools.k9s."platforms.linux-x64"]
 checksum = "sha256:c3752ad51a5a4015a113819c4eeb6e55a4d0e4b8e652494797532f6fc8161dd7"
-checksum_source = "mise-versions"
 url = "https://github.com/derailed/k9s/releases/download/v0.51.0/k9s_Linux_amd64.tar.gz"
 url_api = "https://api.github.com/repos/derailed/k9s/releases/assets/440224321"
 
 [tools.k9s."platforms.linux-x64-musl"]
 checksum = "sha256:c3752ad51a5a4015a113819c4eeb6e55a4d0e4b8e652494797532f6fc8161dd7"
-checksum_source = "mise-versions"
 url = "https://github.com/derailed/k9s/releases/download/v0.51.0/k9s_Linux_amd64.tar.gz"
 url_api = "https://api.github.com/repos/derailed/k9s/releases/assets/440224321"
 
 [tools.k9s."platforms.macos-arm64"]
 checksum = "sha256:9b8c0e8f461e5d33aeee43a67f5ef4aff646a008a786887b8266cbb153c610cc"
-checksum_source = "mise-versions"
 url = "https://github.com/derailed/k9s/releases/download/v0.51.0/k9s_Darwin_arm64.tar.gz"
 url_api = "https://api.github.com/repos/derailed/k9s/releases/assets/440224326"
 
 [tools.k9s."platforms.macos-x64"]
 checksum = "sha256:7e8802c57c45a0cd389e8fc38472243fe4cf48d8ad5957e189ce370e19e5eda0"
-checksum_source = "mise-versions"
 url = "https://github.com/derailed/k9s/releases/download/v0.51.0/k9s_Darwin_amd64.tar.gz"
 url_api = "https://api.github.com/repos/derailed/k9s/releases/assets/440224322"
 
 [tools.k9s."platforms.windows-x64"]
 checksum = "sha256:bba299f1877913979831543a008f2e104995d2ea4ac8f23d7f49c0444857d973"
-checksum_source = "mise-versions"
 url = "https://github.com/derailed/k9s/releases/download/v0.51.0/k9s_Windows_amd64.zip"
 url_api = "https://api.github.com/repos/derailed/k9s/releases/assets/440224317"
 
@@ -386,42 +398,35 @@ specifiers = ["1.13.1"]
 
 [tools.opentofu."platforms.linux-arm64"]
 checksum = "sha256:9c1ef375aa1852db0b2888aa921b640c71f8140d4682aa4fec99378a64fa7dc3"
-checksum_source = "mise-versions"
 url = "https://github.com/opentofu/opentofu/releases/download/v1.13.1/tofu_1.13.1_linux_arm64.tar.gz"
 url_api = "https://api.github.com/repos/opentofu/opentofu/releases/assets/603708055"
 
 [tools.opentofu."platforms.linux-arm64-musl"]
 checksum = "sha256:9c1ef375aa1852db0b2888aa921b640c71f8140d4682aa4fec99378a64fa7dc3"
-checksum_source = "mise-versions"
 url = "https://github.com/opentofu/opentofu/releases/download/v1.13.1/tofu_1.13.1_linux_arm64.tar.gz"
 url_api = "https://api.github.com/repos/opentofu/opentofu/releases/assets/603708055"
 
 [tools.opentofu."platforms.linux-x64"]
 checksum = "sha256:378ada19d4bc70c43732004e8159be771b23b9a5afdf059e5f8a2b3fa2c70a69"
-checksum_source = "mise-versions"
 url = "https://github.com/opentofu/opentofu/releases/download/v1.13.1/tofu_1.13.1_linux_amd64.tar.gz"
 url_api = "https://api.github.com/repos/opentofu/opentofu/releases/assets/603708017"
 
 [tools.opentofu."platforms.linux-x64-musl"]
 checksum = "sha256:378ada19d4bc70c43732004e8159be771b23b9a5afdf059e5f8a2b3fa2c70a69"
-checksum_source = "mise-versions"
 url = "https://github.com/opentofu/opentofu/releases/download/v1.13.1/tofu_1.13.1_linux_amd64.tar.gz"
 url_api = "https://api.github.com/repos/opentofu/opentofu/releases/assets/603708017"
 
 [tools.opentofu."platforms.macos-arm64"]
 checksum = "sha256:be78f659f04ef06a9dbd9b3934d46af95d787a3aa38396d459dea395261816a9"
-checksum_source = "mise-versions"
 url = "https://github.com/opentofu/opentofu/releases/download/v1.13.1/tofu_1.13.1_darwin_arm64.tar.gz"
 url_api = "https://api.github.com/repos/opentofu/opentofu/releases/assets/603708059"
 
 [tools.opentofu."platforms.macos-x64"]
 checksum = "sha256:a73720443ba38712d7d96dc1e857add02c15a790919c653ad07492e9952f8c27"
-checksum_source = "mise-versions"
 url = "https://github.com/opentofu/opentofu/releases/download/v1.13.1/tofu_1.13.1_darwin_amd64.tar.gz"
 url_api = "https://api.github.com/repos/opentofu/opentofu/releases/assets/603708142"
 
 [tools.opentofu."platforms.windows-x64"]
 checksum = "sha256:6825ae311e9a15747ce2ede7b7e97c8bb744a4d271fa8113259eeeee3d09438c"
-checksum_source = "mise-versions"
 url = "https://github.com/opentofu/opentofu/releases/download/v1.13.1/tofu_1.13.1_windows_amd64.tar.gz"
 url_api = "https://api.github.com/repos/opentofu/opentofu/releases/assets/603708102"

@@ -9,6 +9,7 @@ kubectl = "1.34"
 helm = "4"
 k9s = "latest"
 doctl = "1"
+"github:digitalocean/clusterlint" = "0.16.0"
 aws-cli = "2"
 earthly = "0.8.16"
 cmctl = "2"
@@ -21,6 +22,11 @@ KUBECONFIG = "{{config_root}}/kubeconfig_do"
 [tasks.update-k8s-version]
 description = "Update the DO k8s cluster version in do-k8s.tf, and kubectl in mise.toml, to match the running cluster"
 run = "scripts/update-k8s-version.sh"
+tools = { jq = "1" }
+
+[tasks.clusterlint]
+description = "Run the DOKS clusterlint checks (the ones that can block automatic upgrades) against the DO k8s cluster"
+run = "scripts/clusterlint.sh"
 tools = { jq = "1" }
 
 [tasks.get-kubeconfig]
