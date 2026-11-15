@@ -160,6 +160,10 @@ resource "helm_release" "do-alloy" {
     yamlencode({
       "controller" : {
         "type" : "daemonset",
+        "podAnnotations" : {
+          # Node agent: tails /var/log on the node and keeps read positions in /var/lib/alloy.
+          "clusterlint.digitalocean.com/disabled-checks" : "hostpath-volume",
+        },
         "volumes" : {
           "extra" : [{
             "name" : "alloy-data",

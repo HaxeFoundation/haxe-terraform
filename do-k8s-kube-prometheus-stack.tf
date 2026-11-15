@@ -101,6 +101,10 @@ resource "helm_release" "do-prometheus" {
         },
       },
       "prometheus-node-exporter" : {
+        "podAnnotations" : {
+          # Node agent: reads the host's /proc, /sys and / by design.
+          "clusterlint.digitalocean.com/disabled-checks" : "hostpath-volume",
+        },
         "resources" : {
           "requests" : { "cpu" : "10m", "memory" : "32Mi" }, # peak 34Mi
           "limits" : { "memory" : "128Mi" },
