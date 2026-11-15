@@ -24,6 +24,10 @@ resource "helm_release" "do-cert-manager" {
         enabled = true
       }
     }
+    webhook = {
+      # The chart default (30) blocks DOKS upgrades, which require 1 <= timeoutSeconds <= 29.
+      timeoutSeconds = 29
+    }
   })]
 
   depends_on = [
