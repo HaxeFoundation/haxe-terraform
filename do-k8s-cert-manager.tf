@@ -1,9 +1,6 @@
 locals {
   do-cert-manager = {
     email = "andy@onthewings.net"
-    ingress_annotations = {
-      "cert-manager.io/cluster-issuer" = "letsencrypt-production"
-    }
   }
 }
 
@@ -62,42 +59,8 @@ resource "kubernetes_manifest" "do-letsencrypt-issuer-staging" {
         "solvers" = [
           {
             "http01" = {
-              "ingress" = {
-                "ingressClassName" = "nginx"
-              }
-            }
-          },
-        ]
-      }
-    }
-  }
-
-  depends_on = [
-    helm_release.do-cert-manager
-  ]
-}
-
-resource "kubernetes_manifest" "do-letsencrypt-issuer-production" {
-  provider = kubernetes.do
-
-  manifest = {
-    "apiVersion" = "cert-manager.io/v1"
-    "kind"       = "ClusterIssuer"
-    "metadata" = {
-      "name" = "letsencrypt-production"
-    }
-    "spec" = {
-      "acme" = {
-        "email" = local.do-cert-manager.email
-        "privateKeySecretRef" = {
-          "name" = "letsencrypt-production"
-        }
-        "server" = "https://acme-v02.api.letsencrypt.org/directory"
-        "solvers" = [
-          {
-            "http01" = {
-              "ingress" = {
-                "ingressClassName" = "nginx"
+              "gatewayHTTPRoute" = {
+                "parentRefs" = [merge(local.do-gateway.parent_ref, { "sectionName" = "http" })]
               }
             }
           },

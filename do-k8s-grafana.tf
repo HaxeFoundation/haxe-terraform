@@ -12,7 +12,7 @@ module "do-grafana" {
   }
 
   depends_on = [
-    helm_release.do-ingress-nginx,
+    kubernetes_manifest.do-gateway,
     helm_release.do-prometheus,
   ]
 }

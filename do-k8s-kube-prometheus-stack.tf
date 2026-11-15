@@ -109,17 +109,7 @@ resource "helm_release" "do-prometheus" {
 
       # https://github.com/grafana/helm-charts/blob/main/charts/grafana/values.yaml
       "grafana" : {
-        "ingress" : {
-          "enabled" : true,
-          "hosts" : local.do-grafana.hostnames
-          "pathType" : "Prefix",
-          "annotations" : local.do-cert-manager.ingress_annotations,
-          "tls" : [{
-            "hosts" : local.do-grafana.hostnames,
-            "secretName" : "grafana-tls"
-          }]
-        },
-        # Replaces the ingress above (see do-k8s-gateway.tf).
+        # Served by the Gateway (see do-k8s-gateway.tf).
         # HTTP is redirected to HTTPS by kubernetes_manifest.do-gateway-https-redirect.
         "route" : {
           "main" : {

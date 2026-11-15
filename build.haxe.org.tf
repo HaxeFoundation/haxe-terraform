@@ -234,57 +234,7 @@ resource "kubernetes_service_v1" "do-build-haxe-org" {
   }
 }
 
-resource "kubernetes_ingress_v1" "do-build-haxe-org" {
-  for_each = local.build_haxe_org.stage
-
-  provider = kubernetes.do
-  metadata {
-    name = "build-haxe-org-${each.key}"
-    annotations = {
-      "cert-manager.io/cluster-issuer" = "letsencrypt-production"
-
-      # https://nginx.org/en/docs/http/ngx_http_proxy_module.html
-      "nginx.ingress.kubernetes.io/proxy-buffering"       = "on"
-      "nginx.ingress.kubernetes.io/configuration-snippet" = <<-EOT
-        proxy_set_header Cookie "";
-        proxy_cache mycache;
-        proxy_cache_key "$scheme$request_method$host$request_uri";
-        proxy_cache_use_stale error timeout updating http_500 http_502 http_503 http_504;
-        proxy_cache_background_update on;
-        proxy_cache_revalidate on;
-        proxy_cache_lock on;
-        add_header X-Cache-Status $upstream_cache_status;
-      EOT
-    }
-  }
-
-  spec {
-    ingress_class_name = "nginx"
-    tls {
-      hosts       = [each.value.host]
-      secret_name = "build-haxe-org-${each.key}-tls"
-    }
-    rule {
-      host = each.value.host
-      http {
-        path {
-          backend {
-            service {
-              name = kubernetes_service_v1.do-build-haxe-org[each.key].metadata[0].name
-              port {
-                number = 80
-              }
-            }
-          }
-          path      = "/"
-          path_type = "Prefix"
-        }
-      }
-    }
-  }
-}
-
-# Replaces kubernetes_ingress_v1.do-build-haxe-org (see do-k8s-gateway.tf).
+# Served by the Gateway (see do-k8s-gateway.tf).
 # HTTP is redirected to HTTPS by kubernetes_manifest.do-gateway-https-redirect.
 resource "kubernetes_manifest" "do-build-haxe-org-route" {
   for_each = local.build_haxe_org.stage

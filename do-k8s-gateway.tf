@@ -1,4 +1,5 @@
-# NGINX Gateway Fabric (Gateway API), replacing ingress-nginx (do-k8s-ingress.tf).
+# NGINX Gateway Fabric (Gateway API). It replaced ingress-nginx in Nov 2026.
+# All hosts are CNAMEs of do-k8s.haxe.org, which points to the Gateway's load balancer.
 #
 # Bootstrapping: `kubernetes_manifest` needs its CRD to exist at plan time, so on a fresh cluster apply in two steps:
 #   tofu apply -target=module.do-gateway-api-crds -target=module.do-nginx-gateway-fabric-crds -target=helm_release.do-nginx-gateway-fabric
@@ -422,4 +423,21 @@ resource "aws_route53_record" "do-k8s-gw-haxe-org" {
   type    = "A"
   ttl     = 300
   records = [data.digitalocean_loadbalancer.do-gateway.ip]
+}
+
+# do-k8s.haxe.org: the address of the cluster, which all hosts point to (as CNAMEs).
+resource "aws_route53_record" "do-k8s-haxe-org" {
+  zone_id = aws_route53_zone.haxe-org.zone_id
+  name    = "do-k8s"
+  type    = "A"
+  ttl     = 3600
+  records = [data.digitalocean_loadbalancer.do-gateway.ip]
+}
+
+resource "cloudflare_dns_record" "do-k8s-haxe-org" {
+  zone_id = local.cloudflare.zones.haxe-org.zone_id
+  name    = "do-k8s"
+  type    = "A"
+  ttl     = 3600
+  content = data.digitalocean_loadbalancer.do-gateway.ip
 }
