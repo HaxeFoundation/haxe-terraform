@@ -208,6 +208,9 @@ resource "helm_release" "do-prometheus" {
             local.do-kube-prometheus-stack.version,
             local.do-kube-prometheus-stack.grafana-additional-datasources,
           ])),
+          # The check guards against a rolling update deadlocking on the ReadWriteOnce volume,
+          # which the "Recreate" deploymentStrategy above already prevents.
+          "clusterlint.digitalocean.com/disabled-checks" : "dobs-pod-owner",
         },
         "adminPassword" : random_password.grafana-admin-pw.result,
         "admin" : {
