@@ -7,7 +7,7 @@ resource "digitalocean_kubernetes_cluster" "cluster" {
   region       = "lon1"
 
   # run `mise run update-k8s-version` to update this value to match the live cluster
-  version      = "1.34.12-do.2"
+  version      = "1.34.13-do.0"
   auto_upgrade = true
 
 
