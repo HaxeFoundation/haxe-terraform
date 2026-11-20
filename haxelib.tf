@@ -86,17 +86,22 @@ data "aws_iam_policy_document" "haxelib-operator" {
     resources = ["*"]
   }
 
-  # SSM
+  # SSM: only the parameters read by the haxelib terraform (data "aws_ssm_parameter" in ../haxelib/terraform).
+  # They are SecureStrings encrypted with the AWS managed key alias/aws/ssm, whose key policy already
+  # allows decryption through SSM to every principal in the account, so no kms:Decrypt is needed here.
   statement {
-    effect    = "Allow"
-    actions   = [
-      "ssm:DescribeParameters",
-      "ssm:GetParametersByPath",
-      "ssm:GetParameters",
+    effect = "Allow"
+    actions = [
       "ssm:GetParameter",
-      "kms:Decrypt",
+      "ssm:GetParameters",
     ]
-    resources = ["*"]
+    resources = [
+      for name in [
+        "cloudflare_api_token",
+        "haxelib_r2_access_key_id",
+        "haxelib_r2_secret_access_key",
+      ] : "arn:aws:ssm:${data.aws_region.current.region}:${data.aws_caller_identity.current.account_id}:parameter/${name}"
+    ]
   }
 
   # for aws_canonical_user_id data source
