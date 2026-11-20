@@ -144,6 +144,62 @@ resource "helm_release" "do-loki" {
   ]
 }
 
+# Loki has no authentication (auth_enabled = false), so only Alloy (push) and Grafana (query) can reach it.
+# Not affected: kubelet probes (Cilium allows traffic from the local node) and `kubectl port-forward`.
+resource "kubernetes_network_policy_v1" "do-loki" {
+  provider = kubernetes.do
+
+  metadata {
+    name      = local.do-loki.release_name
+    namespace = kubernetes_namespace_v1.do-monitoring.metadata[0].name
+  }
+
+  spec {
+    pod_selector {
+      match_labels = {
+        "app.kubernetes.io/name"     = "loki"
+        "app.kubernetes.io/instance" = local.do-loki.release_name
+      }
+    }
+    policy_types = ["Ingress"]
+
+    ingress {
+      from {
+        pod_selector {
+          match_labels = {
+            "app.kubernetes.io/name"     = "alloy"
+            "app.kubernetes.io/instance" = "alloy" # helm_release.do-alloy
+          }
+        }
+      }
+      from {
+        pod_selector {
+          match_labels = {
+            "app.kubernetes.io/name"     = "grafana"
+            "app.kubernetes.io/instance" = "prometheus-stack" # helm_release.do-prometheus
+          }
+        }
+      }
+      ports {
+        protocol = "TCP"
+        port     = "3100"
+      }
+    }
+
+    # Loki to itself: gRPC (9095) and memberlist (7946) between its components.
+    ingress {
+      from {
+        pod_selector {
+          match_labels = {
+            "app.kubernetes.io/name"     = "loki"
+            "app.kubernetes.io/instance" = local.do-loki.release_name
+          }
+        }
+      }
+    }
+  }
+}
+
 # Collects pod logs on every node and pushes them to Loki.
 # The labels are the same as the ones produced by promtail of loki-stack,
 # such that queries work across logs collected before and after the migration.
