@@ -4,7 +4,7 @@ resource "kubernetes_manifest" "customresourcedefinition_accesspolicies_gateway_
     "kind" = "CustomResourceDefinition"
     "metadata" = {
       "annotations" = {
-        "controller-gen.kubebuilder.io/version" = "v0.22.0"
+        "controller-gen.kubebuilder.io/version" = "v0.23.0"
       }
       "labels" = {
         "gateway.networking.k8s.io/policy" = "inherited"
@@ -598,7 +598,7 @@ resource "kubernetes_manifest" "customresourcedefinition_authenticationfilters_g
     "kind" = "CustomResourceDefinition"
     "metadata" = {
       "annotations" = {
-        "controller-gen.kubebuilder.io/version" = "v0.22.0"
+        "controller-gen.kubebuilder.io/version" = "v0.23.0"
       }
       "name" = "authenticationfilters.gateway.nginx.org"
     }
@@ -660,6 +660,66 @@ resource "kubernetes_manifest" "customresourcedefinition_authenticationfilters_g
                 "spec" = {
                   "description" = "Spec defines the desired state of the AuthenticationFilter."
                   "properties" = {
+                    "apiKey" = {
+                      "description" = "APIKey configures API Key Authentication."
+                      "properties" = {
+                        "secretRef" = {
+                          "description" = <<-EOT
+                          SecretRef references a Secret containing the API keys in the same namespace.
+                          The Secret's "auth" entry must contain one "client-name:api-key" pair per line.
+                          EOT
+                          "properties" = {
+                            "name" = {
+                              "description" = "Name is the name of the referenced object."
+                              "type" = "string"
+                            }
+                          }
+                          "required" = [
+                            "name",
+                          ]
+                          "type" = "object"
+                        }
+                        "sources" = {
+                          "description" = <<-EOT
+                          Sources defines where clients can provide the API key.
+                          At least one source must be specified.
+                          EOT
+                          "items" = {
+                            "description" = "APIKeySourceEntry defines a single location where clients can provide an API key."
+                            "properties" = {
+                              "name" = {
+                                "description" = "Name is the header name or query parameter name that contains the API key."
+                                "maxLength" = 253
+                                "minLength" = 1
+                                "pattern" = "^[A-Za-z0-9_-]+$"
+                                "type" = "string"
+                              }
+                              "type" = {
+                                "description" = "Type specifies the source type: Header or Query."
+                                "enum" = [
+                                  "Header",
+                                  "Query",
+                                ]
+                                "type" = "string"
+                              }
+                            }
+                            "required" = [
+                              "name",
+                              "type",
+                            ]
+                            "type" = "object"
+                          }
+                          "maxItems" = 2
+                          "minItems" = 1
+                          "type" = "array"
+                        }
+                      }
+                      "required" = [
+                        "secretRef",
+                        "sources",
+                      ]
+                      "type" = "object"
+                    }
                     "basic" = {
                       "description" = "Basic configures HTTP Basic Authentication."
                       "properties" = {
@@ -1271,6 +1331,7 @@ resource "kubernetes_manifest" "customresourcedefinition_authenticationfilters_g
                         "Basic",
                         "OIDC",
                         "JWT",
+                        "APIKey",
                       ]
                       "type" = "string"
                     }
@@ -1293,6 +1354,10 @@ resource "kubernetes_manifest" "customresourcedefinition_authenticationfilters_g
                       "rule" = "self.type != 'Basic' || !has(self.oidc)"
                     },
                     {
+                      "message" = "type Basic must not set spec.apiKey"
+                      "rule" = "self.type != 'Basic' || !has(self.apiKey)"
+                    },
+                    {
                       "message" = "type OIDC requires spec.oidc to be set"
                       "rule" = "self.type != 'OIDC' || has(self.oidc)"
                     },
@@ -1305,6 +1370,10 @@ resource "kubernetes_manifest" "customresourcedefinition_authenticationfilters_g
                       "rule" = "self.type != 'OIDC' || !has(self.jwt)"
                     },
                     {
+                      "message" = "type OIDC must not set spec.apiKey"
+                      "rule" = "self.type != 'OIDC' || !has(self.apiKey)"
+                    },
+                    {
                       "message" = "type JWT requires spec.jwt to be set"
                       "rule" = "self.type != 'JWT' || has(self.jwt)"
                     },
@@ -1315,6 +1384,26 @@ resource "kubernetes_manifest" "customresourcedefinition_authenticationfilters_g
                     {
                       "message" = "type JWT must not set spec.oidc"
                       "rule" = "self.type != 'JWT' || !has(self.oidc)"
+                    },
+                    {
+                      "message" = "type JWT must not set spec.apiKey"
+                      "rule" = "self.type != 'JWT' || !has(self.apiKey)"
+                    },
+                    {
+                      "message" = "type APIKey requires spec.apiKey to be set"
+                      "rule" = "self.type != 'APIKey' || has(self.apiKey)"
+                    },
+                    {
+                      "message" = "type APIKey must not set spec.basic"
+                      "rule" = "self.type != 'APIKey' || !has(self.basic)"
+                    },
+                    {
+                      "message" = "type APIKey must not set spec.jwt"
+                      "rule" = "self.type != 'APIKey' || !has(self.jwt)"
+                    },
+                    {
+                      "message" = "type APIKey must not set spec.oidc"
+                      "rule" = "self.type != 'APIKey' || !has(self.oidc)"
                     },
                   ]
                 }
@@ -1463,7 +1552,7 @@ resource "kubernetes_manifest" "customresourcedefinition_clientsettingspolicies_
     "kind" = "CustomResourceDefinition"
     "metadata" = {
       "annotations" = {
-        "controller-gen.kubebuilder.io/version" = "v0.22.0"
+        "controller-gen.kubebuilder.io/version" = "v0.23.0"
       }
       "labels" = {
         "gateway.networking.k8s.io/policy" = "inherited"
@@ -2039,7 +2128,7 @@ resource "kubernetes_manifest" "customresourcedefinition_externalloadbalancers_g
     "kind" = "CustomResourceDefinition"
     "metadata" = {
       "annotations" = {
-        "controller-gen.kubebuilder.io/version" = "v0.22.0"
+        "controller-gen.kubebuilder.io/version" = "v0.23.0"
       }
       "name" = "externalloadbalancers.gateway.nginx.org"
     }
@@ -2572,7 +2661,7 @@ resource "kubernetes_manifest" "customresourcedefinition_nginxgateways_gateway_n
     "kind" = "CustomResourceDefinition"
     "metadata" = {
       "annotations" = {
-        "controller-gen.kubebuilder.io/version" = "v0.22.0"
+        "controller-gen.kubebuilder.io/version" = "v0.23.0"
       }
       "name" = "nginxgateways.gateway.nginx.org"
     }
@@ -2751,7 +2840,7 @@ resource "kubernetes_manifest" "customresourcedefinition_nginxproxies_gateway_ng
     "kind" = "CustomResourceDefinition"
     "metadata" = {
       "annotations" = {
-        "controller-gen.kubebuilder.io/version" = "v0.22.0"
+        "controller-gen.kubebuilder.io/version" = "v0.23.0"
       }
       "name" = "nginxproxies.gateway.nginx.org"
     }
@@ -7734,6 +7823,13 @@ resource "kubernetes_manifest" "customresourcedefinition_nginxproxies_gateway_ng
                             "serviceMonitor" = {
                               "description" = "Defines the configuration of the Service Monitor resource used for scraping metrics."
                               "properties" = {
+                                "annotations" = {
+                                  "additionalProperties" = {
+                                    "type" = "string"
+                                  }
+                                  "description" = "Annotations are added to the ServiceMonitor resource metadata."
+                                  "type" = "object"
+                                }
                                 "enable" = {
                                   "description" = "Enable or disable the Service Monitor."
                                   "type" = "boolean"
@@ -7762,6 +7858,13 @@ resource "kubernetes_manifest" "customresourcedefinition_nginxproxies_gateway_ng
                                     "type" = "object"
                                   }
                                   "type" = "array"
+                                }
+                                "labels" = {
+                                  "additionalProperties" = {
+                                    "type" = "string"
+                                  }
+                                  "description" = "Labels are added to the ServiceMonitor resource metadata."
+                                  "type" = "object"
                                 }
                                 "namespaceSelector" = {
                                   "description" = <<-EOT
@@ -13869,6 +13972,13 @@ resource "kubernetes_manifest" "customresourcedefinition_nginxproxies_gateway_ng
                             "serviceMonitor" = {
                               "description" = "Defines the configuration of the Service Monitor resource used for scraping metrics."
                               "properties" = {
+                                "annotations" = {
+                                  "additionalProperties" = {
+                                    "type" = "string"
+                                  }
+                                  "description" = "Annotations are added to the ServiceMonitor resource metadata."
+                                  "type" = "object"
+                                }
                                 "enable" = {
                                   "description" = "Enable or disable the Service Monitor."
                                   "type" = "boolean"
@@ -13897,6 +14007,13 @@ resource "kubernetes_manifest" "customresourcedefinition_nginxproxies_gateway_ng
                                     "type" = "object"
                                   }
                                   "type" = "array"
+                                }
+                                "labels" = {
+                                  "additionalProperties" = {
+                                    "type" = "string"
+                                  }
+                                  "description" = "Labels are added to the ServiceMonitor resource metadata."
+                                  "type" = "object"
                                 }
                                 "namespaceSelector" = {
                                   "description" = <<-EOT
@@ -15090,9 +15207,19 @@ resource "kubernetes_manifest" "customresourcedefinition_nginxproxies_gateway_ng
                       "description" = <<-EOT
                       ZoneSize is the size of the shared memory zone used by the upstream. This memory zone is used to share
                       the upstream configuration between nginx worker processes. The more servers that an upstream has,
-                      the larger memory zone is required.
+                      the larger memory zone is required. Set to "auto" to enable automatic sizing.
                       Default: OSS: 512k, Plus: 2m.
                       Directive: https://nginx.org/en/docs/http/ngx_http_upstream_module.html#zone
+                      EOT
+                      "pattern" = "^(auto|\\d{1,4}(k|m|g)?)$"
+                      "type" = "string"
+                    }
+                    "zoneSizeMaxSize" = {
+                      "description" = <<-EOT
+                      ZoneSizeMaxSize is the maximum zone size that automatic sizing (ZoneSize: "auto") can grow to.
+                      Once a zone reaches this size, NGF stops growing it and surfaces an error if it is still too
+                      small.
+                      Default: "512m".
                       EOT
                       "pattern" = "^\\d{1,4}(k|m|g)?$"
                       "type" = "string"
@@ -15122,7 +15249,7 @@ resource "kubernetes_manifest" "customresourcedefinition_observabilitypolicies_g
     "kind" = "CustomResourceDefinition"
     "metadata" = {
       "annotations" = {
-        "controller-gen.kubebuilder.io/version" = "v0.22.0"
+        "controller-gen.kubebuilder.io/version" = "v0.23.0"
       }
       "labels" = {
         "gateway.networking.k8s.io/policy" = "direct"
@@ -15713,7 +15840,7 @@ resource "kubernetes_manifest" "customresourcedefinition_payloadprocessors_gatew
     "kind" = "CustomResourceDefinition"
     "metadata" = {
       "annotations" = {
-        "controller-gen.kubebuilder.io/version" = "v0.22.0"
+        "controller-gen.kubebuilder.io/version" = "v0.23.0"
       }
       "labels" = {
         "gateway.networking.k8s.io/policy" = "inherited"
@@ -15910,6 +16037,18 @@ resource "kubernetes_manifest" "customresourcedefinition_payloadprocessors_gatew
                               "backendRef",
                             ]
                             "type" = "object"
+                          }
+                          "failureMode" = {
+                            "default" = "FailClosed"
+                            "description" = <<-EOT
+                            FailureMode determines the behavior when this processor fails to reach a verdict,
+                            for example when the external service is unreachable, times out, or returns an error.
+                            EOT
+                            "enum" = [
+                              "FailClosed",
+                              "FailOpen",
+                            ]
+                            "type" = "string"
                           }
                           "type" = {
                             "description" = <<-EOT
@@ -16352,7 +16491,7 @@ resource "kubernetes_manifest" "customresourcedefinition_proxysettingspolicies_g
     "kind" = "CustomResourceDefinition"
     "metadata" = {
       "annotations" = {
-        "controller-gen.kubebuilder.io/version" = "v0.22.0"
+        "controller-gen.kubebuilder.io/version" = "v0.23.0"
       }
       "labels" = {
         "gateway.networking.k8s.io/policy" = "inherited"
@@ -16936,7 +17075,7 @@ resource "kubernetes_manifest" "customresourcedefinition_ratelimitpolicies_gatew
     "kind" = "CustomResourceDefinition"
     "metadata" = {
       "annotations" = {
-        "controller-gen.kubebuilder.io/version" = "v0.22.0"
+        "controller-gen.kubebuilder.io/version" = "v0.23.0"
       }
       "labels" = {
         "gateway.networking.k8s.io/policy" = "inherited"
@@ -17558,7 +17697,7 @@ resource "kubernetes_manifest" "customresourcedefinition_snippetsfilters_gateway
     "kind" = "CustomResourceDefinition"
     "metadata" = {
       "annotations" = {
-        "controller-gen.kubebuilder.io/version" = "v0.22.0"
+        "controller-gen.kubebuilder.io/version" = "v0.23.0"
       }
       "name" = "snippetsfilters.gateway.nginx.org"
     }
@@ -17626,7 +17765,7 @@ resource "kubernetes_manifest" "customresourcedefinition_snippetsfilters_gateway
                       Allowed contexts: main, http, http.server, http.server.location.
                       EOT
                       "items" = {
-                        "description" = "Snippet represents an NGINX configuration snippet."
+                        "description" = "FilterSnippet represents an NGINX configuration snippet for SnippetsFilter."
                         "properties" = {
                           "context" = {
                             "description" = "Context is the NGINX context to insert the snippet into."
@@ -17810,7 +17949,7 @@ resource "kubernetes_manifest" "customresourcedefinition_snippetspolicies_gatewa
     "kind" = "CustomResourceDefinition"
     "metadata" = {
       "annotations" = {
-        "controller-gen.kubebuilder.io/version" = "v0.22.0"
+        "controller-gen.kubebuilder.io/version" = "v0.23.0"
       }
       "labels" = {
         "gateway.networking.k8s.io/policy" = "direct"
@@ -17883,6 +18022,8 @@ resource "kubernetes_manifest" "customresourcedefinition_snippetspolicies_gatewa
                               "http",
                               "http.server",
                               "http.server.location",
+                              "stream",
+                              "stream.server",
                             ]
                             "type" = "string"
                           }
@@ -17898,7 +18039,7 @@ resource "kubernetes_manifest" "customresourcedefinition_snippetspolicies_gatewa
                         ]
                         "type" = "object"
                       }
-                      "maxItems" = 4
+                      "maxItems" = 6
                       "type" = "array"
                       "x-kubernetes-validations" = [
                         {
@@ -18331,7 +18472,7 @@ resource "kubernetes_manifest" "customresourcedefinition_upstreamsettingspolicie
     "kind" = "CustomResourceDefinition"
     "metadata" = {
       "annotations" = {
-        "controller-gen.kubebuilder.io/version" = "v0.22.0"
+        "controller-gen.kubebuilder.io/version" = "v0.23.0"
       }
       "labels" = {
         "gateway.networking.k8s.io/policy" = "direct"
@@ -18848,10 +18989,14 @@ resource "kubernetes_manifest" "customresourcedefinition_upstreamsettingspolicie
                       ZoneSize is the size of the shared memory zone used by the upstream. This memory zone is used to share
                       the upstream configuration between nginx worker processes. The more servers that an upstream has,
                       the larger memory zone is required.
-                      Default: OSS: 512k, Plus: 2m.
+                      Explicit values set here override the global NginxProxy.ZoneSize setting.
+                      Set to "auto" to enable automatic sizing: NGF starts every upstream's zone at a flat 64k,
+                      regardless of profile, and automatically doubles it if NGINX fails to reload because the
+                      zone is too small, up to NginxProxy.ZoneSizeMaxSize.
+                      Default: inherited from NginxProxy.ZoneSize.
                       Directive: https://nginx.org/en/docs/http/ngx_http_upstream_module.html#zone
                       EOT
-                      "pattern" = "^\\d{1,4}(k|m|g)?$"
+                      "pattern" = "^(auto|\\d{1,4}(k|m|g)?)$"
                       "type" = "string"
                     }
                   }
@@ -19228,7 +19373,7 @@ resource "kubernetes_manifest" "customresourcedefinition_wafpolicies_gateway_ngi
     "kind" = "CustomResourceDefinition"
     "metadata" = {
       "annotations" = {
-        "controller-gen.kubebuilder.io/version" = "v0.22.0"
+        "controller-gen.kubebuilder.io/version" = "v0.23.0"
       }
       "labels" = {
         "gateway.networking.k8s.io/policy" = "inherited"

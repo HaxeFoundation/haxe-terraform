@@ -91,7 +91,7 @@ resource "helm_release" "do-nginx-gateway-fabric" {
   namespace  = kubernetes_namespace_v1.do-nginx-gateway.metadata[0].name
   repository = "oci://ghcr.io/nginx/charts"
   chart      = "nginx-gateway-fabric"
-  version    = "2.8.1" # keep in sync with the Earthfile target +nginx-gateway-fabric.crds
+  version    = "2.9.0" # keep in sync with the Earthfile target +nginx-gateway-fabric.crds
 
   skip_crds = true # CRDs are installed by module.do-nginx-gateway-fabric-crds
 
@@ -127,6 +127,17 @@ resource "helm_release" "do-nginx-gateway-fabric" {
           requests = { cpu = "25m", memory = "96Mi" } # peak 178Mi; CPU p99 31m
           limits   = { memory = "512Mi" }
         }
+        # Shut down gracefully. On SIGTERM, NGF's entrypoint stops NGINX with TERM (fast shutdown), which cuts
+        # in-flight requests. Instead: keep serving while the pod is removed from the Service endpoints,
+        # then send QUIT (graceful shutdown) to the NGINX master so open requests can finish. When NGINX exits, the
+        # container exits. The pid file path is set by NGF in nginx.conf.
+        lifecycle = {
+          preStop = {
+            exec = {
+              command = ["/bin/sh", "-c", "sleep 10; kill -QUIT $(cat /var/run/nginx/nginx.pid); while pgrep -x nginx > /dev/null; do sleep 1; done"]
+            }
+          }
+        }
       }
       # NGF has no setting for the resources of the "init" container (it copies config files), so patch it in.
       patches = [
@@ -156,6 +167,8 @@ resource "helm_release" "do-nginx-gateway-fabric" {
         minAvailable = 1
       }
       pod = {
+        # Covers the preStop hook: 10s delay plus time for slow downloads to finish. Then NGINX gets TERM.
+        terminationGracePeriodSeconds = 60
         topologySpreadConstraints = [
           {
             maxSkew           = 1
@@ -171,7 +184,8 @@ resource "helm_release" "do-nginx-gateway-fabric" {
       }
       config = {
         # Temporary mitigation for CVE-2026-123633 and CVE-2026-123007 (NGINX HTTP/2, fixed in 1.31.9).
-        # NGF 2.8.1 ships NGINX 1.31.7. Remove this after upgrading to NGF 2.9.0+ (NGINX 1.31.9).
+        # NGF 2.8.1 ships NGINX 1.31.7; NGF 2.9.0 ships 1.31.9. Remove this in a separate apply, after the NGF 2.9.0
+        # rollout has finished: during the rollout, the old 1.31.7 pods still get the new config.
         disableHTTP2 = true
 
         # The DO load balancer sends the client address with the PROXY protocol

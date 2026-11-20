@@ -125,7 +125,7 @@ cert-manager.crds:
 #   https://docs.digitalocean.com/products/kubernetes/how-to/use-gateway-api/
 gateway-api.crds:
     FROM +devcontainer
-    RUN curl -fsSL https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.6.3/standard-install.yaml \
+    RUN curl -fsSL https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.7.0/standard-install.yaml \
         | tfk8s --strip --output gateway-api.crds.tf
     RUN sed -i \
         -e 's/^resource "kubernetes_manifest" .* {$/&\n  field_manager {\n    force_conflicts = true\n  }\n/' \
@@ -136,7 +136,7 @@ gateway-api.crds:
 # Keep the version in sync with helm_release.do-nginx-gateway-fabric
 nginx-gateway-fabric.crds:
     FROM +devcontainer
-    RUN curl -fsSL https://raw.githubusercontent.com/nginx/nginx-gateway-fabric/v2.8.1/deploy/crds.yaml \
+    RUN curl -fsSL https://raw.githubusercontent.com/nginx/nginx-gateway-fabric/v2.9.0/deploy/crds.yaml \
         | tfk8s --strip --output nginx-gateway-fabric.crds.tf
     SAVE ARTIFACT --keep-ts nginx-gateway-fabric.crds.tf AS LOCAL nginx-gateway-fabric.crds/nginx-gateway-fabric.crds.tf
 

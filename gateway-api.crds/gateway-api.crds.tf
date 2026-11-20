@@ -8,8 +8,8 @@ resource "kubernetes_manifest" "customresourcedefinition_backendtlspolicies_gate
     "kind" = "CustomResourceDefinition"
     "metadata" = {
       "annotations" = {
-        "api-approved.kubernetes.io" = "https://github.com/kubernetes-sigs/gateway-api/pull/4530"
-        "gateway.networking.k8s.io/bundle-version" = "v1.6.3"
+        "api-approved.kubernetes.io" = "https://github.com/kubernetes-sigs/gateway-api/pull/5371"
+        "gateway.networking.k8s.io/bundle-version" = "v1.7.0"
         "doks.digitalocean.com/install-policy" = "external"
         "gateway.networking.k8s.io/channel" = "standard"
       }
@@ -201,6 +201,7 @@ resource "kubernetes_manifest" "customresourcedefinition_backendtlspolicies_gate
                             resources, SectionName is interpreted as the following:
                             
                             * Gateway: Listener name
+                            * ListenerSet: Listener name
                             * HTTPRoute: HTTPRouteRule name
                             * Service: Port name
                             
@@ -973,6 +974,7 @@ resource "kubernetes_manifest" "customresourcedefinition_backendtlspolicies_gate
                             resources, SectionName is interpreted as the following:
                             
                             * Gateway: Listener name
+                            * ListenerSet: Listener name
                             * HTTPRoute: HTTPRouteRule name
                             * Service: Port name
                             
@@ -1598,8 +1600,8 @@ resource "kubernetes_manifest" "customresourcedefinition_gatewayclasses_gateway_
     "kind" = "CustomResourceDefinition"
     "metadata" = {
       "annotations" = {
-        "api-approved.kubernetes.io" = "https://github.com/kubernetes-sigs/gateway-api/pull/4530"
-        "gateway.networking.k8s.io/bundle-version" = "v1.6.3"
+        "api-approved.kubernetes.io" = "https://github.com/kubernetes-sigs/gateway-api/pull/5371"
+        "gateway.networking.k8s.io/bundle-version" = "v1.7.0"
         "doks.digitalocean.com/install-policy" = "external"
         "gateway.networking.k8s.io/channel" = "standard"
       }
@@ -1713,7 +1715,7 @@ resource "kubernetes_manifest" "customresourcedefinition_gatewayclasses_gateway_
                       "type" = "string"
                       "x-kubernetes-validations" = [
                         {
-                          "message" = "Value is immutable"
+                          "message" = "field is immutable"
                           "rule" = "self == oldSelf"
                         },
                       ]
@@ -2031,7 +2033,7 @@ resource "kubernetes_manifest" "customresourcedefinition_gatewayclasses_gateway_
                       "type" = "string"
                       "x-kubernetes-validations" = [
                         {
-                          "message" = "Value is immutable"
+                          "message" = "field is immutable"
                           "rule" = "self == oldSelf"
                         },
                       ]
@@ -2275,8 +2277,8 @@ resource "kubernetes_manifest" "customresourcedefinition_gateways_gateway_networ
     "kind" = "CustomResourceDefinition"
     "metadata" = {
       "annotations" = {
-        "api-approved.kubernetes.io" = "https://github.com/kubernetes-sigs/gateway-api/pull/4530"
-        "gateway.networking.k8s.io/bundle-version" = "v1.6.3"
+        "api-approved.kubernetes.io" = "https://github.com/kubernetes-sigs/gateway-api/pull/5371"
+        "gateway.networking.k8s.io/bundle-version" = "v1.7.0"
         "doks.digitalocean.com/install-policy" = "external"
         "gateway.networking.k8s.io/channel" = "standard"
       }
@@ -4004,6 +4006,7 @@ resource "kubernetes_manifest" "customresourcedefinition_gateways_gateway_networ
                       * "Accepted"
                       * "Programmed"
                       * "Ready"
+                      * "AddressesAssigned"
                       EOT
                       "items" = {
                         "description" = "Condition contains details for one aspect of the current state of this API Resource."
@@ -5967,6 +5970,7 @@ resource "kubernetes_manifest" "customresourcedefinition_gateways_gateway_networ
                       * "Accepted"
                       * "Programmed"
                       * "Ready"
+                      * "AddressesAssigned"
                       EOT
                       "items" = {
                         "description" = "Condition contains details for one aspect of the current state of this API Resource."
@@ -6241,8 +6245,8 @@ resource "kubernetes_manifest" "customresourcedefinition_grpcroutes_gateway_netw
     "kind" = "CustomResourceDefinition"
     "metadata" = {
       "annotations" = {
-        "api-approved.kubernetes.io" = "https://github.com/kubernetes-sigs/gateway-api/pull/4530"
-        "gateway.networking.k8s.io/bundle-version" = "v1.6.3"
+        "api-approved.kubernetes.io" = "https://github.com/kubernetes-sigs/gateway-api/pull/5371"
+        "gateway.networking.k8s.io/bundle-version" = "v1.7.0"
         "doks.digitalocean.com/install-policy" = "external"
         "gateway.networking.k8s.io/channel" = "standard"
       }
@@ -6370,11 +6374,30 @@ resource "kubernetes_manifest" "customresourcedefinition_grpcroutes_gateway_netw
                       the implementation. The implementation MUST raise an 'Accepted' Condition
                       with a status of `False` in the corresponding RouteParentStatus.
                       
+                      In the event that multiple GRPCRoutes specify intersecting hostnames (e.g.
+                      overlapping wildcard matching and exact matching hostnames), precedence must
+                      be given to rules from the GRPCRoute with the largest number of:
+                      
+                      * Characters in a matching non-wildcard hostname.
+                      * Characters in a matching hostname.
+                      
+                      When multiple GRPCRoutes attach to the same Listener and yield identical
+                      Listener/Route intersected hostnames, implementations SHOULD evaluate
+                      precedence using the original hostnames configured on the Route, not the
+                      calculated Listener/Route hostname intersection.
+                      
+                      Resolving Route precedence using original Route hostname specificity is an
+                      Extended feature. Implementations that support this behavior SHOULD claim
+                      support for the `GatewayRouteHostnameIntersectionPrecedence` feature.
+                      Implementations that do not support this feature MAY evaluate precedence
+                      using the calculated Listener/Route hostname intersection.
+                      
                       If a Route (A) of type HTTPRoute or GRPCRoute is attached to a
                       Listener and that listener already has another Route (B) of the other
                       type attached and the intersection of the hostnames of A and B is
-                      non-empty, then the implementation MUST accept exactly one of these two
-                      routes, determined by the following criteria, in order:
+                      non-empty, then the implementation MAY reject one of the two routes.
+                      An implementation that does so MUST accept exactly one of them,
+                      determined by the following criteria, in order:
                       
                       * The oldest Route based on creation timestamp.
                       * The Route appearing first in alphabetical order by
@@ -8292,6 +8315,10 @@ resource "kubernetes_manifest" "customresourcedefinition_grpcroutes_gateway_netw
                           "message" = "While 16 rules and 64 matches per rule are allowed, the total number of matches across all rules in a route must be less than 128"
                           "rule" = "(self.size() > 0 ? (has(self[0].matches) ? self[0].matches.size() : 0) : 0) + (self.size() > 1 ? (has(self[1].matches) ? self[1].matches.size() : 0) : 0) + (self.size() > 2 ? (has(self[2].matches) ? self[2].matches.size() : 0) : 0) + (self.size() > 3 ? (has(self[3].matches) ? self[3].matches.size() : 0) : 0) + (self.size() > 4 ? (has(self[4].matches) ? self[4].matches.size() : 0) : 0) + (self.size() > 5 ? (has(self[5].matches) ? self[5].matches.size() : 0) : 0) + (self.size() > 6 ? (has(self[6].matches) ? self[6].matches.size() : 0) : 0) + (self.size() > 7 ? (has(self[7].matches) ? self[7].matches.size() : 0) : 0) + (self.size() > 8 ? (has(self[8].matches) ? self[8].matches.size() : 0) : 0) + (self.size() > 9 ? (has(self[9].matches) ? self[9].matches.size() : 0) : 0) + (self.size() > 10 ? (has(self[10].matches) ? self[10].matches.size() : 0) : 0) + (self.size() > 11 ? (has(self[11].matches) ? self[11].matches.size() : 0) : 0) + (self.size() > 12 ? (has(self[12].matches) ? self[12].matches.size() : 0) : 0) + (self.size() > 13 ? (has(self[13].matches) ? self[13].matches.size() : 0) : 0) + (self.size() > 14 ? (has(self[14].matches) ? self[14].matches.size() : 0) : 0) + (self.size() > 15 ? (has(self[15].matches) ? self[15].matches.size() : 0) : 0) <= 128"
                         },
+                        {
+                          "message" = "Rule name must be unique within the route"
+                          "rule" = "self.all(l1, !has(l1.name) || self.exists_one(l2, has(l2.name) && l1.name == l2.name))"
+                        },
                       ]
                     }
                   }
@@ -8622,8 +8649,8 @@ resource "kubernetes_manifest" "customresourcedefinition_httproutes_gateway_netw
     "kind" = "CustomResourceDefinition"
     "metadata" = {
       "annotations" = {
-        "api-approved.kubernetes.io" = "https://github.com/kubernetes-sigs/gateway-api/pull/4530"
-        "gateway.networking.k8s.io/bundle-version" = "v1.6.3"
+        "api-approved.kubernetes.io" = "https://github.com/kubernetes-sigs/gateway-api/pull/5371"
+        "gateway.networking.k8s.io/bundle-version" = "v1.7.0"
         "doks.digitalocean.com/install-policy" = "external"
         "gateway.networking.k8s.io/channel" = "standard"
       }
@@ -8741,8 +8768,16 @@ resource "kubernetes_manifest" "customresourcedefinition_httproutes_gateway_netw
                       * Characters in a matching non-wildcard hostname.
                       * Characters in a matching hostname.
                       
-                      If ties exist across multiple Routes, the matching precedence rules for
-                      HTTPRouteMatches takes over.
+                      When multiple HTTPRoutes attach to the same Listener and yield identical
+                      Listener/Route intersected hostnames, implementations SHOULD evaluate
+                      precedence using the original hostnames configured on the Route, not the
+                      calculated Listener/Route hostname intersection.
+                      
+                      Resolving Route precedence using original Route hostname specificity is an
+                      Extended feature. Implementations that support this behavior SHOULD claim
+                      support for the `GatewayRouteHostnameIntersectionPrecedence` feature.
+                      Implementations that do not support this feature MAY evaluate precedence
+                      using the calculated Listener/Route hostname intersection.
                       
                       Support: Core
                       EOT
@@ -12162,6 +12197,115 @@ resource "kubernetes_manifest" "customresourcedefinition_httproutes_gateway_netw
                             "pattern" = "^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$"
                             "type" = "string"
                           }
+                          "retry" = {
+                            "description" = <<-EOT
+                            Retry defines the configuration for when to retry an HTTP request.
+                            
+                            A request is retried when attempts is greater than 0 and the backend did
+                            not process it. This is the case when the connection could not be
+                            established, or when the backend explicitly rejected the request, either
+                            before processing it or with one of the configured status codes.
+                            
+                            Support: Extended
+                            EOT
+                            "properties" = {
+                              "attempts" = {
+                                "default" = 1
+                                "description" = <<-EOT
+                                Attempts specifies the maximum number of times an individual request
+                                from the Gateway to a backend should be retried in addition to the
+                                initial request.
+                                
+                                If the maximum number of retries has been attempted without a successful
+                                response from the backend, the Gateway MUST return an error.
+                                
+                                An explicit zero value MUST disable retries.
+                                
+                                Support: Extended
+                                EOT
+                                "minimum" = 0
+                                "type" = "integer"
+                              }
+                              "backoff" = {
+                                "description" = <<-EOT
+                                Backoff specifies the base interval for a backoff strategy between
+                                retry attempts and is represented in Gateway API Duration formatting.
+                                The duration a Gateway waits before a retry attempt is determined
+                                by the base interval and the implementation's retry strategy.
+                                
+                                Implementations MAY add random jitter and MAY cap the delay at an
+                                implementation-defined maximum, which SHOULD NOT be less than the base
+                                interval. The precise backoff curve and jitter calculation are
+                                implementation-specific and not exposed in the Gateway API specification.
+                                Implementations typically apply exponential backoff with jitter to
+                                mitigate thundering-herd issues.
+                                
+                                If a Request timeout (`rules[].timeouts.request`) is configured on the
+                                route, the entire duration of the initial request and any retry attempts
+                                MUST not exceed the Request timeout duration. If any retry attempts are
+                                still in progress when the Request timeout duration has been reached,
+                                these SHOULD be canceled if possible and the Gateway MUST immediately
+                                return a timeout error.
+                                
+                                If a BackendRequest timeout (`rules[].timeouts.backendRequest`) is
+                                configured on the route, any retry attempts which reach the configured
+                                BackendRequest timeout duration without a response SHOULD be canceled if
+                                possible and the Gateway SHOULD schedule the next retry attempt according
+                                to the configured backoff.
+                                
+                                If a BackendRequest timeout is _not_ configured on the route, retry
+                                attempts MAY time out after an implementation default duration, or MAY
+                                remain pending until a configured Request timeout or implementation
+                                default duration for total request time is reached.
+                                
+                                When this field is unspecified, the backoff strategy and base interval
+                                are implementation-specific.
+                                
+                                Implementations which retry immediately with no backoff MUST NOT advertise
+                                support for this field and MUST set the Accepted Condition for the Route
+                                to `status: False` with a Reason of `UnsupportedValue` when this field is
+                                set.
+                                
+                                Support: Implementation-specific
+                                EOT
+                                "pattern" = "^([0-9]{1,5}(h|m|s|ms)){1,4}$"
+                                "type" = "string"
+                              }
+                              "codes" = {
+                                "description" = <<-EOT
+                                Codes defines the HTTP response status codes for which a backend request
+                                should be retried.
+                                
+                                Support: Extended
+                                EOT
+                                "items" = {
+                                  "description" = <<-EOT
+                                  HTTPRouteRetryStatusCode defines an HTTP response status code for
+                                  which a backend request should be retried.
+                                  
+                                  Implementations MUST support the following status codes as retriable:
+                                  
+                                  * 500
+                                  * 502
+                                  * 503
+                                  * 504
+                                  
+                                  Implementations MAY support specifying additional discrete values in the
+                                  500-599 range.
+                                  
+                                  Implementations MAY support specifying discrete values in the 400-499 range,
+                                  which are often inadvisable to retry.
+                                  EOT
+                                  "maximum" = 599
+                                  "minimum" = 400
+                                  "type" = "integer"
+                                }
+                                "type" = "array"
+                                "x-kubernetes-list-type" = "set"
+                              }
+                            }
+                            "type" = "object"
+                          }
                           "timeouts" = {
                             "description" = <<-EOT
                             Timeouts defines the timeouts that can be configured for an HTTP request.
@@ -12261,6 +12405,10 @@ resource "kubernetes_manifest" "customresourcedefinition_httproutes_gateway_netw
                       "type" = "array"
                       "x-kubernetes-list-type" = "atomic"
                       "x-kubernetes-validations" = [
+                        {
+                          "message" = "Rule name must be unique within the route"
+                          "rule" = "self.all(l1, !has(l1.name) || self.exists_one(l2, has(l2.name) && l1.name == l2.name))"
+                        },
                         {
                           "message" = "While 16 rules and 64 matches per rule are allowed, the total number of matches across all rules in a route must be less than 128"
                           "rule" = "(self.size() > 0 ? self[0].matches.size() : 0) + (self.size() > 1 ? self[1].matches.size() : 0) + (self.size() > 2 ? self[2].matches.size() : 0) + (self.size() > 3 ? self[3].matches.size() : 0) + (self.size() > 4 ? self[4].matches.size() : 0) + (self.size() > 5 ? self[5].matches.size() : 0) + (self.size() > 6 ? self[6].matches.size() : 0) + (self.size() > 7 ? self[7].matches.size() : 0) + (self.size() > 8 ? self[8].matches.size() : 0) + (self.size() > 9 ? self[9].matches.size() : 0) + (self.size() > 10 ? self[10].matches.size() : 0) + (self.size() > 11 ? self[11].matches.size() : 0) + (self.size() > 12 ? self[12].matches.size() : 0) + (self.size() > 13 ? self[13].matches.size() : 0) + (self.size() > 14 ? self[14].matches.size() : 0) + (self.size() > 15 ? self[15].matches.size() : 0) <= 128"
@@ -12679,8 +12827,16 @@ resource "kubernetes_manifest" "customresourcedefinition_httproutes_gateway_netw
                       * Characters in a matching non-wildcard hostname.
                       * Characters in a matching hostname.
                       
-                      If ties exist across multiple Routes, the matching precedence rules for
-                      HTTPRouteMatches takes over.
+                      When multiple HTTPRoutes attach to the same Listener and yield identical
+                      Listener/Route intersected hostnames, implementations SHOULD evaluate
+                      precedence using the original hostnames configured on the Route, not the
+                      calculated Listener/Route hostname intersection.
+                      
+                      Resolving Route precedence using original Route hostname specificity is an
+                      Extended feature. Implementations that support this behavior SHOULD claim
+                      support for the `GatewayRouteHostnameIntersectionPrecedence` feature.
+                      Implementations that do not support this feature MAY evaluate precedence
+                      using the calculated Listener/Route hostname intersection.
                       
                       Support: Core
                       EOT
@@ -16100,6 +16256,115 @@ resource "kubernetes_manifest" "customresourcedefinition_httproutes_gateway_netw
                             "pattern" = "^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$"
                             "type" = "string"
                           }
+                          "retry" = {
+                            "description" = <<-EOT
+                            Retry defines the configuration for when to retry an HTTP request.
+                            
+                            A request is retried when attempts is greater than 0 and the backend did
+                            not process it. This is the case when the connection could not be
+                            established, or when the backend explicitly rejected the request, either
+                            before processing it or with one of the configured status codes.
+                            
+                            Support: Extended
+                            EOT
+                            "properties" = {
+                              "attempts" = {
+                                "default" = 1
+                                "description" = <<-EOT
+                                Attempts specifies the maximum number of times an individual request
+                                from the Gateway to a backend should be retried in addition to the
+                                initial request.
+                                
+                                If the maximum number of retries has been attempted without a successful
+                                response from the backend, the Gateway MUST return an error.
+                                
+                                An explicit zero value MUST disable retries.
+                                
+                                Support: Extended
+                                EOT
+                                "minimum" = 0
+                                "type" = "integer"
+                              }
+                              "backoff" = {
+                                "description" = <<-EOT
+                                Backoff specifies the base interval for a backoff strategy between
+                                retry attempts and is represented in Gateway API Duration formatting.
+                                The duration a Gateway waits before a retry attempt is determined
+                                by the base interval and the implementation's retry strategy.
+                                
+                                Implementations MAY add random jitter and MAY cap the delay at an
+                                implementation-defined maximum, which SHOULD NOT be less than the base
+                                interval. The precise backoff curve and jitter calculation are
+                                implementation-specific and not exposed in the Gateway API specification.
+                                Implementations typically apply exponential backoff with jitter to
+                                mitigate thundering-herd issues.
+                                
+                                If a Request timeout (`rules[].timeouts.request`) is configured on the
+                                route, the entire duration of the initial request and any retry attempts
+                                MUST not exceed the Request timeout duration. If any retry attempts are
+                                still in progress when the Request timeout duration has been reached,
+                                these SHOULD be canceled if possible and the Gateway MUST immediately
+                                return a timeout error.
+                                
+                                If a BackendRequest timeout (`rules[].timeouts.backendRequest`) is
+                                configured on the route, any retry attempts which reach the configured
+                                BackendRequest timeout duration without a response SHOULD be canceled if
+                                possible and the Gateway SHOULD schedule the next retry attempt according
+                                to the configured backoff.
+                                
+                                If a BackendRequest timeout is _not_ configured on the route, retry
+                                attempts MAY time out after an implementation default duration, or MAY
+                                remain pending until a configured Request timeout or implementation
+                                default duration for total request time is reached.
+                                
+                                When this field is unspecified, the backoff strategy and base interval
+                                are implementation-specific.
+                                
+                                Implementations which retry immediately with no backoff MUST NOT advertise
+                                support for this field and MUST set the Accepted Condition for the Route
+                                to `status: False` with a Reason of `UnsupportedValue` when this field is
+                                set.
+                                
+                                Support: Implementation-specific
+                                EOT
+                                "pattern" = "^([0-9]{1,5}(h|m|s|ms)){1,4}$"
+                                "type" = "string"
+                              }
+                              "codes" = {
+                                "description" = <<-EOT
+                                Codes defines the HTTP response status codes for which a backend request
+                                should be retried.
+                                
+                                Support: Extended
+                                EOT
+                                "items" = {
+                                  "description" = <<-EOT
+                                  HTTPRouteRetryStatusCode defines an HTTP response status code for
+                                  which a backend request should be retried.
+                                  
+                                  Implementations MUST support the following status codes as retriable:
+                                  
+                                  * 500
+                                  * 502
+                                  * 503
+                                  * 504
+                                  
+                                  Implementations MAY support specifying additional discrete values in the
+                                  500-599 range.
+                                  
+                                  Implementations MAY support specifying discrete values in the 400-499 range,
+                                  which are often inadvisable to retry.
+                                  EOT
+                                  "maximum" = 599
+                                  "minimum" = 400
+                                  "type" = "integer"
+                                }
+                                "type" = "array"
+                                "x-kubernetes-list-type" = "set"
+                              }
+                            }
+                            "type" = "object"
+                          }
                           "timeouts" = {
                             "description" = <<-EOT
                             Timeouts defines the timeouts that can be configured for an HTTP request.
@@ -16199,6 +16464,10 @@ resource "kubernetes_manifest" "customresourcedefinition_httproutes_gateway_netw
                       "type" = "array"
                       "x-kubernetes-list-type" = "atomic"
                       "x-kubernetes-validations" = [
+                        {
+                          "message" = "Rule name must be unique within the route"
+                          "rule" = "self.all(l1, !has(l1.name) || self.exists_one(l2, has(l2.name) && l1.name == l2.name))"
+                        },
                         {
                           "message" = "While 16 rules and 64 matches per rule are allowed, the total number of matches across all rules in a route must be less than 128"
                           "rule" = "(self.size() > 0 ? self[0].matches.size() : 0) + (self.size() > 1 ? self[1].matches.size() : 0) + (self.size() > 2 ? self[2].matches.size() : 0) + (self.size() > 3 ? self[3].matches.size() : 0) + (self.size() > 4 ? self[4].matches.size() : 0) + (self.size() > 5 ? self[5].matches.size() : 0) + (self.size() > 6 ? self[6].matches.size() : 0) + (self.size() > 7 ? self[7].matches.size() : 0) + (self.size() > 8 ? self[8].matches.size() : 0) + (self.size() > 9 ? self[9].matches.size() : 0) + (self.size() > 10 ? self[10].matches.size() : 0) + (self.size() > 11 ? self[11].matches.size() : 0) + (self.size() > 12 ? self[12].matches.size() : 0) + (self.size() > 13 ? self[13].matches.size() : 0) + (self.size() > 14 ? self[14].matches.size() : 0) + (self.size() > 15 ? self[15].matches.size() : 0) <= 128"
@@ -16533,8 +16802,8 @@ resource "kubernetes_manifest" "customresourcedefinition_listenersets_gateway_ne
     "kind" = "CustomResourceDefinition"
     "metadata" = {
       "annotations" = {
-        "api-approved.kubernetes.io" = "https://github.com/kubernetes-sigs/gateway-api/pull/4530"
-        "gateway.networking.k8s.io/bundle-version" = "v1.6.3"
+        "api-approved.kubernetes.io" = "https://github.com/kubernetes-sigs/gateway-api/pull/5371"
+        "gateway.networking.k8s.io/bundle-version" = "v1.7.0"
         "doks.digitalocean.com/install-policy" = "external"
         "gateway.networking.k8s.io/channel" = "standard"
       }
@@ -17479,8 +17748,8 @@ resource "kubernetes_manifest" "customresourcedefinition_referencegrants_gateway
     "kind" = "CustomResourceDefinition"
     "metadata" = {
       "annotations" = {
-        "api-approved.kubernetes.io" = "https://github.com/kubernetes-sigs/gateway-api/pull/4530"
-        "gateway.networking.k8s.io/bundle-version" = "v1.6.3"
+        "api-approved.kubernetes.io" = "https://github.com/kubernetes-sigs/gateway-api/pull/5371"
+        "gateway.networking.k8s.io/bundle-version" = "v1.7.0"
         "doks.digitalocean.com/install-policy" = "external"
         "gateway.networking.k8s.io/channel" = "standard"
       }
@@ -17927,8 +18196,8 @@ resource "kubernetes_manifest" "customresourcedefinition_tcproutes_gateway_netwo
     "kind" = "CustomResourceDefinition"
     "metadata" = {
       "annotations" = {
-        "api-approved.kubernetes.io" = "https://github.com/kubernetes-sigs/gateway-api/pull/4530"
-        "gateway.networking.k8s.io/bundle-version" = "v1.6.3"
+        "api-approved.kubernetes.io" = "https://github.com/kubernetes-sigs/gateway-api/pull/5371"
+        "gateway.networking.k8s.io/bundle-version" = "v1.7.0"
         "doks.digitalocean.com/install-policy" = "external"
         "gateway.networking.k8s.io/channel" = "standard"
       }
@@ -19418,8 +19687,8 @@ resource "kubernetes_manifest" "customresourcedefinition_tlsroutes_gateway_netwo
     "kind" = "CustomResourceDefinition"
     "metadata" = {
       "annotations" = {
-        "api-approved.kubernetes.io" = "https://github.com/kubernetes-sigs/gateway-api/pull/4530"
-        "gateway.networking.k8s.io/bundle-version" = "v1.6.3"
+        "api-approved.kubernetes.io" = "https://github.com/kubernetes-sigs/gateway-api/pull/5371"
+        "gateway.networking.k8s.io/bundle-version" = "v1.7.0"
         "doks.digitalocean.com/install-policy" = "external"
         "gateway.networking.k8s.io/channel" = "standard"
       }
@@ -19492,6 +19761,25 @@ resource "kubernetes_manifest" "customresourcedefinition_tlsroutes_gateway_netwo
                       1. IPs are not allowed in SNI hostnames per RFC 6066.
                       2. A hostname may be prefixed with a wildcard label (`*.`). The wildcard
                          label must appear by itself as the first label.
+                      
+                      
+                      In the event that multiple TLSRoutes specify intersecting hostnames (e.g.
+                      overlapping wildcard matching and exact matching hostnames), precedence must
+                      be given to rules from the TLSRoute with the largest number of:
+                      
+                      * Characters in a matching non-wildcard hostname.
+                      * Characters in a matching hostname.
+                      
+                      When multiple TLSRoutes attach to the same Listener and yield identical
+                      Listener/Route intersected hostnames, implementations SHOULD evaluate
+                      precedence using the original hostnames configured on the Route, not the
+                      calculated Listener/Route hostname intersection.
+                      
+                      Resolving Route precedence using original Route hostname specificity is an
+                      Extended feature. Implementations that support this behavior SHOULD claim
+                      support for the `GatewayRouteHostnameIntersectionPrecedence` feature.
+                      Implementations that do not support this feature MAY evaluate precedence
+                      using the calculated Listener/Route hostname intersection.
                       EOT
                       "items" = {
                         "description" = <<-EOT
@@ -21093,6 +21381,25 @@ resource "kubernetes_manifest" "customresourcedefinition_tlsroutes_gateway_netwo
                       1. IPs are not allowed in SNI hostnames per RFC 6066.
                       2. A hostname may be prefixed with a wildcard label (`*.`). The wildcard
                          label must appear by itself as the first label.
+                      
+                      
+                      In the event that multiple TLSRoutes specify intersecting hostnames (e.g.
+                      overlapping wildcard matching and exact matching hostnames), precedence must
+                      be given to rules from the TLSRoute with the largest number of:
+                      
+                      * Characters in a matching non-wildcard hostname.
+                      * Characters in a matching hostname.
+                      
+                      When multiple TLSRoutes attach to the same Listener and yield identical
+                      Listener/Route intersected hostnames, implementations SHOULD evaluate
+                      precedence using the original hostnames configured on the Route, not the
+                      calculated Listener/Route hostname intersection.
+                      
+                      Resolving Route precedence using original Route hostname specificity is an
+                      Extended feature. Implementations that support this behavior SHOULD claim
+                      support for the `GatewayRouteHostnameIntersectionPrecedence` feature.
+                      Implementations that do not support this feature MAY evaluate precedence
+                      using the calculated Listener/Route hostname intersection.
                       EOT
                       "items" = {
                         "description" = <<-EOT
@@ -21849,8 +22156,8 @@ resource "kubernetes_manifest" "customresourcedefinition_udproutes_gateway_netwo
     "kind" = "CustomResourceDefinition"
     "metadata" = {
       "annotations" = {
-        "api-approved.kubernetes.io" = "https://github.com/kubernetes-sigs/gateway-api/pull/4530"
-        "gateway.networking.k8s.io/bundle-version" = "v1.6.3"
+        "api-approved.kubernetes.io" = "https://github.com/kubernetes-sigs/gateway-api/pull/5371"
+        "gateway.networking.k8s.io/bundle-version" = "v1.7.0"
         "doks.digitalocean.com/install-policy" = "external"
         "gateway.networking.k8s.io/channel" = "standard"
       }
@@ -23340,7 +23647,7 @@ resource "kubernetes_manifest" "validatingadmissionpolicy_safe_upgrades_gateway_
     "kind" = "ValidatingAdmissionPolicy"
     "metadata" = {
       "annotations" = {
-        "gateway.networking.k8s.io/bundle-version" = "v1.6.3"
+        "gateway.networking.k8s.io/bundle-version" = "v1.7.0"
         "doks.digitalocean.com/install-policy" = "external"
         "gateway.networking.k8s.io/channel" = "standard"
       }
@@ -23374,8 +23681,8 @@ resource "kubernetes_manifest" "validatingadmissionpolicy_safe_upgrades_gateway_
           "reason" = "Invalid"
         },
         {
-          "expression" = "object.spec.group != 'gateway.networking.k8s.io' || (has(object.metadata.annotations) && object.metadata.annotations.exists(k, k == 'gateway.networking.k8s.io/bundle-version') && ( matches(object.metadata.annotations['gateway.networking.k8s.io/bundle-version'], '-(rc)') || ( !matches(object.metadata.annotations['gateway.networking.k8s.io/bundle-version'], 'v1.[0-5].\\\\d+') && !matches(object.metadata.annotations['gateway.networking.k8s.io/bundle-version'], 'v0') ) ))"
-          "message" = "Installing CRDs with version before v1.5.0 is prohibited by default. Uninstall ValidatingAdmissionPolicy safe-upgrades.gateway.networking.k8s.io to install older versions."
+          "expression" = "object.spec.group != 'gateway.networking.k8s.io' || (has(object.metadata.annotations) && object.metadata.annotations.exists(k, k == 'gateway.networking.k8s.io/bundle-version') && !matches(object.metadata.annotations['gateway.networking.k8s.io/bundle-version'], 'v1.[0-6].\\\\d+') && !matches(object.metadata.annotations['gateway.networking.k8s.io/bundle-version'], 'v0'))"
+          "message" = "Installing CRDs with version before v1.7.0 is prohibited by default. Uninstall ValidatingAdmissionPolicy safe-upgrades.gateway.networking.k8s.io to install older versions."
           "reason" = "Invalid"
         },
       ]
@@ -23393,7 +23700,7 @@ resource "kubernetes_manifest" "validatingadmissionpolicybinding_safe_upgrades_g
     "kind" = "ValidatingAdmissionPolicyBinding"
     "metadata" = {
       "annotations" = {
-        "gateway.networking.k8s.io/bundle-version" = "v1.6.3"
+        "gateway.networking.k8s.io/bundle-version" = "v1.7.0"
         "doks.digitalocean.com/install-policy" = "external"
         "gateway.networking.k8s.io/channel" = "standard"
       }
