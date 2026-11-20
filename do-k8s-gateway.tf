@@ -183,11 +183,6 @@ resource "helm_release" "do-nginx-gateway-fabric" {
         ]
       }
       config = {
-        # Temporary mitigation for CVE-2026-123633 and CVE-2026-123007 (NGINX HTTP/2, fixed in 1.31.9).
-        # NGF 2.8.1 ships NGINX 1.31.7; NGF 2.9.0 ships 1.31.9. Remove this in a separate apply, after the NGF 2.9.0
-        # rollout has finished: during the rollout, the old 1.31.7 pods still get the new config.
-        disableHTTP2 = true
-
         # The DO load balancer sends the client address with the PROXY protocol
         # (see "do-loadbalancer-enable-proxy-protocol" on the Gateway).
         rewriteClientIP = {
