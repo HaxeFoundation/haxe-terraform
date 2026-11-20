@@ -5,14 +5,14 @@ locals {
         replicas  = 1
         subdomain = "development-build"
         host      = "development-build.haxe.org"
-        image     = "ghcr.io/haxefoundation/build.haxe.org:a51c7acd4cfdc56f74e584c6bfe80298ec4053b2"
+        image     = "ghcr.io/haxefoundation/build.haxe.org:2bb4f61a07c7f13854d592161b09fd4ec342fcd1"
         proxied   = false
       }
       prod = {
         replicas  = 2
         subdomain = "build"
         host      = "build.haxe.org"
-        image     = "ghcr.io/haxefoundation/build.haxe.org:a51c7acd4cfdc56f74e584c6bfe80298ec4053b2"
+        image     = "ghcr.io/haxefoundation/build.haxe.org:2bb4f61a07c7f13854d592161b09fd4ec342fcd1"
         proxied   = true
       }
     }
